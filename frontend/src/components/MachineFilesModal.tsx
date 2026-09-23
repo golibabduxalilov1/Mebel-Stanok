@@ -146,6 +146,10 @@ export function MachineFilesModal({
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Files chosen but not yet saved - selecting/dropping files no longer uploads them
+  // immediately; the user reviews the list and presses "Сохранить" to upload.
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
   // Media preview modal state
   const [previewItem, setPreviewItem] = useState<MachineAttachment | null>(null);
   const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
@@ -296,6 +300,25 @@ export function MachineFilesModal({
       return 'archive';
     }
     return 'other';
+  };
+
+  // Queue files chosen via the picker or drag-and-drop for review before uploading.
+  const queueFiles = (files: FileList | File[]) => {
+    const list = Array.from(files);
+    if (list.length === 0) return;
+    setUploadError(null);
+    setUploadSuccess(null);
+    setPendingFiles(prev => [...prev, ...list]);
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSavePendingFiles = async () => {
+    const files = pendingFiles;
+    setPendingFiles([]);
+    await handleFiles(files);
   };
 
   // Handle uploaded files (videos, photos, docs) - each goes straight to the backend's attachment endpoint.
@@ -482,7 +505,10 @@ export function MachineFilesModal({
           ref={fileInputRef}
           multiple
           className="hidden"
-          onChange={e => e.target.files && handleFiles(e.target.files)}
+          onChange={e => {
+            if (e.target.files) queueFiles(e.target.files);
+            e.target.value = '';
+          }}
         />
         {/* Header */}
         <div className="px-5 py-4 sm:px-8 sm:py-5 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between gap-4">
@@ -514,6 +540,47 @@ export function MachineFilesModal({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Pending files review - shown after picking/dropping files, before they're saved */}
+        {pendingFiles.length > 0 && !isProcessing && (
+          <div className="mx-5 sm:mx-8 mt-4 p-4 bg-blue-50/60 border border-blue-200 rounded-2xl shadow-xs space-y-3">
+            <p className="text-xs font-bold text-blue-900">
+              Выбрано файлов: {pendingFiles.length}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {pendingFiles.map((file, idx) => (
+                <span
+                  key={`${file.name}-${idx}`}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-blue-200 rounded-xl text-[11px] font-semibold text-slate-700 max-w-[220px]"
+                >
+                  <span className="truncate" title={file.name}>{file.name}</span>
+                  <span className="text-slate-400 font-mono shrink-0">{formatBytes(file.size)}</span>
+                  <button
+                    onClick={() => removePendingFile(idx)}
+                    className="text-slate-400 hover:text-rose-600 shrink-0"
+                    title="Убрать файл"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSavePendingFiles}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95"
+              >
+                Сохранить
+              </button>
+              <button
+                onClick={() => setPendingFiles([])}
+                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition-all active:scale-95"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Notifications */}
         {uploadProgress && (
@@ -553,6 +620,12 @@ export function MachineFilesModal({
           <div className="mx-5 mt-4 p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center gap-2.5">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
             <span className="flex-1">{uploadSuccess}</span>
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shrink-0"
+            >
+              Закрыть
+            </button>
             <button onClick={() => setUploadSuccess(null)} className="text-emerald-400 hover:text-emerald-700">
               <X className="w-4 h-4" />
             </button>
@@ -650,7 +723,7 @@ export function MachineFilesModal({
                   onDrop={e => {
                     e.preventDefault();
                     setDragActive(false);
-                    if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+                    if (e.dataTransfer.files) queueFiles(e.dataTransfer.files);
                   }}
                   className={`py-14 text-center border-2 border-dashed rounded-3xl transition-all flex flex-col items-center justify-center ${
                     dragActive

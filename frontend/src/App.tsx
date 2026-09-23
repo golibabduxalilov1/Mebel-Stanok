@@ -155,6 +155,7 @@ const getStatusLabel = (status: MachineStatus) => {
 export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [resolvedImageUrls, setResolvedImageUrls] = useState<Record<string, string>>({});
   const [branches, setBranches] = useState<Branch[]>([]);
   const [spareParts, setSpareParts] = useState<SparePart[]>([]);
   const [units, setUnits] = useState<UnitOfMeasure[]>(DEFAULT_UNITS);
@@ -313,6 +314,34 @@ export default function App() {
       setActiveTab(allowedTabs[0].id as any);
     }
   }, [allowedTabs, activeTab]);
+
+  // Machine attachment thumbnails point at an authenticated download endpoint that a
+  // plain <img src> can't fetch (it needs a Bearer header) - resolve those to blob URLs
+  // up front so grid/table thumbnails and the lightbox don't render as broken/black.
+  useEffect(() => {
+    let isMounted = true;
+    const urls = new Set<string>();
+    machines.forEach(m => getMachineImages(m).forEach(u => urls.add(u)));
+    const toResolve = Array.from(urls).filter(u => !resolvedImageUrls[u]);
+    if (toResolve.length === 0) return;
+    (async () => {
+      const entries: Record<string, string> = {};
+      for (const url of toResolve) {
+        try {
+          const resolved = await machineService.resolveImageUrl(url);
+          if (resolved) entries[url] = resolved;
+        } catch (e) {
+          console.error('Error resolving machine image URL:', e);
+        }
+      }
+      if (isMounted && Object.keys(entries).length > 0) {
+        setResolvedImageUrls(prev => ({ ...prev, ...entries }));
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [machines]);
+
+  const imgSrc = (url: string): string => resolvedImageUrls[url] || url;
 
   // Only used for the two legitimate self-sync cases from UsersTab.tsx: an admin
   // editing their own active account (updatedUser), or deleting it (null, signs out).
@@ -940,17 +969,17 @@ export default function App() {
                             <div 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setLightboxState({ 
-                                  images: machineImages, 
-                                  initialIndex: 0, 
-                                  title: `Станок: ${machine.name} (${machine.model || ''})` 
+                                setLightboxState({
+                                  images: machineImages.map(imgSrc),
+                                  initialIndex: 0,
+                                  title: `Станок: ${machine.name} (${machine.model || ''})`
                                 });
                               }}
                               className="relative w-16 h-16 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100 shrink-0 cursor-pointer group/img hover:ring-2 hover:ring-blue-500 transition-all z-10"
                               title="Нажмите для просмотра фото в 1 клик"
                             >
-                              <img 
-                                src={machineImages[0]} 
+                              <img
+                                src={imgSrc(machineImages[0])}
                                 alt={machine.name} 
                                 className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-200"
                                 referrerPolicy="no-referrer"
@@ -1120,17 +1149,17 @@ export default function App() {
                                     <div 
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setLightboxState({ 
-                                          images: machineImages, 
-                                          initialIndex: 0, 
-                                          title: `Станок: ${machine.name} (${machine.model || ''})` 
+                                        setLightboxState({
+                                          images: machineImages.map(imgSrc),
+                                          initialIndex: 0,
+                                          title: `Станок: ${machine.name} (${machine.model || ''})`
                                         });
                                       }}
                                       className="relative w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100 shrink-0 cursor-pointer group/img hover:ring-2 hover:ring-blue-500 transition-all"
                                       title="Нажмите для просмотра фото в 1 клик"
                                     >
-                                      <img 
-                                        src={machineImages[0]} 
+                                      <img
+                                        src={imgSrc(machineImages[0])}
                                         alt={machine.name} 
                                         className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-200"
                                         referrerPolicy="no-referrer"
@@ -1415,11 +1444,11 @@ export default function App() {
                   machine={selectedMachine} 
                   onOpenManage={() => setShowPhotoModal(true)} 
                   onOpenFiles={() => setFilesModalMachine(selectedMachine)}
-                  onOpenLightbox={(idx) => setLightboxState({ 
-                    images: getMachineImages(selectedMachine), 
-                    initialIndex: idx, 
-                    title: selectedMachine.name 
-                  })} 
+                  onOpenLightbox={(idx) => setLightboxState({
+                    images: getMachineImages(selectedMachine).map(imgSrc),
+                    initialIndex: idx,
+                    title: selectedMachine.name
+                  })}
                   canManagePhoto={canPerformAction(currentRole, 'machines.catalog', 'edit') || canPerformAction(currentRole, 'machines.cards', 'edit')}
                 />
 
@@ -3151,12 +3180,37 @@ function MachineDetailPhotoGallery({
   onOpenFiles?: () => void;
   canManagePhoto?: boolean;
 }) {
-  const images = getMachineImages(machine);
+  const rawImages = getMachineImages(machine);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [resolved, setResolved] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setActiveIdx(0);
   }, [machine.id]);
+
+  // Attachment download links need an auth header a plain <img> can't send - resolve
+  // to blob URLs so the banner/thumbnails don't render as broken/black images.
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      const entries: Record<string, string> = {};
+      for (const url of rawImages) {
+        if (resolved[url]) continue;
+        try {
+          const r = await machineService.resolveImageUrl(url);
+          if (r) entries[url] = r;
+        } catch (e) {
+          console.error('Error resolving machine image URL:', e);
+        }
+      }
+      if (isMounted && Object.keys(entries).length > 0) {
+        setResolved(prev => ({ ...prev, ...entries }));
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [machine.id, rawImages.join('|')]);
+
+  const images = rawImages.map(u => resolved[u] || u);
 
   if (images.length === 0) {
     return (
@@ -5511,9 +5565,9 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
     }
   };
 
-  // Combine scheduled tasks and manual nextMaintenanceDates
-  const combinedSchedules: ToirScheduleItem[] = [
-    ...schedules.map(s => {
+  // Combine scheduled tasks (manual nextMaintenanceDate cards removed — they had no working edit)
+  const combinedSchedules: ToirScheduleItem[] = schedules
+    .map(s => {
       const machine = machines.find(m => m.id === s.machineId);
       const branch = branches.find(b => b.id === machine?.branchId);
       return {
@@ -5524,30 +5578,8 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
         serialNumber: machine?.serialNumber,
         branchName: branch?.name
       };
-    }),
-    ...machines
-      .filter(m => m.nextMaintenanceDate)
-      .map(m => {
-        const branch = branches.find(b => b.id === m.branchId);
-        return {
-          id: `m-next-${m.id}`,
-          machineId: m.id,
-          taskName: 'Регламентные работы (ЕО/ТО)',
-          taskType: 'routine' as ToirTaskType,
-          description: 'Плановое поддержание работоспособности и проверка систем',
-          intervalDays: 0,
-          lastPerformed: m.lastMaintenanceDate || '',
-          nextDue: m.nextMaintenanceDate!,
-          assignedTechnician: 'Дежурный мастер',
-          priority: 'medium' as any,
-          isManual: true,
-          machineName: m.name,
-          model: m.model,
-          serialNumber: m.serialNumber,
-          branchName: branch?.name
-        };
-      })
-  ].sort((a, b) => new Date(a.nextDue).getTime() - new Date(b.nextDue).getTime());
+    })
+    .sort((a, b) => new Date(a.nextDue).getTime() - new Date(b.nextDue).getTime());
 
   // Filtered schedules for dashboard
   const filteredSchedules = useMemo(() => {

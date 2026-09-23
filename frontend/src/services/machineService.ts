@@ -341,6 +341,20 @@ export const machineService = {
    * blob and cached as an object URL - external "link" attachments and already-
    * resolved data: URLs (legacy machine.imageUrl entries) pass straight through.
    */
+  /**
+   * Resolves a machine/part thumbnail `url` for direct use as an <img src>. Attachment
+   * download links (`${API_BASE_URL}/attachments/:id/download`) require a Bearer auth
+   * header, which a plain <img> can't send - loading them directly renders as a broken
+   * image. This fetches those through the authenticated client and swaps in a blob URL;
+   * anything else (data: URLs, external links) passes through unchanged.
+   */
+  async resolveImageUrl(url: string): Promise<string> {
+    if (!url) return url;
+    const match = url.match(/\/attachments\/([^/]+)\/download$/);
+    if (!match) return url;
+    return this.resolveAttachmentUrl(match[1], url);
+  },
+
   async resolveAttachmentUrl(id: string, currentUrl?: string, opts?: { thumbnail?: boolean }): Promise<string> {
     // Thumbnail and full-download blobs must be cached separately - they're different
     // files (a JPEG poster vs. the actual video/PDF/etc), and sharing one `id` key here
