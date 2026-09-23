@@ -350,7 +350,11 @@ export const machineService = {
    * resolved data: URLs (legacy machine.imageUrl entries) pass straight through.
    */
   async resolveAttachmentUrl(id: string, currentUrl?: string, opts?: { thumbnail?: boolean }): Promise<string> {
-    if (attachmentUrlCache.has(id)) return attachmentUrlCache.get(id)!;
+    // Thumbnail and full-download blobs must be cached separately - they're different
+    // files (a JPEG poster vs. the actual video/PDF/etc), and sharing one `id` key here
+    // previously caused e.g. a video's <video> src to resolve to its own thumbnail image.
+    const cacheKey = opts?.thumbnail ? `${id}:thumbnail` : id;
+    if (attachmentUrlCache.has(cacheKey)) return attachmentUrlCache.get(cacheKey)!;
 
     if (currentUrl && (currentUrl.startsWith('data:') || (currentUrl.startsWith('http') && !currentUrl.startsWith(API_BASE_URL)))) {
       return currentUrl;
@@ -360,7 +364,7 @@ export const machineService = {
       const path = opts?.thumbnail ? `/attachments/${id}/thumbnail` : `/attachments/${id}/download`;
       const blob = await apiClient.getBlob(path);
       const objectUrl = URL.createObjectURL(blob);
-      attachmentUrlCache.set(id, objectUrl);
+      attachmentUrlCache.set(cacheKey, objectUrl);
       return objectUrl;
     } catch {
       return currentUrl || '';

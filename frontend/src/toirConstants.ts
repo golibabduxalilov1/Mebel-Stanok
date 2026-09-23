@@ -28,7 +28,7 @@ export const TOIR_CATEGORIES: Record<ToirTaskType, ToirCategoryConfig> = {
     type: 'routine',
     code: 'EO_TO',
     title: 'Регламентные задачи (ЕО и ТО)',
-    shortName: 'ЕО и ТО',
+    shortName: 'Общее ТО',
     badgeLabel: 'Регламент (ЕО/ТО)',
     goal: 'Предотвращение износа и поддержание станка в рабочем состоянии.',
     description: 'Ежесменное (ЕО) и периодическое техобслуживание по наработке моточасов/дней.',
@@ -57,7 +57,7 @@ export const TOIR_CATEGORIES: Record<ToirTaskType, ToirCategoryConfig> = {
     type: 'diagnostic',
     code: 'DIAG',
     title: 'Диагностические и контрольно-измерительные задачи',
-    shortName: 'Диагностика и КИП',
+    shortName: 'Диагностика',
     badgeLabel: 'Диагностика & КИП',
     goal: 'Оценка текущего состояния узлов и поиск скрытых дефектов до аварии.',
     examples: [
@@ -86,7 +86,7 @@ export const TOIR_CATEGORIES: Record<ToirTaskType, ToirCategoryConfig> = {
     type: 'ppr',
     code: 'PPR',
     title: 'Планово-предупредительные ремонтные задачи (ППР)',
-    shortName: 'ППР Ремонт',
+    shortName: 'Ремонт',
     badgeLabel: 'ППР (Плановый ремонт)',
     goal: 'Восстановление ресурсных характеристик оборудования.',
     examples: [

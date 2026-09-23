@@ -106,6 +106,11 @@ function isLegacyPhoto(attachment: MachineAttachment): boolean {
   return attachment.id.startsWith('legacy-photo-');
 }
 
+/** Only .docx can be rendered inline (via mammoth) - legacy .doc and other document types still fall back to download. */
+function isDocx(attachment: MachineAttachment): boolean {
+  return attachment.type === 'document' && attachment.name.toLowerCase().endsWith('.docx');
+}
+
 interface MachineFilesModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -152,20 +157,43 @@ export function MachineFilesModal({
   // Media preview modal state
   const [previewItem, setPreviewItem] = useState<MachineAttachment | null>(null);
   const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
+  const [previewDocxHtml, setPreviewDocxHtml] = useState<string | null>(null);
+  const [previewDocxError, setPreviewDocxError] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     if (previewItem && previewItem.type === 'video') {
-      const existing = resolvedUrls[previewItem.id];
-      if (existing) {
-        setPreviewVideoUrl(existing);
-      } else {
-        machineService.resolveAttachmentUrl(previewItem.id, previewItem.url).then(url => {
-          if (isMounted) setPreviewVideoUrl(url);
-        });
-      }
+      // Note: resolvedUrls[id] holds this video's thumbnail poster (pre-resolved for the
+      // grid), not the video itself - the actual video file is always fetched separately.
+      setPreviewVideoUrl(null);
+      machineService.resolveAttachmentUrl(previewItem.id, previewItem.url).then(url => {
+        if (isMounted) setPreviewVideoUrl(url);
+      });
     } else {
       setPreviewVideoUrl(null);
+    }
+    return () => { isMounted = false; };
+  }, [previewItem]);
+
+  // Renders .docx inline (no download): converts the already-resolved blob to HTML client-side via mammoth.
+  useEffect(() => {
+    let isMounted = true;
+    setPreviewDocxHtml(null);
+    setPreviewDocxError(false);
+    if (previewItem && isDocx(previewItem)) {
+      (async () => {
+        try {
+          const resolved = resolvedUrls[previewItem.id] || await machineService.resolveAttachmentUrl(previewItem.id, previewItem.url);
+          const res = await fetch(resolved);
+          const arrayBuffer = await res.arrayBuffer();
+          const mammoth = await import('mammoth');
+          const { value } = await mammoth.convertToHtml({ arrayBuffer });
+          if (isMounted) setPreviewDocxHtml(value);
+        } catch (err) {
+          console.error('DOCX preview error:', err);
+          if (isMounted) setPreviewDocxError(true);
+        }
+      })();
     }
     return () => { isMounted = false; };
   }, [previewItem, resolvedUrls]);
@@ -786,7 +814,7 @@ export function MachineFilesModal({
                       <div
                         className="h-36 bg-slate-100 relative overflow-hidden flex items-center justify-center cursor-pointer border-b border-slate-100"
                         onClick={() => {
-                          if (item.type === 'image' || item.type === 'video' || item.type === 'pdf') {
+                          if (item.type === 'image' || item.type === 'video' || item.type === 'pdf' || isDocx(item)) {
                             setPreviewItem(item);
                           } else if (item.type === 'link') {
                             window.open(item.url, '_blank');
@@ -872,7 +900,7 @@ export function MachineFilesModal({
                             className="text-xs font-bold text-slate-900 line-clamp-2 hover:text-blue-600 cursor-pointer"
                             title={item.name}
                             onClick={() => {
-                              if (item.type === 'image' || item.type === 'video' || item.type === 'pdf') setPreviewItem(item);
+                              if (item.type === 'image' || item.type === 'video' || item.type === 'pdf' || isDocx(item)) setPreviewItem(item);
                               else if (item.type === 'link') window.open(item.url, '_blank');
                               else handleDownload(item);
                             }}
@@ -911,7 +939,7 @@ export function MachineFilesModal({
                               </button>
                             )}
 
-                            {(item.type === 'image' || item.type === 'video' || item.type === 'pdf') && (
+                            {(item.type === 'image' || item.type === 'video' || item.type === 'pdf' || isDocx(item)) && (
                               <button
                                 onClick={() => setPreviewItem(item)}
                                 className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors"
@@ -984,7 +1012,7 @@ export function MachineFilesModal({
                               <div className="flex items-center gap-2">
                                 <span
                                   onClick={() => {
-                                    if (item.type === 'image' || item.type === 'video' || item.type === 'pdf') setPreviewItem(item);
+                                    if (item.type === 'image' || item.type === 'video' || item.type === 'pdf' || isDocx(item)) setPreviewItem(item);
                                     else if (item.type === 'link') window.open(item.url, '_blank');
                                     else handleDownload(item);
                                   }}
@@ -1023,7 +1051,7 @@ export function MachineFilesModal({
                                     <Star className="w-3.5 h-3.5" />
                                   </button>
                                 )}
-                                {(item.type === 'image' || item.type === 'video' || item.type === 'pdf') && (
+                                {(item.type === 'image' || item.type === 'video' || item.type === 'pdf' || isDocx(item)) && (
                                   <button
                                     onClick={() => setPreviewItem(item)}
                                     className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded"
@@ -1344,6 +1372,20 @@ export function MachineFilesModal({
                   <div className="flex flex-col items-center justify-center p-8 text-white space-y-3">
                     <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
                     <p className="text-sm font-semibold text-slate-300">Загрузка PDF...</p>
+                  </div>
+                )
+              ) : isDocx(previewItem) && !previewDocxError ? (
+                previewDocxHtml ? (
+                  <div className="w-full h-[75vh] overflow-y-auto rounded-xl shadow-2xl bg-white">
+                    <div
+                      className="docx-preview-content max-w-3xl mx-auto p-8 sm:p-12 text-slate-900 text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: previewDocxHtml }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 text-white space-y-3">
+                    <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
+                    <p className="text-sm font-semibold text-slate-300">Загрузка документа...</p>
                   </div>
                 )
               ) : (

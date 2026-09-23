@@ -40,6 +40,32 @@ html, body, #root, * {
   background: #2563eb;
 }
 
+/* Readable defaults for mammoth's raw HTML output (docx inline preview) - Tailwind's preflight
+   zeroes out margins/list-style/borders, so plain <p>/<table>/<ul> render unreadably without this. */
+.docx-preview-content h1, .docx-preview-content h2, .docx-preview-content h3 {
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+}
+.docx-preview-content p {
+  margin: 0.5em 0;
+}
+.docx-preview-content ul, .docx-preview-content ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  list-style: revert;
+}
+.docx-preview-content table {
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+.docx-preview-content table td, .docx-preview-content table th {
+  border: 1px solid #cbd5e1;
+  padding: 0.4em 0.6em;
+}
+.docx-preview-content img {
+  max-width: 100%;
+}
+
 @layer utilities {
   .custom-scrollbar {
     scroll-behavior: smooth;
