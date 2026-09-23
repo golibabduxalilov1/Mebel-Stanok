@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MachineStatus {
+  active
+  maintenance
+  repair
+  retired
+}
+
+enum AttachmentType {
+  image
+  video
+  pdf
+  document
+  archive
+  link
+  other
+}
+
+enum ToirTaskType {
+  routine
+  diagnostic
+  ppr
+  emergency
+}
+
+enum Priority {
+  low
+  medium
+  high
+  critical
+}
+
+enum LogType {
+  routine
+  repair
+  inspection
+  diagnostic
+  ppr
+  emergency
+}
+
+enum ActionType {
+  create
+  update
+  delete
+  transfer
+  other
+}
+
+enum EntityType {
+  machine
+  branch
+  part
+  schedule
+  log
+  transfer
+  user
+  role
+  other
+}
+
+enum UserStatus {
+  active
+  blocked
+}
+
+model Branch {
+  id            String   @id @default(uuid())
+  name          String
+  location      String?
+  contactPerson String?  @map("contact_person")
+  createdBy     String?  @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  machines      Machine[]
+  spareParts    SparePart[]
+  transfersFrom Transfer[] @relation("TransferFrom")
+  transfersTo   Transfer[] @relation("TransferTo")
+
+  @@map("branches")
+}
+
+model UnitOfMeasure {
+  id        String   @id @default(uuid())
+  code      String
+  name      String
+  isSystem  Boolean  @default(false) @map("is_system")
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("units_of_measure")
+}
+
+model Machine {
+  id                  String        @id @default(uuid())
+  name                String
+  manufacturer        String?
+  model               String
+  serialNumber        String        @unique @map("serial_number")
+  inventoryNumber     String?       @map("inventory_number")
+  category            String
+  branchId            String?       @map("branch_id")
+  branch              Branch?       @relation(fields: [branchId], references: [id])
+  status              MachineStatus @default(active)
+  purchasePrice       Decimal       @default(0) @map("purchase_price") @db.Decimal(14, 2)
+  purchaseDate        DateTime?     @map("purchase_date") @db.Timestamptz
+  installationDate    DateTime?     @map("installation_date") @db.Timestamptz
+  lastMaintenanceDate DateTime?     @map("last_maintenance_date") @db.Timestamptz
+  nextMaintenanceDate DateTime?     @map("next_maintenance_date") @db.Timestamptz
+  usefulLifeYears     Int?          @map("useful_life_years")
+  description         String?
+  imageUrl            String?       @map("image_url")
+  imageUrls           String[]      @default([]) @map("image_urls")
+  createdBy           String?       @map("created_by")
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  attachments MachineAttachment[]
+  spareParts  SparePart[]
+  schedules   MaintenanceSchedule[]
+  transfers   Transfer[]
+  logs        MaintenanceLog[]
+
+  @@map("machines")
+}
+
+model MachineAttachment {
+  id           String         @id @default(uuid())
+  machineId    String         @map("machine_id")
+  machine      Machine        @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  name         String
+  type         AttachmentType
+  storageKey   String         @map("storage_key")
+  thumbnailKey String?        @map("thumbnail_key")
+  size         Int?
+  uploadedAt   DateTime       @default(now()) @map("uploaded_at") @db.Timestamptz
+  uploadedBy   String?        @map("uploaded_by")
+  description  String?
+  isMainImage  Boolean        @default(false) @map("is_main_image")
+
+  @@map("machine_attachments")
+}
+
+model SparePart {
+  id          String   @id @default(uuid())
+  name        String
+  sku         String
+  quantity    Decimal  @default(0) @db.Decimal(14, 3)
+  minQuantity Decimal? @map("min_quantity") @db.Decimal(14, 3)
+  unitPrice   Decimal? @map("unit_price") @db.Decimal(14, 2)
+  unit        String?
+  imageUrl    String?  @map("image_url")
+  imageUrls   String[] @default([]) @map("image_urls")
+  branchId    String?  @map("branch_id")
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  machineId   String?  @map("machine_id")
+  machine     Machine? @relation(fields: [machineId], references: [id])
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  scheduleParts MaintenanceSchedulePart[]
+  logParts      MaintenanceLogPart[]
+
+  @@map("spare_parts")
+}
+
+model MaintenanceSchedule {
+  id                 String        @id @default(uuid())
+  machineId          String        @map("machine_id")
+  machine            Machine       @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  taskName           String        @map("task_name")
+  intervalDays       Int           @map("interval_days")
+  lastPerformed      DateTime?     @map("last_performed") @db.Timestamptz
+  nextDue            DateTime?     @map("next_due") @db.Timestamptz
+  taskType           ToirTaskType? @map("task_type")
+  description        String?
+  priority           Priority?
+  assignedTechnician String?       @map("assigned_technician")
+  laborCost          Decimal?      @map("labor_cost") @db.Decimal(14, 2)
+  estimatedHours     Decimal?      @map("estimated_hours") @db.Decimal(6, 2)
+  imageUrl           String?       @map("image_url")
+  imageUrls          String[]      @default([]) @map("image_urls")
+  createdBy          String?       @map("created_by")
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  parts MaintenanceSchedulePart[]
+  logs  MaintenanceLog[]
+
+  @@map("maintenance_schedules")
+}
+
+model MaintenanceSchedulePart {
+  scheduleId String               @map("schedule_id")
+  schedule   MaintenanceSchedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  partId     String               @map("part_id")
+  part       SparePart            @relation(fields: [partId], references: [id])
+  quantity   Decimal              @db.Decimal(14, 3)
+  name       String
+
+  @@id([scheduleId, partId])
+  @@map("maintenance_schedule_parts")
+}
+
+model Transfer {
+  id           String   @id @default(uuid())
+  machineId    String   @map("machine_id")
+  machine      Machine  @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  fromBranchId String?  @map("from_branch_id")
+  fromBranch   Branch?  @relation("TransferFrom", fields: [fromBranchId], references: [id])
+  toBranchId   String   @map("to_branch_id")
+  toBranch     Branch   @relation("TransferTo", fields: [toBranchId], references: [id])
+  date         DateTime @default(now()) @db.Timestamptz
+  createdBy    String?  @map("created_by")
+
+  @@map("transfers")
+}
+
+model MaintenanceLog {
+  id                  String                @id @default(uuid())
+  machineId           String                @map("machine_id")
+  machine             Machine               @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  date                DateTime              @db.Timestamptz
+  technicianName      String?               @map("technician_name")
+  type                LogType
+  taskType            ToirTaskType?         @map("task_type")
+  notes               String?
+  cost                Decimal               @default(0) @db.Decimal(14, 2)
+  performedBy         String?               @map("performed_by")
+  scheduleId          String?               @map("schedule_id")
+  schedule            MaintenanceSchedule?  @relation(fields: [scheduleId], references: [id])
+  nextMaintenanceDate DateTime?             @map("next_maintenance_date") @db.Timestamptz
+  imageUrl            String?               @map("image_url")
+  imageUrls           String[]              @default([]) @map("image_urls")
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz
+
+  parts MaintenanceLogPart[]
+
+  @@map("maintenance_logs")
+}
+
+model MaintenanceLogPart {
+  logId    String         @map("log_id")
+  log      MaintenanceLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  partId   String         @map("part_id")
+  part     SparePart      @relation(fields: [partId], references: [id])
+  quantity Decimal        @db.Decimal(14, 3)
+  name     String
+
+  @@id([logId, partId])
+  @@map("maintenance_log_parts")
+}
+
+model ActivityHistory {
+  id         String     @id @default(uuid())
+  actionType ActionType @map("action_type")
+  entityType EntityType @map("entity_type")
+  entityId   String?    @map("entity_id")
+  entityName String?    @map("entity_name")
+  details    String?
+  timestamp  DateTime   @default(now()) @db.Timestamptz
+  userId     String?    @map("user_id")
+  userEmail  String?    @map("user_email")
+
+  @@map("activity_history")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system")
+  color       String?
+  permissions Json
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  username     String     @unique
+  fullName     String     @map("full_name")
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  roleId       String?    @map("role_id")
+  role         Role?      @relation(fields: [roleId], references: [id])
+  branchId     String?    @map("branch_id")
+  position     String?
+  phone        String?
+  status       UserStatus @default(active)
+  notes        String?
+  lastLogin    DateTime?  @map("last_login") @db.Timestamptz
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  createdBy    String?    @map("created_by")
+
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+
+  @@map("refresh_tokens")
+}
