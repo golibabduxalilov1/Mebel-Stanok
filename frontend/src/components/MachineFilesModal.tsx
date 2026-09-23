@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
-  Search,
   Plus,
   Play,
   Grid,
@@ -129,7 +128,6 @@ export function MachineFilesModal({
   onMachineUpdated
 }: MachineFilesModalProps) {
   const [activeFilter, setActiveFilter] = useState<'all' | 'image' | 'video' | 'pdf' | 'document' | 'archive' | 'link'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab] = useState<'files'>('files');
 
@@ -220,14 +218,9 @@ export function MachineFilesModal({
   // Filtered files
   const filteredAttachments = useMemo(() => {
     return attachments.filter(item => {
-      const matchesCategory = activeFilter === 'all' || item.type === activeFilter;
-      const matchesSearch = !searchQuery.trim() ||
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (item.uploadedBy && item.uploadedBy.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesCategory && matchesSearch;
+      return activeFilter === 'all' || item.type === activeFilter;
     });
-  }, [attachments, activeFilter, searchQuery]);
+  }, [attachments, activeFilter]);
 
   // Counts by category
   const counts = useMemo(() => {
@@ -613,7 +606,7 @@ export function MachineFilesModal({
           {/* TAB 1: FILE EXPLORER */}
           {activeTab === 'files' && (
             <div className="space-y-5">
-              {/* Category Filter Pills & Search */}
+              {/* Category Filter Pills */}
               <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 custom-scrollbar">
                   {[
@@ -647,27 +640,6 @@ export function MachineFilesModal({
                     );
                   })}
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="relative min-w-[180px] sm:min-w-[220px]">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      placeholder="Поиск по имени или описанию..."
-                      className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
               </div>
 
               {/* Empty state */}
@@ -690,7 +662,7 @@ export function MachineFilesModal({
                     <FolderOpen className="w-8 h-8" />
                   </div>
                   <h4 className="text-base font-bold text-slate-800">
-                    {searchQuery ? 'Ничего не найдено по вашему запросу' : 'В папке станка пока нет файлов'}
+                    В папке станка пока нет файлов
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mt-1 mb-5">
                     Сюда можно скидывать всё что есть: видео работы станка, фотографии шильдиков и узлов, PDF паспорта, руководства, электросхемы и чертежи.
