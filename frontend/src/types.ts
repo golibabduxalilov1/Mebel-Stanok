@@ -22,8 +22,6 @@ export interface Machine {
   manufacturer?: string;
   model: string;
   serialNumber: string;
-  inventoryNumber?: string;
-  category: string;
   branchId: string;
   status: MachineStatus;
   purchasePrice: number;

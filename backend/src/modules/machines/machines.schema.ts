@@ -8,8 +8,6 @@ export const createMachineSchema = z.object({
   manufacturer: z.string().optional(),
   model: z.string().min(1),
   serialNumber: z.string().min(1),
-  inventoryNumber: z.string().optional(),
-  category: z.string().optional(),
   branchId: z.string().uuid().optional(),
   status: machineStatus.default('active'),
   purchasePrice: z.coerce.number().min(0).default(0),

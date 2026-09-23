@@ -40,8 +40,6 @@ const FIELD_LABELS: Record<string, string> = {
   manufacturer: 'Производитель',
   model: 'Модель',
   serialNumber: 'Серийный номер',
-  inventoryNumber: 'Инвентарный номер',
-  category: 'Категория',
   branchId: 'Филиал',
   status: 'Статус',
   purchasePrice: 'Стоимость закупки',

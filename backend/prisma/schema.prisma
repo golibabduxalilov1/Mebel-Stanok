@@ -105,8 +105,6 @@ model Machine {
   manufacturer        String?
   model               String
   serialNumber        String        @unique @map("serial_number")
-  inventoryNumber     String?       @map("inventory_number")
-  category            String
   branchId            String?       @map("branch_id")
   branch              Branch?       @relation(fields: [branchId], references: [id])
   status              MachineStatus @default(active)

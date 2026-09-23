@@ -1740,30 +1740,13 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
             )}
 
             {canDelete && onDelete && (
-              confirmDelete ? (
-                <div className="flex items-center gap-1 bg-rose-50 border border-rose-200 p-0.5 rounded-lg">
-                  <button
-                    onClick={() => onDelete(schedule)}
-                    className="px-2 py-0.5 bg-rose-600 text-white text-[10px] font-bold rounded hover:bg-rose-700"
-                  >
-                    Да
-                  </button>
-                  <button
-                    onClick={() => setConfirmDelete(false)}
-                    className="px-1.5 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded hover:bg-slate-300"
-                  >
-                    Нет
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors border border-transparent hover:border-rose-200"
-                  title="Удалить задачу из графика"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors border border-transparent hover:border-rose-200"
+                title="Удалить задачу из графика"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
         )}
@@ -1777,6 +1760,56 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
         initialIndex={lightboxIndex || 0}
         title={`Фото задачи ТОиР: ${schedule.taskName}`}
       />
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+            onClick={() => setConfirmDelete(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-rose-50 rounded-xl shrink-0">
+                  <Trash2 className="w-5 h-5 text-rose-600" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-800 text-sm">Удалить задачу?</h3>
+                  <p className="text-xs text-slate-500 mt-1 break-words">
+                    Задача «{schedule.taskName}» будет удалена из графика ТОиР. Это действие нельзя отменить.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 mt-4">
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Нет
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmDelete(false);
+                    onDelete && onDelete(schedule);
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors"
+                >
+                  Да, удалить
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

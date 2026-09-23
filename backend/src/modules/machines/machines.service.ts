@@ -45,7 +45,7 @@ export const machinesService = {
 
     const machine = await prisma.$transaction(async (tx) => {
       const created = await tx.machine.create({
-        data: { ...input, category: input.category || '', createdBy: actor.userId },
+        data: { ...input, createdBy: actor.userId },
       });
       await writeActivity(tx, {
         actionType: 'create',
@@ -101,7 +101,7 @@ export const machinesService = {
         entityType: 'machine',
         entityId: id,
         entityName: original.name,
-        details: `Удален станок "${original.name}" (Модель: ${original.model || '—'}, С/Н: ${original.serialNumber || '—'}, Категория: ${original.category || '—'})`,
+        details: `Удален станок "${original.name}" (Модель: ${original.model || '—'}, С/Н: ${original.serialNumber || '—'})`,
         userId: actor.userId,
         userEmail: actor.userEmail,
       });

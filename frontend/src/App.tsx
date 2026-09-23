@@ -413,8 +413,7 @@ export default function App() {
     const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          m.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (m.manufacturer && m.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         m.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (m.inventoryNumber && m.inventoryNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+                         m.serialNumber.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (activeTab === 'all') return matchesSearch;
     if (activeTab === 'maintenance') return matchesSearch && m.status === 'maintenance';
@@ -1479,9 +1478,7 @@ export default function App() {
                       { label: 'Производитель', value: selectedMachine.manufacturer || 'Не указан' },
                       { label: 'Модель', value: selectedMachine.model },
                       { label: 'Серийный номер', value: selectedMachine.serialNumber },
-                      { label: 'Инвентарный №', value: selectedMachine.inventoryNumber || 'Не указан' },
                       { label: 'Расположение', value: branches.find(b => b.id === selectedMachine.branchId)?.name || 'Не указан' },
-                      { label: 'Категория', value: selectedMachine.category || 'Не указана' },
                       { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
                       { label: 'Дата установки', value: new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') },
                     ].map((item, idx) => (
@@ -3298,8 +3295,6 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
     manufacturer: machine.manufacturer || '',
     model: machine.model,
     serialNumber: machine.serialNumber,
-    inventoryNumber: machine.inventoryNumber || '',
-    category: machine.category || '',
     branchId: machine.branchId || '',
     purchasePrice: machine.purchasePrice || 0,
     purchaseDate: machine.purchaseDate || new Date().toISOString().split('T')[0],
@@ -3404,16 +3399,6 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
             className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.serialNumber}
             onChange={e => setFormData({...formData, serialNumber: e.target.value})}
-          />
-        </div>
-        <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Инвентарный номер</label>
-          <input 
-            type="text" 
-            placeholder="ИНВ-0001"
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium font-mono"
-            value={formData.inventoryNumber}
-            onChange={e => setFormData({...formData, inventoryNumber: e.target.value})}
           />
         </div>
         <div>
