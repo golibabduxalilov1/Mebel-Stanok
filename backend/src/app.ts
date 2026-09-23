@@ -23,7 +23,16 @@ import { adminRouter } from './modules/admin/admin.routes';
 export function createApp() {
   const app = express();
 
-  app.use(helmet());
+  // The API is served over plain HTTP (no TLS termination), so helmet's default
+  // CSP (which includes `upgrade-insecure-requests`) and COOP/origin-agent-cluster
+  // headers make browsers try to upgrade requests to HTTPS and fail with
+  // ERR_SSL_PROTOCOL_ERROR - e.g. opening an attachment's download URL.
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    originAgentCluster: false,
+  }));
   app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
   // Machines/logs/parts/schedules carry compressed base64 photo strings (imageUrl/imageUrls)
   // straight in the JSON body, so this needs more headroom than a typical API.

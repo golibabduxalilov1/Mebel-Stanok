@@ -3472,8 +3472,6 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
     manufacturer: '',
     model: '',
     serialNumber: '',
-    inventoryNumber: '',
-    category: '',
     branchId: '',
     purchasePrice: 0,
     purchaseDate: new Date().toISOString().split('T')[0],
@@ -3565,16 +3563,6 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
             className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.serialNumber}
             onChange={e => setFormData({...formData, serialNumber: e.target.value})}
-          />
-        </div>
-        <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Инвентарный номер</label>
-          <input 
-            type="text" 
-            placeholder="ИНВ-0001"
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium font-mono"
-            value={formData.inventoryNumber}
-            onChange={e => setFormData({...formData, inventoryNumber: e.target.value})}
           />
         </div>
         <div>

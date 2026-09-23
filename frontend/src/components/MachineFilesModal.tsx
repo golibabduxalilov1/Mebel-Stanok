@@ -786,9 +786,9 @@ export function MachineFilesModal({
                       <div
                         className="h-36 bg-slate-100 relative overflow-hidden flex items-center justify-center cursor-pointer border-b border-slate-100"
                         onClick={() => {
-                          if (item.type === 'image' || item.type === 'video') {
+                          if (item.type === 'image' || item.type === 'video' || item.type === 'pdf') {
                             setPreviewItem(item);
-                          } else if (item.url.startsWith('http')) {
+                          } else if (item.type === 'link') {
                             window.open(item.url, '_blank');
                           } else {
                             handleDownload(item);
@@ -872,8 +872,8 @@ export function MachineFilesModal({
                             className="text-xs font-bold text-slate-900 line-clamp-2 hover:text-blue-600 cursor-pointer"
                             title={item.name}
                             onClick={() => {
-                              if (item.type === 'image' || item.type === 'video') setPreviewItem(item);
-                              else if (item.url.startsWith('http')) window.open(item.url, '_blank');
+                              if (item.type === 'image' || item.type === 'video' || item.type === 'pdf') setPreviewItem(item);
+                              else if (item.type === 'link') window.open(item.url, '_blank');
                               else handleDownload(item);
                             }}
                           >
@@ -911,7 +911,7 @@ export function MachineFilesModal({
                               </button>
                             )}
 
-                            {(item.type === 'image' || item.type === 'video') && (
+                            {(item.type === 'image' || item.type === 'video' || item.type === 'pdf') && (
                               <button
                                 onClick={() => setPreviewItem(item)}
                                 className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors"
@@ -921,7 +921,7 @@ export function MachineFilesModal({
                               </button>
                             )}
 
-                            {item.url.startsWith('http') ? (
+                            {item.type === 'link' ? (
                               <button
                                 onClick={() => window.open(item.url, '_blank')}
                                 className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors"
@@ -984,8 +984,8 @@ export function MachineFilesModal({
                               <div className="flex items-center gap-2">
                                 <span
                                   onClick={() => {
-                                    if (item.type === 'image' || item.type === 'video') setPreviewItem(item);
-                                    else if (item.url.startsWith('http')) window.open(item.url, '_blank');
+                                    if (item.type === 'image' || item.type === 'video' || item.type === 'pdf') setPreviewItem(item);
+                                    else if (item.type === 'link') window.open(item.url, '_blank');
                                     else handleDownload(item);
                                   }}
                                   className="cursor-pointer hover:text-blue-600 truncate"
@@ -1023,7 +1023,7 @@ export function MachineFilesModal({
                                     <Star className="w-3.5 h-3.5" />
                                   </button>
                                 )}
-                                {(item.type === 'image' || item.type === 'video') && (
+                                {(item.type === 'image' || item.type === 'video' || item.type === 'pdf') && (
                                   <button
                                     onClick={() => setPreviewItem(item)}
                                     className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded"
@@ -1032,7 +1032,7 @@ export function MachineFilesModal({
                                     <Eye className="w-3.5 h-3.5" />
                                   </button>
                                 )}
-                                {item.url.startsWith('http') ? (
+                                {item.type === 'link' ? (
                                   <button
                                     onClick={() => window.open(item.url, '_blank')}
                                     className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded"
@@ -1268,7 +1268,7 @@ export function MachineFilesModal({
                     <span className="hidden sm:inline">Сделать главным</span>
                   </button>
                 )}
-                {previewItem.type === 'link' && previewItem.url.startsWith('http') ? (
+                {previewItem.type === 'link' ? (
                   <button
                     onClick={() => window.open(previewItem.url, '_blank')}
                     className="p-1.5 hover:bg-white/10 rounded-lg text-white/80 hover:text-white"
@@ -1331,6 +1331,19 @@ export function MachineFilesModal({
                   <div className="flex flex-col items-center justify-center p-8 text-white space-y-3">
                     <Loader2 className="w-10 h-10 text-rose-500 animate-spin" />
                     <p className="text-sm font-semibold text-slate-300">Подготовка видео к воспроизведению...</p>
+                  </div>
+                )
+              ) : previewItem.type === 'pdf' ? (
+                resolvedUrls[previewItem.id] ? (
+                  <iframe
+                    src={resolvedUrls[previewItem.id]}
+                    title={previewItem.name}
+                    className="w-full h-[75vh] max-w-full rounded-xl shadow-2xl bg-white"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 text-white space-y-3">
+                    <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
+                    <p className="text-sm font-semibold text-slate-300">Загрузка PDF...</p>
                   </div>
                 )
               ) : (
