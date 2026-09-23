@@ -131,7 +131,7 @@ export function MachineFilesModal({
   const [activeFilter, setActiveFilter] = useState<'all' | 'image' | 'video' | 'pdf' | 'document' | 'archive' | 'link'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [activeTab, setActiveTab] = useState<'files' | 'upload' | 'link'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'link'>('files');
 
   // Upload state
   const [dragActive, setDragActive] = useState(false);
@@ -633,15 +633,15 @@ export function MachineFilesModal({
             </button>
 
             <button
-              onClick={() => setActiveTab('upload')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                activeTab === 'upload'
-                  ? 'bg-emerald-50 text-emerald-700 font-black shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isProcessing}
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 disabled:opacity-50"
+              title="Выбрать файлы на компьютере или телефоне"
             >
-              <Upload className="w-4 h-4" />
-              Выбрать файлы
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Выбрать файлы</span>
+              <span className="sm:hidden">Файлы</span>
             </button>
 
             <button
@@ -742,18 +742,6 @@ export function MachineFilesModal({
                       </button>
                     )}
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isProcessing}
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 disabled:opacity-50"
-                    title="Выбрать файлы на компьютере или телефоне"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Выбрать файлы</span>
-                    <span className="sm:hidden">Файлы</span>
-                  </button>
                 </div>
               </div>
 
@@ -1098,71 +1086,7 @@ export function MachineFilesModal({
             </div>
           )}
 
-          {/* TAB 2: UPLOAD FILES */}
-          {activeTab === 'upload' && (
-            <div className="max-w-2xl mx-auto space-y-6">
-              <div
-                onDragOver={e => { e.preventDefault(); setDragActive(true); }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={e => {
-                  e.preventDefault();
-                  setDragActive(false);
-                  if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
-                }}
-                className={`rounded-3xl border-2 border-dashed transition-all p-8 sm:p-12 text-center flex flex-col items-center justify-center ${
-                  dragActive
-                    ? 'border-blue-500 bg-blue-50/70 scale-[1.01]'
-                    : 'border-slate-300 bg-slate-50 hover:bg-slate-100/70'
-                }`}
-              >
-                <div className="w-16 h-16 rounded-3xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 shadow-sm">
-                  <Upload className="w-8 h-8" />
-                </div>
-                <h4 className="text-base sm:text-lg font-black text-slate-900">
-                  Перетащите файлы сюда или выберите на диске
-                </h4>
-                <p className="text-xs text-slate-500 max-w-md mt-1.5 mb-6">
-                  Поддерживаются любые файлы: <b>видео</b> (MP4, MOV), <b>фото</b> (JPG, PNG, WebP), <b>документы и паспорта</b> (PDF, DOCX, XLSX), <b>схемы и чертежи</b> (DWG, ZIP, RAR).
-                </p>
-
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isProcessing}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-100 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
-                  >
-                    <Upload className="w-4 h-4" />
-                    {isProcessing ? 'Обработка и загрузка...' : 'Выбрать файлы'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('link')}
-                    className="px-4 py-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-                  >
-                    <LinkIcon className="w-4 h-4 text-slate-400" />
-                    Добавить по ссылке (Облако/YouTube)
-                  </button>
-                </div>
-              </div>
-
-              {/* Hints Box */}
-              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/70 text-amber-900 text-xs flex items-start gap-3">
-                <HardDrive className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-bold">Советы по хранению материалов станка:</p>
-                  <p className="text-[11px] text-amber-800 leading-relaxed">
-                    • <b>Фотографии</b> автоматически оптимизируются и сжимаются без потери резкости деталей.<br/>
-                    • Небольшие <b>PDF руководства</b> и <b>видеоролики</b> сохраняются прямо в карточке оборудования.<br/>
-                    • Для очень объёмных видеозаписей цеха или папок с гигабайтами чертежей рекомендуется использовать вкладку <b>«Добавить ссылку»</b> (на Яндекс.Диск, Google Drive или сетевую папку).
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: ADD EXTERNAL LINK */}
+          {/* TAB 2: ADD EXTERNAL LINK */}
           {activeTab === 'link' && (
             <div className="max-w-xl mx-auto">
               <form onSubmit={handleAddLink} className="space-y-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
