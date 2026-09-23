@@ -325,14 +325,6 @@ export const machineService = {
     return mapAttachment(created);
   },
 
-  async addAttachmentLink(
-    machineId: string,
-    input: { name?: string; type: MachineAttachmentType; url: string; description?: string }
-  ): Promise<MachineAttachment> {
-    const created = await apiClient.post<any>(`/machines/${machineId}/attachments/link`, input);
-    return mapAttachment(created);
-  },
-
   async deleteAttachment(attachmentId: string) {
     attachmentUrlCache.delete(attachmentId);
     await apiClient.delete(`/attachments/${attachmentId}`);

@@ -108,41 +108,6 @@ export const attachmentsService = {
     return attachment;
   },
 
-  async addLink(
-    machineId: string,
-    input: { name?: string; type: AttachmentType; url: string; description?: string },
-    actor: Actor
-  ) {
-    const machine = await prisma.machine.findUnique({ where: { id: machineId } });
-    if (!machine) throw Errors.notFound('Machine');
-
-    const attachment = await prisma.$transaction(async (tx) => {
-      const created = await tx.machineAttachment.create({
-        data: {
-          machineId,
-          name: input.name || input.url,
-          type: input.type,
-          storageKey: input.url,
-          uploadedBy: actor.userId,
-          description: input.description,
-        },
-      });
-      await writeActivity(tx, {
-        actionType: 'create',
-        entityType: 'machine',
-        entityId: machineId,
-        entityName: machine.name,
-        details: `Добавлена ссылка "${created.name}" к станку "${machine.name}"`,
-        userId: actor.userId,
-        userEmail: actor.userEmail,
-      });
-      return created;
-    });
-
-    emitEntity('attachment', 'created', attachment);
-    return attachment;
-  },
-
   async getForDownload(id: string) {
     const attachment = await prisma.machineAttachment.findUnique({ where: { id } });
     if (!attachment) throw Errors.notFound('Attachment');

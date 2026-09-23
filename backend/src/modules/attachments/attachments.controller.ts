@@ -61,11 +61,6 @@ export const attachmentsController = {
     res.status(201).json(attachment);
   }),
 
-  addLink: asyncHandler(async (req: Request, res: Response) => {
-    const attachment = await attachmentsService.addLink(req.params.machineId, req.body, { userId: req.user!.sub });
-    res.status(201).json(attachment);
-  }),
-
   update: asyncHandler(async (req: Request, res: Response) => {
     const attachment = await attachmentsService.updateMeta(req.params.id, req.body, { userId: req.user!.sub });
     res.json(attachment);

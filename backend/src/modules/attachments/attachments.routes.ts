@@ -5,7 +5,7 @@ import { requirePermission } from '../../middleware/permissions';
 import { validate } from '../../middleware/validate';
 import { env } from '../../env';
 import { attachmentsController } from './attachments.controller';
-import { addLinkSchema, updateAttachmentSchema, uploadAttachmentSchema } from './attachments.schema';
+import { updateAttachmentSchema, uploadAttachmentSchema } from './attachments.schema';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: env.MAX_UPLOAD_BYTES } });
 const uploadFields = upload.fields([
@@ -24,13 +24,6 @@ attachmentsRouter.post(
   validate(uploadAttachmentSchema),
   attachmentsController.upload
 );
-attachmentsRouter.post(
-  '/link',
-  requirePermission('machines.files', 'create'),
-  validate(addLinkSchema),
-  attachmentsController.addLink
-);
-
 /** Mounted at /api/v1/attachments */
 export const attachmentsStandaloneRouter = Router();
 attachmentsStandaloneRouter.use(requireAuth);

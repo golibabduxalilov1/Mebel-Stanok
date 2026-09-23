@@ -131,7 +131,7 @@ export function MachineFilesModal({
   const [activeFilter, setActiveFilter] = useState<'all' | 'image' | 'video' | 'pdf' | 'document' | 'archive' | 'link'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [activeTab, setActiveTab] = useState<'files' | 'link'>('files');
+  const [activeTab] = useState<'files'>('files');
 
   // Upload state
   const [dragActive, setDragActive] = useState(false);
@@ -147,12 +147,6 @@ export function MachineFilesModal({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // External link form state
-  const [linkUrl, setLinkUrl] = useState('');
-  const [linkTitle, setLinkTitle] = useState('');
-  const [linkCategory, setLinkCategory] = useState<MachineAttachmentType>('link');
-  const [linkDescription, setLinkDescription] = useState('');
 
   // Media preview modal state
   const [previewItem, setPreviewItem] = useState<MachineAttachment | null>(null);
@@ -376,7 +370,6 @@ export function MachineFilesModal({
         } else {
           setUploadSuccess(`Успешно добавлено файлов: ${newAttachments.length}`);
         }
-        setActiveTab('files');
       }
     } catch (err) {
       console.error('File upload error:', err);
@@ -385,47 +378,6 @@ export function MachineFilesModal({
       setIsProcessing(false);
       setUploadProgress(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  // Add external link
-  const handleAddLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!linkUrl.trim()) return;
-
-    setIsProcessing(true);
-    setUploadError(null);
-
-    try {
-      let finalType = linkCategory;
-      const lower = linkUrl.toLowerCase();
-      if (lower.includes('youtube.com') || lower.includes('youtu.be') || lower.includes('rutube.ru') || lower.includes('vimeo.com')) {
-        finalType = 'video';
-      }
-
-      const newAttachment = await machineService.addAttachmentLink(machine.id, {
-        name: linkTitle.trim() || linkUrl.trim(),
-        type: finalType,
-        url: linkUrl.trim(),
-        description: linkDescription.trim() || undefined
-      });
-
-      const updatedMachine: Machine = {
-        ...machine,
-        attachments: [newAttachment, ...attachments]
-      };
-      onMachineUpdated(updatedMachine);
-
-      setLinkUrl('');
-      setLinkTitle('');
-      setLinkDescription('');
-      setUploadSuccess('Ссылка успешно сохранена в папку оборудования');
-      setActiveTab('files');
-    } catch (err) {
-      console.error(err);
-      setUploadError('Не удалось добавить ссылку');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -618,21 +570,6 @@ export function MachineFilesModal({
         <div className="px-5 sm:px-8 border-b border-slate-100 flex items-center justify-between gap-2 overflow-x-auto bg-white">
           <div className="flex gap-1 py-2">
             <button
-              onClick={() => setActiveTab('files')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                activeTab === 'files'
-                  ? 'bg-blue-50 text-blue-700 font-black shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <FolderOpen className="w-4 h-4" />
-              Все файлы папки
-              <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-white border border-slate-200 text-slate-700">
-                {attachments.length}
-              </span>
-            </button>
-
-            <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
@@ -642,18 +579,6 @@ export function MachineFilesModal({
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Выбрать файлы</span>
               <span className="sm:hidden">Файлы</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('link')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                activeTab === 'link'
-                  ? 'bg-indigo-50 text-indigo-700 font-black shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <LinkIcon className="w-4 h-4" />
-              Добавить ссылку (Диск / Видео)
             </button>
           </div>
 
@@ -779,14 +704,6 @@ export function MachineFilesModal({
                     >
                       <Upload className="w-4 h-4" />
                       {isProcessing ? 'Загрузка...' : 'Выбрать файлы'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('link')}
-                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
-                    >
-                      <LinkIcon className="w-4 h-4" />
-                      Добавить ссылку
                     </button>
                   </div>
                 </div>
@@ -1083,100 +1000,6 @@ export function MachineFilesModal({
                   </div>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* TAB 2: ADD EXTERNAL LINK */}
-          {activeTab === 'link' && (
-            <div className="max-w-xl mx-auto">
-              <form onSubmit={handleAddLink} className="space-y-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                <div>
-                  <h4 className="text-sm font-black uppercase tracking-wider text-slate-900 flex items-center gap-2 mb-1">
-                    <LinkIcon className="w-4 h-4 text-indigo-600" />
-                    Добавить ссылку на внешнее хранилище или видео
-                  </h4>
-                  <p className="text-xs text-slate-500">
-                    Сохраните прямую ссылку на видео YouTube/RuTube, папку на Яндекс.Диске, Google Drive или сетевом диске.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 mb-1 block">
-                    URL адрес ссылки <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    value={linkUrl}
-                    onChange={e => setLinkUrl(e.target.value)}
-                    placeholder="https://disk.yandex.ru/... или https://youtube.com/watch?v=..."
-                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 mb-1 block">
-                      Название материала
-                    </label>
-                    <input
-                      type="text"
-                      value={linkTitle}
-                      onChange={e => setLinkTitle(e.target.value)}
-                      placeholder="Например: Паспорт на Яндекс.Диске"
-                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 mb-1 block">
-                      Категория материала
-                    </label>
-                    <select
-                      value={linkCategory}
-                      onChange={e => setLinkCategory(e.target.value as any)}
-                      className="w-full p-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                    >
-                      <option value="video">Видеоролик (YouTube / RuTube / Диск)</option>
-                      <option value="document">Документ / Регламент (Облако)</option>
-                      <option value="pdf">PDF Паспорт онлайн</option>
-                      <option value="archive">Папка чертежей / Архив</option>
-                      <option value="link">Другая полезная ссылка</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 mb-1 block">
-                    Примечание / Описание (необязательно)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={linkDescription}
-                    onChange={e => setLinkDescription(e.target.value)}
-                    placeholder="Например: Ссылка на видеозапись наладки ЧПУ специалистом завода от 2026г."
-                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('files')}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
-                  >
-                    Отмена
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isProcessing || !linkUrl.trim()}
-                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-blue-100 transition-all flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {isProcessing ? 'Сохранение...' : 'Добавить ссылку в папку'}
-                  </button>
-                </div>
-              </form>
             </div>
           )}
         </div>
