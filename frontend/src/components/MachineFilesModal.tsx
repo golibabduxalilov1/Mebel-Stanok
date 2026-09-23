@@ -400,18 +400,35 @@ export function MachineFilesModal({
   // Delete attachment
   const handleDeleteAttachment = async (attachmentId: string) => {
     const itemToDelete = attachments.find(a => a.id === attachmentId);
-    if (!itemToDelete || isLegacyPhoto(itemToDelete)) return;
+    if (!itemToDelete) return;
 
     if (!window.confirm(`Удалить файл «${itemToDelete.name}» из папки станка?`)) {
       return;
     }
 
     try {
-      await machineService.deleteAttachment(attachmentId);
+      if (isLegacyPhoto(itemToDelete)) {
+        // Synthetic entry sourced from machine.imageUrl/imageUrls, not a real attachment row.
+        const updatedImageUrls = (machine.imageUrls || (machine.imageUrl ? [machine.imageUrl] : []))
+          .filter(url => url !== itemToDelete.url);
+        const updatedMainImageUrl = machine.imageUrl === itemToDelete.url
+          ? (updatedImageUrls[0] || '')
+          : machine.imageUrl;
 
-      const updatedList = attachments.filter(a => a.id !== attachmentId);
-      const updatedMachine: Machine = { ...machine, attachments: updatedList };
-      onMachineUpdated(updatedMachine);
+        await machineService.updateMachine(machine.id, {
+          imageUrls: updatedImageUrls,
+          imageUrl: updatedMainImageUrl,
+        });
+
+        const updatedMachine: Machine = { ...machine, imageUrls: updatedImageUrls, imageUrl: updatedMainImageUrl };
+        onMachineUpdated(updatedMachine);
+      } else {
+        await machineService.deleteAttachment(attachmentId);
+
+        const updatedList = attachments.filter(a => a.id !== attachmentId);
+        const updatedMachine: Machine = { ...machine, attachments: updatedList };
+        onMachineUpdated(updatedMachine);
+      }
 
       if (previewItem?.id === attachmentId) {
         setPreviewItem(null);
@@ -918,15 +935,13 @@ export function MachineFilesModal({
                             )}
                           </div>
 
-                          {!isLegacyPhoto(item) && (
-                            <button
-                              onClick={() => handleDeleteAttachment(item.id)}
-                              className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
-                              title="Удалить из папки"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleDeleteAttachment(item.id)}
+                            className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                            title="Удалить из папки"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1027,15 +1042,13 @@ export function MachineFilesModal({
                                     <Download className="w-3.5 h-3.5" />
                                   </button>
                                 )}
-                                {!isLegacyPhoto(item) && (
-                                  <button
-                                    onClick={() => handleDeleteAttachment(item.id)}
-                                    className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded"
-                                    title="Удалить"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
+                                <button
+                                  onClick={() => handleDeleteAttachment(item.id)}
+                                  className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded"
+                                  title="Удалить"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </td>
                           </tr>
