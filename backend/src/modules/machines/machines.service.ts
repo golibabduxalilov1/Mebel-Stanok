@@ -45,7 +45,7 @@ export const machinesService = {
 
     const machine = await prisma.$transaction(async (tx) => {
       const created = await tx.machine.create({
-        data: { ...input, createdBy: actor.userId },
+        data: { ...input, category: input.category || '', createdBy: actor.userId },
       });
       await writeActivity(tx, {
         actionType: 'create',
