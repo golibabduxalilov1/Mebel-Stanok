@@ -588,8 +588,8 @@ export function CreateToirScheduleModal({
                 })}
               </select>
 
-              <div className="flex items-center gap-1.5 shrink-0">
-                <div className="relative flex items-center">
+              <div className="flex gap-1.5">
+                <div className="relative flex items-center flex-1 min-w-0 sm:flex-none">
                   <input
                     type="number"
                     step="any"
@@ -597,7 +597,7 @@ export function CreateToirScheduleModal({
                     placeholder="Кол-во"
                     value={partQty}
                     onChange={e => setPartQty(e.target.value)}
-                    className="min-h-10 w-20 p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="min-h-10 w-full sm:w-20 p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
                     title="Можно вводить дробное количество (например: 0.3, 0.5, 0.7)"
                   />
                   <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none select-none">
@@ -608,7 +608,7 @@ export function CreateToirScheduleModal({
                   type="button"
                   onClick={handleAddPart}
                   disabled={!selectedPartId}
-                  className="min-h-10 px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                  className="min-h-10 px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 whitespace-nowrap shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Добавить</span>
@@ -1246,8 +1246,8 @@ export function EditToirScheduleModal({
                 })}
               </select>
 
-              <div className="flex items-center gap-1.5 shrink-0">
-                <div className="relative flex items-center">
+              <div className="flex gap-1.5">
+                <div className="relative flex items-center flex-1 min-w-0 sm:flex-none">
                   <input
                     type="number"
                     step="any"
@@ -1255,7 +1255,7 @@ export function EditToirScheduleModal({
                     placeholder="Кол-во"
                     value={partQty}
                     onChange={e => setPartQty(e.target.value)}
-                    className="min-h-10 w-20 p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="min-h-10 w-full sm:w-20 p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
                     title="Можно вводить дробное количество (например: 0.3, 0.5, 0.7)"
                   />
                   <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none select-none">
@@ -1266,7 +1266,7 @@ export function EditToirScheduleModal({
                   type="button"
                   onClick={handleAddPart}
                   disabled={!selectedPartId}
-                  className="min-h-10 px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                  className="min-h-10 px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 whitespace-nowrap shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Добавить</span>
