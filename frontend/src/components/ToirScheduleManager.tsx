@@ -550,11 +550,30 @@ export function CreateToirScheduleModal({
                 <span className="p-1 bg-amber-100 text-amber-800 rounded-md shrink-0">⚙️</span>
                 3. Запчасти со склада (списание при создании задачи)
               </label>
-              {selectedParts.length > 0 && (
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap ml-auto">
-                  Итого: {totalPartsCost.toLocaleString()} ₽
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {parts.length > recommendedParts.length && (
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 cursor-pointer select-none whitespace-nowrap">
+                    <span>Весь склад</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showAllWarehouseParts}
+                      onClick={() => setShowAllWarehouseParts(!showAllWarehouseParts)}
+                      className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors shrink-0 ${
+                        showAllWarehouseParts ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'
+                      }`}
+                      title={showAllWarehouseParts ? 'Показать только рекомендованные детали' : 'Показать все детали склада'}
+                    >
+                      <span className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                    </button>
+                  </label>
+                )}
+                {selectedParts.length > 0 && (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap">
+                    Итого: {totalPartsCost.toLocaleString()} ₽
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -644,25 +663,12 @@ export function CreateToirScheduleModal({
               </div>
             )}
 
-            {/* Quick filter information */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] pt-1 px-1 gap-1 text-slate-500">
-              <span className="flex items-center gap-1">
-                <Filter className="w-3 h-3 text-indigo-500" />
-                {showAllWarehouseParts 
-                  ? `Показаны все детали со склада (${parts.length})` 
-                  : `Показаны только рекомендованные к станку/филиалу (${recommendedParts.length})`}
-              </span>
-              {parts.length > recommendedParts.length && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllWarehouseParts(!showAllWarehouseParts)}
-                  className="text-blue-600 hover:text-blue-800 font-semibold hover:underline text-left sm:text-right"
-                >
-                  {showAllWarehouseParts 
-                    ? `Только рекомендованные (${recommendedParts.length})` 
-                    : `Показать также остальные детали склада (+${parts.length - recommendedParts.length})`}
-                </button>
-              )}
+            {/* Warehouse parts filter status */}
+            <div className="flex items-center gap-1 text-[11px] pt-1 px-1 text-slate-500">
+              <Filter className="w-3 h-3 text-indigo-500" />
+              {showAllWarehouseParts
+                ? `Показаны все детали со склада (${parts.length})`
+                : `Показаны только рекомендованные к станку/филиалу (${recommendedParts.length})`}
             </div>
 
             {/* Selected parts list */}
@@ -1191,11 +1197,30 @@ export function EditToirScheduleModal({
                 <span className="p-1 bg-amber-100 text-amber-800 rounded-md shrink-0">⚙️</span>
                 Запчасти со склада (авто-списание при изменении)
               </label>
-              {selectedParts.length > 0 && (
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap ml-auto">
-                  Итого: {totalPartsCost.toLocaleString()} ₽
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {parts.length > recommendedParts.length && (
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 cursor-pointer select-none whitespace-nowrap">
+                    <span>Весь склад</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showAllWarehouseParts}
+                      onClick={() => setShowAllWarehouseParts(!showAllWarehouseParts)}
+                      className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors shrink-0 ${
+                        showAllWarehouseParts ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'
+                      }`}
+                      title={showAllWarehouseParts ? 'Показать только рекомендованные детали' : 'Показать все детали склада'}
+                    >
+                      <span className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                    </button>
+                  </label>
+                )}
+                {selectedParts.length > 0 && (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap">
+                    Итого: {totalPartsCost.toLocaleString()} ₽
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -1285,25 +1310,12 @@ export function EditToirScheduleModal({
               </div>
             )}
 
-            {/* Quick filter information */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] pt-1 px-1 gap-1 text-slate-500">
-              <span className="flex items-center gap-1">
-                <Filter className="w-3 h-3 text-indigo-500" />
-                {showAllWarehouseParts 
-                  ? `Показаны все детали со склада (${parts.length})` 
-                  : `Показаны только рекомендованные к станку/филиалу (${recommendedParts.length})`}
-              </span>
-              {parts.length > recommendedParts.length && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllWarehouseParts(!showAllWarehouseParts)}
-                  className="text-blue-600 hover:text-blue-800 font-semibold hover:underline text-left sm:text-right"
-                >
-                  {showAllWarehouseParts 
-                    ? `Только рекомендованные (${recommendedParts.length})` 
-                    : `Показать также остальные детали склада (+${parts.length - recommendedParts.length})`}
-                </button>
-              )}
+            {/* Warehouse parts filter status */}
+            <div className="flex items-center gap-1 text-[11px] pt-1 px-1 text-slate-500">
+              <Filter className="w-3 h-3 text-indigo-500" />
+              {showAllWarehouseParts
+                ? `Показаны все детали со склада (${parts.length})`
+                : `Показаны только рекомендованные к станку/филиалу (${recommendedParts.length})`}
             </div>
 
             {/* Selected parts list */}

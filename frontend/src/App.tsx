@@ -178,6 +178,7 @@ export default function App() {
   const [photoLightboxUrl, setPhotoLightboxUrl] = useState<string | null>(null);
   const [lightboxState, setLightboxState] = useState<{ images: string[]; initialIndex: number; title?: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [registryBranchFilter, setRegistryBranchFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'all' | 'maintenance' | 'repair' | 'branches' | 'inventory' | 'reports' | 'history' | 'users'>('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -439,15 +440,16 @@ export default function App() {
   };
 
   const filteredMachines = machines.filter(m => {
-    const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          m.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (m.manufacturer && m.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())) ||
                          m.serialNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeTab === 'all') return matchesSearch;
-    if (activeTab === 'maintenance') return matchesSearch && m.status === 'maintenance';
-    if (activeTab === 'repair') return matchesSearch && m.status === 'repair';
-    return matchesSearch;
+    const matchesBranch = registryBranchFilter === 'all' || m.branchId === registryBranchFilter;
+
+    if (activeTab === 'all') return matchesSearch && matchesBranch;
+    if (activeTab === 'maintenance') return matchesSearch && matchesBranch && m.status === 'maintenance';
+    if (activeTab === 'repair') return matchesSearch && matchesBranch && m.status === 'repair';
+    return matchesSearch && matchesBranch;
   });
 
   if (authLoading) {
@@ -932,6 +934,41 @@ export default function App() {
                   <h3 className="text-xl sm:text-3xl font-mono font-bold text-slate-800">{machines.filter(m => m.status === 'active').length}</h3>
                   <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">Готовы к эксплуатации</p>
                 </div>
+              </div>
+
+              {/* Registry Search + Branch Filter */}
+              <div className="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-2 items-stretch sm:items-center shrink-0">
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Поиск по названию, модели, SN..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full min-h-10 pl-8 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                <select
+                  value={registryBranchFilter}
+                  onChange={(e) => setRegistryBranchFilter(e.target.value)}
+                  className="w-full sm:w-auto sm:min-w-[160px] min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
+                  title="Фильтр по филиалу"
+                >
+                  <option value="all">Все филиалы ({machines.length})</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({machines.filter(m => m.branchId === b.id).length})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Mobile Card List (sm:hidden) */}
