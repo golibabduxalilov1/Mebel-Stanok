@@ -374,7 +374,7 @@ export function CreateToirScheduleModal({
         machineId,
         taskName: taskName.trim(),
         taskType: selectedType,
-        description: description.trim() || activeCategory.goal,
+        description: description.trim(),
         intervalDays: Number(intervalDays) || 30,
         lastPerformed: lastPerformed || new Date().toISOString().split('T')[0],
         nextDue: nextDue || new Date().toISOString().split('T')[0],
@@ -1355,11 +1355,7 @@ export function EditToirScheduleModal({
                   <span>При сохранении складской остаток автоматически скорректируется с учетом изменений.</span>
                 </p>
               </div>
-            ) : (
-              <p className="text-[10px] text-slate-400">
-                Запчасти со склада пока не прикреплены к данной задаче.
-              </p>
-            )}
+            ) : null}
           </div>
 
           {/* Photos of performed work */}
