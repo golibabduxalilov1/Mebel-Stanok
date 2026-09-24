@@ -1215,11 +1215,6 @@ export function EditToirScheduleModal({
                     </button>
                   </label>
                 )}
-                {selectedParts.length > 0 && (
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap">
-                    Итого: {totalPartsCost.toLocaleString()} ₽
-                  </span>
-                )}
               </div>
             </div>
 
@@ -1230,8 +1225,8 @@ export function EditToirScheduleModal({
                 className="min-h-10 flex-1 p-2 bg-white rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none truncate"
               >
                 <option value="">
-                  {relevantParts.length === 0 
-                    ? (!schedule.machineId 
+                  {relevantParts.length === 0
+                    ? (!schedule.machineId
                         ? '-- Сначала выберите станок --' 
                         : '-- Нет рекомендованных деталей для этого станка/филиала --')
                     : showAllWarehouseParts
@@ -1335,7 +1330,7 @@ export function EditToirScheduleModal({
                         × {p.quantity} {p.unit}
                       </span>
                       {p.unitPrice ? (
-                        <span className="text-[10px] text-slate-500 font-normal">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap">
                           ({(p.unitPrice * p.quantity).toLocaleString()} ₽)
                         </span>
                       ) : null}
