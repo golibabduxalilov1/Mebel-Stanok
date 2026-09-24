@@ -926,7 +926,6 @@ export default function App() {
                 <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
                   <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5 sm:mb-1">Всего активов</p>
                   <h3 className="text-xl sm:text-3xl font-mono font-bold text-slate-800">{machines.length}</h3>
-                  <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">Оценка: {machines.reduce((acc, m) => acc + machineService.calculateCurrentValue(m), 0).toLocaleString()} ₽</p>
                 </div>
                 <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500 transition-all hover:shadow-md text-slate-800">
                   <p className="text-[10px] sm:text-xs font-bold text-emerald-600 uppercase tracking-wider mb-0.5 sm:mb-1">В работе</p>
@@ -1508,12 +1507,13 @@ export default function App() {
                       { label: 'Модель', value: selectedMachine.model },
                       { label: 'Серийный номер', value: selectedMachine.serialNumber },
                       { label: 'Расположение', value: branches.find(b => b.id === selectedMachine.branchId)?.name || 'Не указан' },
-                      { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана' },
-                      { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана' },
-                      { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
+                      { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана', fullWidth: true },
+                      { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана', fullWidth: true },
+                      { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет`, fullWidth: true },
                       { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽/день` : 'Не указана' },
+                      { label: 'Годовая амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateYearlyDepreciation(selectedMachine).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽/год` : 'Не указана' },
                     ].map((item, idx) => (
-                      <div key={idx} className="min-w-0">
+                      <div key={idx} className={`min-w-0 ${item.fullWidth ? 'col-span-2' : ''}`}>
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>
                         <p className="font-semibold text-slate-900 break-words">{item.value}</p>
                       </div>

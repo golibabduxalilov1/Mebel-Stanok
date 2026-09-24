@@ -269,6 +269,12 @@ export const machineService = {
     return machine.purchasePrice / (usefulLifeYears * 365);
   },
 
+  calculateYearlyDepreciation(machine: Machine) {
+    if (!machine.purchasePrice || !machine.purchaseDate) return 0;
+    const usefulLifeYears = machine.usefulLifeYears || 10;
+    return machine.purchasePrice / usefulLifeYears;
+  },
+
   getDepreciationData(machine: Machine) {
     if (!machine.purchasePrice || !machine.purchaseDate) return [];
     const usefulLifeYears = machine.usefulLifeYears || 10;
