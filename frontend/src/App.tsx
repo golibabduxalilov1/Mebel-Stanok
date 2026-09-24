@@ -3421,7 +3421,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           {error}
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-slate-900 overflow-y-auto max-h-[70vh] p-1 custom-scrollbar">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-slate-900">
         <div className="sm:col-span-2">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Наименование</label>
           <input 
@@ -3499,8 +3499,9 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
         </div>
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Дата закупки</label>
-          <input 
-            type="date" 
+          <input
+            type="date"
+            lang="ru"
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.purchaseDate}
             onChange={e => setFormData({...formData, purchaseDate: e.target.value})}
@@ -3510,6 +3511,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Дата установки</label>
           <input
             type="date"
+            lang="ru"
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.installationDate}
             onChange={e => setFormData({...formData, installationDate: e.target.value})}
@@ -3657,8 +3659,9 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
         </div>
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Дата закупки</label>
-          <input 
-            type="date" 
+          <input
+            type="date"
+            lang="ru"
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.purchaseDate}
             onChange={e => setFormData({...formData, purchaseDate: e.target.value})}
@@ -3675,8 +3678,9 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
         </div>
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Дата установки</label>
-          <input 
-            type="date" 
+          <input
+            type="date"
+            lang="ru"
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.installationDate}
             onChange={e => setFormData({...formData, installationDate: e.target.value})}
