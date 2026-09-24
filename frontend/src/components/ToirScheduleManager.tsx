@@ -1147,7 +1147,8 @@ export function EditToirScheduleModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5 overflow-y-auto space-y-3.5 custom-scrollbar text-xs">
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 custom-scrollbar text-xs flex-1 min-h-0">
           {/* TOIR Type */}
           <div>
             <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
@@ -1497,9 +1498,10 @@ export function EditToirScheduleModal({
               </div>
             </div>
           )}
+        </div>
 
           {/* Actions */}
-          <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+          <div className="shrink-0 p-4 sm:p-5 pt-3 flex justify-end gap-2 border-t border-slate-200 bg-white">
             <button
               type="button"
               onClick={onClose}
