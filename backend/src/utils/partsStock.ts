@@ -10,10 +10,14 @@ type Tx = Prisma.TransactionClient;
  */
 export async function adjustPartQuantity(tx: Tx, partId: string, delta: number): Promise<void> {
   if (delta === 0) return;
+  // spare_parts.id is a `text` column (Prisma's plain String @id, no @db.Uuid), but
+  // Prisma's query engine auto-detects UUID-shaped string literals in raw queries and
+  // binds them with the Postgres `uuid` OID regardless - explicitly casting the
+  // parameter back to text is what actually matches it against the text column.
   await tx.$executeRaw`
     UPDATE spare_parts
     SET quantity = GREATEST(quantity + ${delta}, 0)
-    WHERE id = ${partId}::uuid
+    WHERE id = ${partId}::text
   `;
 }
 
