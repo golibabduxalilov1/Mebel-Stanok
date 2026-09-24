@@ -6985,7 +6985,7 @@ function InventoryTab({
                 <th className="px-4 py-4">Мин. запас</th>
                 <th className="px-4 py-4">Цена / ЕД</th>
                 <th className="px-5 py-4 bg-blue-50/60 text-blue-900">Итого сумма (₽)</th>
-                <th className="px-4 py-4">Статус</th>
+                <th className="px-4 py-4">Филиал</th>
                 <th className="px-6 py-4 text-right">Управление</th>
               </tr>
             </thead>
@@ -6993,7 +6993,6 @@ function InventoryTab({
               {filteredParts.map(part => {
                 const rowTotalSum = (part.quantity || 0) * (part.unitPrice || 0);
                 const isLow = (part.quantity || 0) <= (part.minQuantity || 0);
-                const isOut = (part.quantity || 0) <= 0;
                 const partImages = (part.imageUrls && part.imageUrls.length > 0)
                   ? part.imageUrls
                   : (part.imageUrl ? [part.imageUrl] : []);
@@ -7064,18 +7063,12 @@ function InventoryTab({
                       {rowTotalSum.toLocaleString('ru-RU')} ₽
                     </td>
                     <td className="px-4 py-4">
-                      {isOut ? (
-                        <span className="bg-rose-100 text-rose-800 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shadow-xs border border-rose-200 whitespace-nowrap">
-                          Нет на складе
-                        </span>
-                      ) : isLow ? (
-                        <span className="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shadow-xs border border-amber-200 whitespace-nowrap">
-                          Низкий запас
+                      {part.branchId ? (
+                        <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border border-blue-100 whitespace-nowrap">
+                          🏢 {branches.find(b => b.id === part.branchId)?.name || 'Филиал'}
                         </span>
                       ) : (
-                        <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border border-emerald-200 whitespace-nowrap">
-                          В норме
-                        </span>
+                        <span className="text-slate-400 text-xs">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
