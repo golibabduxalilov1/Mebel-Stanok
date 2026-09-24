@@ -111,8 +111,6 @@ export const attachmentsService = {
   async getForDownload(id: string) {
     const attachment = await prisma.machineAttachment.findUnique({ where: { id } });
     if (!attachment) throw Errors.notFound('Attachment');
-    // link-type attachments store the external URL in storageKey instead of a local file.
-    if (attachment.type === 'link') return attachment;
     if (!(await storage.exists(attachment.storageKey))) throw Errors.notFound('Attachment file');
     return attachment;
   },
@@ -143,10 +141,8 @@ export const attachmentsService = {
       });
     });
 
-    if (attachment.type !== 'link') {
-      await storage.remove(attachment.storageKey);
-      if (attachment.thumbnailKey) await storage.remove(attachment.thumbnailKey);
-    }
+    await storage.remove(attachment.storageKey);
+    if (attachment.thumbnailKey) await storage.remove(attachment.thumbnailKey);
     emitEntity('attachment', 'deleted', { id, machineId: attachment.machineId });
   },
 };

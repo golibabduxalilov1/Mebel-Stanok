@@ -68,10 +68,6 @@ export const attachmentsController = {
 
   download: asyncHandler(async (req: Request, res: Response) => {
     const attachment = await attachmentsService.getForDownload(req.params.id);
-    if (attachment.type === 'link') {
-      res.redirect(302, attachment.storageKey);
-      return;
-    }
     res.setHeader('Content-Type', mimeTypeFor(attachment.name));
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(attachment.name)}"`);
     storage.createReadStream(attachment.storageKey).pipe(res);

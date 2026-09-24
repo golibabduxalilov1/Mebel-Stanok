@@ -1,6 +1,6 @@
 export type MachineStatus = 'active' | 'maintenance' | 'repair' | 'retired';
 
-export type MachineAttachmentType = 'image' | 'video' | 'pdf' | 'document' | 'archive' | 'link' | 'other';
+export type MachineAttachmentType = 'image' | 'video' | 'pdf' | 'document' | 'archive' | 'other';
 
 export interface MachineAttachment {
   id: string;

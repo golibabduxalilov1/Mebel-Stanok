@@ -7,7 +7,6 @@ import {
   Video,
   Film,
   Archive,
-  Link as LinkIcon,
   Download,
   Trash2,
   Eye,
@@ -29,6 +28,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Machine, MachineAttachment, MachineAttachmentType, Role, AppUser } from '../types';
 import { compressImage } from './PhotoPicker';
 import { machineService } from '../services/machineService';
+import { ApiError } from '../lib/apiClient';
 
 /** Generates a JPEG poster frame (~15-25KB) for a video, uploaded alongside it as the attachment's thumbnail. */
 async function generateVideoThumbnail(file: File | Blob): Promise<Blob | null> {
@@ -127,7 +127,7 @@ export function MachineFilesModal({
   currentUser,
   onMachineUpdated
 }: MachineFilesModalProps) {
-  const [activeFilter, setActiveFilter] = useState<'all' | 'image' | 'video' | 'pdf' | 'document' | 'archive' | 'link'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'image' | 'video' | 'pdf' | 'document' | 'archive'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab] = useState<'files'>('files');
 
@@ -235,11 +235,10 @@ export function MachineFilesModal({
       pdf: attachments.filter(a => a.type === 'pdf').length,
       document: attachments.filter(a => a.type === 'document').length,
       archive: attachments.filter(a => a.type === 'archive').length,
-      link: attachments.filter(a => a.type === 'link').length,
     };
   }, [attachments]);
 
-  // Pre-resolve URLs (backend attachments need an authenticated blob fetch; legacy/link entries resolve instantly)
+  // Pre-resolve URLs (backend attachments need an authenticated blob fetch; legacy entries resolve instantly)
   useEffect(() => {
     let isMounted = true;
     async function resolveAll() {
@@ -434,6 +433,15 @@ export function MachineFilesModal({
         setPreviewItem(null);
       }
     } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        // File was already removed server-side (e.g. deleted from another session/tab).
+        // Drop the stale row from the UI instead of leaving it permanently stuck - every
+        // retry would just 404 again since there is nothing left on the server to delete.
+        const updatedList = attachments.filter(a => a.id !== attachmentId);
+        onMachineUpdated({ ...machine, attachments: updatedList });
+        if (previewItem?.id === attachmentId) setPreviewItem(null);
+        return;
+      }
       console.error(err);
       alert('Ошибка при удалении файла');
     }
@@ -501,8 +509,6 @@ export function MachineFilesModal({
         return <FileText className={`${className} text-blue-600`} />;
       case 'archive':
         return <Archive className={`${className} text-amber-600`} />;
-      case 'link':
-        return <LinkIcon className={`${className} text-indigo-600`} />;
       default:
         return <FileText className={`${className} text-slate-500`} />;
     }
@@ -706,7 +712,6 @@ export function MachineFilesModal({
                     { id: 'pdf', label: 'PDF', count: counts.pdf, icon: FileText },
                     { id: 'document', label: 'Документы', count: counts.document, icon: FileText },
                     { id: 'archive', label: 'Схемы/Архивы', count: counts.archive, icon: Archive },
-                    { id: 'link', label: 'Ссылки', count: counts.link, icon: LinkIcon },
                   ].map(tab => {
                     const Icon = tab.icon;
                     return (
@@ -783,8 +788,6 @@ export function MachineFilesModal({
                         onClick={() => {
                           if (item.type === 'image' || item.type === 'video' || item.type === 'pdf' || isDocx(item)) {
                             setPreviewItem(item);
-                          } else if (item.type === 'link') {
-                            window.open(item.url, '_blank');
                           } else {
                             handleDownload(item);
                           }
@@ -832,9 +835,9 @@ export function MachineFilesModal({
                             <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 mt-1">Архив / Чертёж</span>
                           </div>
                         ) : (
-                          <div className="w-full h-full bg-indigo-50 flex flex-col items-center justify-center text-indigo-600">
-                            <LinkIcon className="w-12 h-12 stroke-[1.5]" />
-                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500 mt-1">Внешняя ссылка</span>
+                          <div className="w-full h-full bg-slate-100 flex flex-col items-center justify-center text-slate-500">
+                            <FileText className="w-12 h-12 stroke-[1.5]" />
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mt-1">Файл</span>
                           </div>
                         )}
 
@@ -868,7 +871,6 @@ export function MachineFilesModal({
                             title={item.name}
                             onClick={() => {
                               if (item.type === 'image' || item.type === 'video' || item.type === 'pdf' || isDocx(item)) setPreviewItem(item);
-                              else if (item.type === 'link') window.open(item.url, '_blank');
                               else handleDownload(item);
                             }}
                           >
@@ -916,23 +918,13 @@ export function MachineFilesModal({
                               </button>
                             )}
 
-                            {item.type === 'link' ? (
-                              <button
-                                onClick={() => window.open(item.url, '_blank')}
-                                className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors"
-                                title="Перейти по ссылке"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleDownload(item)}
-                                className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors"
-                                title="Скачать файл"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleDownload(item)}
+                              className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors"
+                              title="Скачать файл"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
                           </div>
 
                           <button
@@ -978,7 +970,6 @@ export function MachineFilesModal({
                                 <span
                                   onClick={() => {
                                     if (item.type === 'image' || item.type === 'video' || item.type === 'pdf' || isDocx(item)) setPreviewItem(item);
-                                    else if (item.type === 'link') window.open(item.url, '_blank');
                                     else handleDownload(item);
                                   }}
                                   className="cursor-pointer hover:text-blue-600 truncate"
@@ -1025,23 +1016,13 @@ export function MachineFilesModal({
                                     <Eye className="w-3.5 h-3.5" />
                                   </button>
                                 )}
-                                {item.type === 'link' ? (
-                                  <button
-                                    onClick={() => window.open(item.url, '_blank')}
-                                    className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded"
-                                    title="Перейти"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => handleDownload(item)}
-                                    className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded"
-                                    title="Скачать"
-                                  >
-                                    <Download className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
+                                <button
+                                  onClick={() => handleDownload(item)}
+                                  className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded"
+                                  title="Скачать"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
                                 <button
                                   onClick={() => handleDeleteAttachment(item.id)}
                                   className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded"
@@ -1101,23 +1082,13 @@ export function MachineFilesModal({
                     <span className="hidden sm:inline">Сделать главным</span>
                   </button>
                 )}
-                {previewItem.type === 'link' ? (
-                  <button
-                    onClick={() => window.open(previewItem.url, '_blank')}
-                    className="p-1.5 hover:bg-white/10 rounded-lg text-white/80 hover:text-white"
-                    title="Открыть ссылку"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleDownload(previewItem)}
-                    className="p-1.5 hover:bg-white/10 rounded-lg text-white/80 hover:text-white"
-                    title="Скачать файл"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
-                )}
+                <button
+                  onClick={() => handleDownload(previewItem)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-white/80 hover:text-white"
+                  title="Скачать файл"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => setPreviewItem(null)}
                   className="p-1.5 hover:bg-white/10 rounded-lg text-white/80 hover:text-white"

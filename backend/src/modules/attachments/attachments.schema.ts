@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const attachmentType = z.enum(['image', 'video', 'pdf', 'document', 'archive', 'link', 'other']);
+export const attachmentType = z.enum(['image', 'video', 'pdf', 'document', 'archive', 'other']);
 
 export const uploadAttachmentSchema = z.object({
   name: z.string().optional(),

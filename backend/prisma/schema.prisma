@@ -20,7 +20,6 @@ enum AttachmentType {
   pdf
   document
   archive
-  link
   other
 }
 

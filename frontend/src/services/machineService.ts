@@ -56,12 +56,11 @@ function toIsoStrings<T extends Record<string, any>>(obj: T): T {
 
 /** Maps a raw backend attachment row (storageKey/thumbnailKey) to the frontend's url-based shape. */
 function mapAttachment(a: any): MachineAttachment {
-  const isLink = a.type === 'link';
   return {
     id: a.id,
     name: a.name,
     type: a.type,
-    url: isLink ? a.storageKey : `${API_BASE_URL}/attachments/${a.id}/download`,
+    url: `${API_BASE_URL}/attachments/${a.id}/download`,
     thumbnailUrl: a.thumbnailKey ? `${API_BASE_URL}/attachments/${a.id}/thumbnail` : undefined,
     size: a.size ?? undefined,
     uploadedAt: a.uploadedAt,
@@ -336,17 +335,11 @@ export const machineService = {
   },
 
   /**
-   * Resolves an attachment (by id) to a URL usable in <img>/<video> src. Backend
-   * download routes require an auth header, so real attachments are fetched as a
-   * blob and cached as an object URL - external "link" attachments and already-
-   * resolved data: URLs (legacy machine.imageUrl entries) pass straight through.
-   */
-  /**
    * Resolves a machine/part thumbnail `url` for direct use as an <img src>. Attachment
    * download links (`${API_BASE_URL}/attachments/:id/download`) require a Bearer auth
    * header, which a plain <img> can't send - loading them directly renders as a broken
    * image. This fetches those through the authenticated client and swaps in a blob URL;
-   * anything else (data: URLs, external links) passes through unchanged.
+   * anything else (data: URLs from legacy machine.imageUrl entries) passes through unchanged.
    */
   async resolveImageUrl(url: string): Promise<string> {
     if (!url) return url;
