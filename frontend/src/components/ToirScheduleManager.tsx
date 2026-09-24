@@ -145,6 +145,12 @@ export function ToirGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
   );
 }
 
+// Normalizes a date value (ISO timestamp or already YYYY-MM-DD) for <input type="date">
+function toDateInputValue(value?: string | null): string {
+  if (!value) return '';
+  return value.split('T')[0];
+}
+
 // -------------------------------------------------------------
 // Add TOIR Schedule Task Modal
 // -------------------------------------------------------------
@@ -917,8 +923,8 @@ export function EditToirScheduleModal({
   const [taskName, setTaskName] = useState(schedule.taskName || '');
   const [description, setDescription] = useState(schedule.description || '');
   const [intervalDays, setIntervalDays] = useState<number>(schedule.intervalDays || 30);
-  const [lastPerformed, setLastPerformed] = useState(schedule.lastPerformed || '');
-  const [nextDue, setNextDue] = useState(schedule.nextDue || '');
+  const [lastPerformed, setLastPerformed] = useState(toDateInputValue(schedule.lastPerformed));
+  const [nextDue, setNextDue] = useState(toDateInputValue(schedule.nextDue));
   const [assignedTechnician, setAssignedTechnician] = useState(schedule.assignedTechnician || '');
   const [laborCost, setLaborCost] = useState<number | ''>(schedule.laborCost !== undefined ? schedule.laborCost : '');
   const [priority, setPriority] = useState(schedule.priority || 'medium');
