@@ -18,4 +18,5 @@ logsRouter.use(requireAuth);
 logsRouter.get('/', logsController.listAll);
 logsRouter.post('/', requirePermission('maintenance.logs', 'create'), validate(createLogSchema), logsController.create);
 logsRouter.put('/:id', requirePermission('maintenance.logs', 'edit'), validate(updateLogSchema), logsController.update);
+logsRouter.post('/:id/complete', requirePermission('maintenance.logs', 'edit'), logsController.complete);
 logsRouter.delete('/:id', requirePermission('maintenance.logs', 'delete'), logsController.remove);

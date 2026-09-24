@@ -59,6 +59,8 @@ export interface SparePart {
   name: string;
   sku: string;
   quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
   minQuantity: number;
   unitPrice: number;
   unit?: string;
@@ -101,12 +103,16 @@ export interface Transfer {
 
 export type LogType = 'routine' | 'repair' | 'inspection' | 'diagnostic' | 'ppr' | 'emergency';
 
+export type LogStatus = 'planned' | 'completed';
+
 export interface MaintenanceLog {
   id: string;
   machineId: string;
   date: string;
   technicianName: string;
   type: LogType;
+  /** Always present on logs read from the backend; omit it when creating one to default to 'completed'. */
+  status?: LogStatus;
   taskType?: ToirTaskType;
   notes: string;
   cost: number;

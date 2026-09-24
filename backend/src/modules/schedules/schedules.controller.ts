@@ -16,6 +16,9 @@ export const schedulesController = {
   update: asyncHandler(async (req: Request, res: Response) => {
     res.json(await schedulesService.update(req.params.id, req.body, { userId: req.user!.sub }, getBranchScope(req.user)));
   }),
+  execute: asyncHandler(async (req: Request, res: Response) => {
+    res.json(await schedulesService.execute(req.params.id, req.body, { userId: req.user!.sub }, getBranchScope(req.user)));
+  }),
   remove: asyncHandler(async (req: Request, res: Response) => {
     await schedulesService.remove(req.params.id, { userId: req.user!.sub }, getBranchScope(req.user));
     res.status(204).send();

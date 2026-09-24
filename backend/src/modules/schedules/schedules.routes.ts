@@ -4,7 +4,7 @@ import { requirePermission } from '../../middleware/permissions';
 import { requireMachineParamInScope } from '../../utils/branchScope';
 import { validate } from '../../middleware/validate';
 import { schedulesController } from './schedules.controller';
-import { createScheduleSchema, updateScheduleSchema } from './schedules.schema';
+import { createScheduleSchema, executeScheduleSchema, updateScheduleSchema } from './schedules.schema';
 
 /** Mounted at /api/v1/machines/:machineId/schedules */
 export const schedulesForMachineRouter = Router({ mergeParams: true });
@@ -18,4 +18,5 @@ schedulesRouter.use(requireAuth);
 schedulesRouter.get('/', schedulesController.listAll);
 schedulesRouter.post('/', requirePermission('maintenance.schedules', 'create'), validate(createScheduleSchema), schedulesController.create);
 schedulesRouter.put('/:id', requirePermission('maintenance.schedules', 'edit'), validate(updateScheduleSchema), schedulesController.update);
+schedulesRouter.post('/:id/execute', requirePermission('maintenance.schedules', 'edit'), validate(executeScheduleSchema), schedulesController.execute);
 schedulesRouter.delete('/:id', requirePermission('maintenance.schedules', 'delete'), schedulesController.remove);

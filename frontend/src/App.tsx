@@ -52,7 +52,6 @@ import {
   Sparkles,
   Check,
   Receipt,
-  CircleDollarSign,
   Filter,
   Menu as MenuIcon,
   Phone,
@@ -119,7 +118,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { machineService, DEFAULT_UNITS } from './services/machineService';
 import { ApiError } from './lib/apiClient';
 import { userService, canAccessTab, canPerformAction } from './services/userService';
-import { Machine, MachineStatus, MaintenanceLog, LogType, Branch, SparePart, MaintenanceSchedule, Transfer, ActivityLog, UnitOfMeasure, ToirTaskType, AppUser, Role } from './types';
+import { Machine, MachineStatus, MaintenanceLog, LogType, LogStatus, Branch, SparePart, MaintenanceSchedule, Transfer, ActivityLog, UnitOfMeasure, ToirTaskType, AppUser, Role } from './types';
 import { TOIR_CATEGORIES, getToirCategory, calculateDeadlineInfo, ToirCategoryConfig } from './toirConstants';
 import { UsersTab } from './components/UsersTab';
 import { 
@@ -856,34 +855,36 @@ export default function App() {
             </div>
 
             {/* Desktop Search Input */}
-            <div className="hidden lg:flex items-center gap-3">
-              <div className="w-px h-6 bg-slate-200"></div>
-              {activeTab === 'all' && (
-                <select
-                  value={registryBranchFilter}
-                  onChange={(e) => setRegistryBranchFilter(e.target.value)}
-                  className="min-w-[140px] max-w-[160px] min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
-                  title="Фильтр по филиалу"
-                >
-                  <option value="all">Все филиалы ({machines.length})</option>
-                  {branches.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {b.name} ({machines.filter(m => m.branchId === b.id).length})
-                    </option>
-                  ))}
-                </select>
-              )}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Поиск..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all w-48 bg-slate-50"
-                />
+            {activeTab !== 'inventory' && (
+              <div className="hidden lg:flex items-center gap-3">
+                <div className="w-px h-6 bg-slate-200"></div>
+                {activeTab === 'all' && (
+                  <select
+                    value={registryBranchFilter}
+                    onChange={(e) => setRegistryBranchFilter(e.target.value)}
+                    className="min-w-[140px] max-w-[160px] min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
+                    title="Фильтр по филиалу"
+                  >
+                    <option value="all">Все филиалы ({machines.length})</option>
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({machines.filter(m => m.branchId === b.id).length})
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Поиск..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all w-48 bg-slate-50"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </header>
 
@@ -1980,32 +1981,10 @@ function ScheduleList({ machineId, parts, machines, branches, onRefresh, role }:
   };
 
   const handleQuickComplete = async (schedule: MaintenanceSchedule) => {
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const interval = schedule.intervalDays || 30;
-    const newNextDue = new Date(now.getTime() + interval * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     try {
-      await machineService.addLog({
-        machineId,
-        date: dateStr,
-        technicianName: schedule.assignedTechnician || 'Дежурный мастер',
-        type: (schedule.taskType as LogType) || 'routine',
-        taskType: schedule.taskType || 'routine',
-        notes: `Выполнено ТО: ${schedule.taskName}`,
-        cost: 0,
-        partsUsed: [],
-        scheduleId: schedule.id,
-        nextMaintenanceDate: newNextDue
-      });
-      await machineService.updateSchedule(schedule.id, {
-        lastPerformed: dateStr,
-        nextDue: newNextDue
-      });
-      await machineService.updateMachine(machineId, {
-        lastMaintenanceDate: dateStr,
-        nextMaintenanceDate: newNextDue,
-        status: 'active'
-      });
+      // recurring=true: reservation -> real consumption + history log, schedule kept with
+      // lastPerformed/nextDue advanced, all in one backend transaction.
+      await machineService.executeSchedule(schedule.id, true);
       loadSchedules();
       onRefresh();
     } catch (e) {
@@ -2424,6 +2403,16 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
     }
   };
 
+  const handleCompleteLog = async (logId: string) => {
+    try {
+      await machineService.completeLog(logId);
+      loadLogs();
+      onRefresh();
+    } catch (e) {
+      alert('Ошибка при отметке выполнения');
+    }
+  };
+
   return (
     <section>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6">
@@ -2447,11 +2436,26 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap justify-between items-start gap-x-2 mb-1">
-                  <p className="font-bold text-slate-900">
+                  <p className="font-bold text-slate-900 flex items-center gap-2">
                     {log.type === 'routine' ? 'Плановое ТО' : log.type === 'repair' ? 'Ремонт' : 'Инспекция'}
+                    {log.status === 'planned' && (
+                      <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded-md border border-amber-200 uppercase tracking-wide">
+                        Запланировано
+                      </span>
+                    )}
                   </p>
                   <div className="flex items-center gap-1 shrink-0 ml-auto">
                     <span className="text-xs text-slate-400 font-mono mr-2">{new Date(log.date).toLocaleDateString('ru-RU')}</span>
+                    {log.status === 'planned' && canEditLog && (
+                      <button
+                        onClick={() => handleCompleteLog(log.id)}
+                        className="min-h-10 px-2.5 flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-colors"
+                        title="Отметить как выполненное и списать запчасти со склада"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Выполнено
+                      </button>
+                    )}
                     {canEditLog && (
                       <button 
                         onClick={() => setEditingLog(log)}
@@ -3741,6 +3745,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
     date: new Date().toISOString().split('T')[0],
     technicianName: '',
     type: 'routine' as LogType,
+    status: 'completed' as LogStatus,
     notes: defaultNotes || '',
     cost: 0,
     partsUsed: [] as { partId: string, quantity: number, name: string }[],
@@ -3862,8 +3867,8 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
     if (existingIndex >= 0) {
       const current = formData.partsUsed[existingIndex].quantity || 0;
       const totalDesired = Math.round((current + qtyToAdd) * 1000) / 1000;
-      if (totalDesired > part.quantity) {
-        alert(`Недостаточно на складе! В наличии всего ${part.quantity} ${part.unit || 'ед.'}, а запрошено ${totalDesired} ${part.unit || 'ед.'}`);
+      if (totalDesired > part.availableQuantity) {
+        alert(`Недостаточно на складе! Доступно ${part.availableQuantity} ${part.unit || 'ед.'}, а запрошено ${totalDesired} ${part.unit || 'ед.'}`);
         return;
       }
       const updated = [...formData.partsUsed];
@@ -3876,8 +3881,8 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
         partsUsed: updated
       });
     } else {
-      if (qtyToAdd > part.quantity) {
-        alert(`Недостаточно на складе! В наличии всего ${part.quantity} ${part.unit || 'ед.'}, а запрошено ${qtyToAdd} ${part.unit || 'ед.'}`);
+      if (qtyToAdd > part.availableQuantity) {
+        alert(`Недостаточно на складе! Доступно ${part.availableQuantity} ${part.unit || 'ед.'}, а запрошено ${qtyToAdd} ${part.unit || 'ед.'}`);
         return;
       }
       setFormData({
@@ -3931,6 +3936,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
         date: new Date().toISOString().split('T')[0],
         technicianName: '',
         type: 'routine',
+        status: 'completed',
         notes: defaultNotes || '',
         cost: 0,
         partsUsed: [],
@@ -4020,12 +4026,32 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
 
           <div>
             <span className="text-slate-400 block text-[8px] uppercase tracking-wider mb-0.5 font-bold">Дата проведения</span>
-            <input 
-              type="date" 
+            <input
+              type="date"
               className="min-h-10 w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-bold h-7 focus:ring-1 focus:ring-blue-500 outline-none"
               value={formData.date}
               onChange={e => setFormData({...formData, date: e.target.value})}
             />
+          </div>
+
+          <div className="col-span-2">
+            <span className="text-slate-400 block text-[8px] uppercase tracking-wider mb-0.5 font-bold">Статус работы</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, status: 'completed' })}
+                className={`min-h-8 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${formData.status === 'completed' ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200 text-slate-500'}`}
+              >
+                ✅ Выполнено (списать сразу)
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, status: 'planned' })}
+                className={`min-h-8 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${formData.status === 'planned' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-slate-200 text-slate-500'}`}
+              >
+                🕓 Запланировано (только резерв)
+              </button>
+            </div>
           </div>
 
           <div className="col-span-2 bg-indigo-50/60 border border-indigo-100 rounded-lg p-1.5 flex flex-wrap items-center justify-between gap-2">
@@ -4065,8 +4091,13 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
                 const isForBranch = Boolean(p.branchId && targetBranchId && p.branchId === targetBranchId && !p.machineId);
                 const prefix = isForMachine ? '[🎯 Станок] ' : isForBranch ? '[🏢 Филиал] ' : '[📦 Склад] ';
                 return (
-                  <option key={p.id} value={p.id} disabled={p.quantity <= 0}>
-                    {prefix}{p.name} ({p.quantity} {p.unit || 'шт'}){p.quantity <= 0 ? ' — нет на складе' : ''}
+                  <option
+                    key={p.id}
+                    value={p.id}
+                    disabled={p.availableQuantity <= 0}
+                    style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
+                  >
+                    {prefix}{p.name} (доступно: {p.availableQuantity} {p.unit || 'шт'}{p.reservedQuantity > 0 ? `, резерв: ${p.reservedQuantity}` : ''}){p.availableQuantity <= 0 ? ' — нет на складе' : ''}
                   </option>
                 );
               })}
@@ -4110,7 +4141,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
                   {preset} {selectedPartObj.unit || ''}
                 </button>
               ))}
-              <span className="ml-auto text-blue-700">Остаток: <b>{selectedPartObj.quantity} {selectedPartObj.unit || 'ед.'}</b></span>
+              <span className="ml-auto text-blue-700">Доступно: <b>{selectedPartObj.availableQuantity} {selectedPartObj.unit || 'ед.'}</b></span>
             </div>
           )}
 
@@ -4336,14 +4367,14 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
     }
 
     const previouslyAllocated = log.partsUsed?.find(p => p.partId === selectedPart)?.quantity || 0;
-    const maxAvailable = Math.round((part.quantity + previouslyAllocated) * 1000) / 1000;
+    const maxAvailable = Math.round((part.availableQuantity + previouslyAllocated) * 1000) / 1000;
 
     const existingIndex = formData.partsUsed.findIndex(p => p.partId === selectedPart);
     if (existingIndex >= 0) {
       const current = formData.partsUsed[existingIndex].quantity || 0;
       const totalDesired = Math.round((current + qtyToAdd) * 1000) / 1000;
       if (totalDesired > maxAvailable) {
-        alert(`Недостаточно на складе! В наличии доступно ${part.quantity} ${part.unit || 'ед.'}, а суммарно запрошено ${totalDesired} ${part.unit || 'ед.'}`);
+        alert(`Недостаточно на складе! Доступно ${maxAvailable} ${part.unit || 'ед.'}, а суммарно запрошено ${totalDesired} ${part.unit || 'ед.'}`);
         return;
       }
       const updated = [...formData.partsUsed];
@@ -4357,7 +4388,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
       });
     } else {
       if (qtyToAdd > maxAvailable) {
-        alert(`Недостаточно на складе! В наличии доступно ${part.quantity} ${part.unit || 'ед.'}, а запрошено ${qtyToAdd} ${part.unit || 'ед.'}`);
+        alert(`Недостаточно на складе! Доступно ${maxAvailable} ${part.unit || 'ед.'}, а запрошено ${qtyToAdd} ${part.unit || 'ед.'}`);
         return;
       }
       setFormData({
@@ -4467,9 +4498,16 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
               const isForMachine = Boolean(log.machineId && p.machineId === log.machineId);
               const isForBranch = Boolean(targetBranchId && p.branchId === targetBranchId && !p.machineId);
               const prefix = isForMachine ? '[🎯 Станок] ' : isForBranch ? '[🏢 Филиал] ' : '[📦 Склад] ';
+              const previouslyAllocated = log.partsUsed?.find(u => u.partId === p.id)?.quantity || 0;
+              const maxAvailable = Math.round((p.availableQuantity + previouslyAllocated) * 1000) / 1000;
               return (
-                <option key={p.id} value={p.id} disabled={p.quantity <= 0}>
-                  {prefix}{p.name} ({p.quantity} {p.unit || 'шт'}){p.quantity <= 0 ? ' — нет на складе' : ''}
+                <option
+                  key={p.id}
+                  value={p.id}
+                  disabled={maxAvailable <= 0}
+                  style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
+                >
+                  {prefix}{p.name} (доступно: {maxAvailable} {p.unit || 'шт'}{p.reservedQuantity > 0 ? `, резерв: ${p.reservedQuantity}` : ''}){maxAvailable <= 0 ? ' — нет на складе' : ''}
                 </option>
               );
             })}
@@ -5415,15 +5453,22 @@ function EditPartForm({
           <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
             Количество на складе ({formData.unit || 'шт'})
           </label>
-          <input 
-            required 
-            type="number" 
+          <input
+            required
+            type="number"
             min="0"
             step="any"
-            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
-            value={formData.quantity} 
-            onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})} 
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono"
+            value={formData.quantity}
+            onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})}
           />
+          {(part.reservedQuantity ?? 0) > 0 && (
+            <p className={`mt-1 text-[10px] font-bold ${Number(formData.quantity) < (part.reservedQuantity ?? 0) ? 'text-rose-600' : 'text-amber-600'}`}>
+              {Number(formData.quantity) < (part.reservedQuantity ?? 0)
+                ? `⚠️ В резерве ${part.reservedQuantity} ${formData.unit || 'ед.'} — доступный остаток станет отрицательным`
+                : `В резерве: ${part.reservedQuantity} ${formData.unit || 'ед.'} (под незавершённые задачи ТОиР/журнал)`}
+            </p>
+          )}
         </div>
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
@@ -5541,6 +5586,15 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
     }
   };
 
+  const handleCompleteLog = async (logId: string) => {
+    try {
+      await machineService.completeLog(logId);
+      onRefresh();
+    } catch (e) {
+      alert('Ошибка при отметке выполнения');
+    }
+  };
+
   const handleDeleteSchedule = async (schedule: ToirScheduleItem) => {
     try {
       if (schedule.isManual) {
@@ -5560,34 +5614,36 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
     setIsExecutingComplete(true);
     try {
       const schedule = confirmCompleteSchedule;
-      const todayStr = new Date().toISOString().split('T')[0];
-      const category = getToirCategory(schedule.taskType);
 
-      // Create log entry in maintenance history
-      await machineService.addLog({
-        machineId: schedule.machineId,
-        date: todayStr,
-        technicianName: schedule.assignedTechnician || 'Дежурный специалист',
-        type: (schedule.taskType === 'ppr' ? 'repair' : schedule.taskType === 'diagnostic' ? 'inspection' : 'routine') as LogType,
-        taskType: schedule.taskType || 'routine',
-        notes: `Выполнено ТО: ${schedule.taskName}${schedule.description ? ` (${schedule.description})` : ` — ${category.goal}`}`,
-        cost: schedule.laborCost || 0,
-        partsUsed: schedule.partsUsed || [],
-        nextMaintenanceDate: '',
-        imageUrl: schedule.imageUrl || (schedule.imageUrls && schedule.imageUrls[0]) || '',
-        scheduleId: schedule.isManual ? '' : schedule.id
-      });
-
-      // Remove from active schedule so the card disappears
-      if (!schedule.isManual) {
-        await machineService.deleteSchedule(schedule.id);
+      if (schedule.isManual) {
+        // Synthetic card from Machine.nextMaintenanceDate, not backed by a real schedule
+        // row - nothing was ever reserved for it, so just log it as completed directly.
+        const todayStr = new Date().toISOString().split('T')[0];
+        const category = getToirCategory(schedule.taskType);
+        await machineService.addLog({
+          machineId: schedule.machineId,
+          date: todayStr,
+          technicianName: schedule.assignedTechnician || 'Дежурный специалист',
+          type: (schedule.taskType === 'ppr' ? 'repair' : schedule.taskType === 'diagnostic' ? 'inspection' : 'routine') as LogType,
+          status: 'completed',
+          taskType: schedule.taskType || 'routine',
+          notes: `Выполнено ТО: ${schedule.taskName}${schedule.description ? ` (${schedule.description})` : ` — ${category.goal}`}`,
+          cost: schedule.laborCost || 0,
+          partsUsed: [],
+          nextMaintenanceDate: '',
+          imageUrl: schedule.imageUrl || (schedule.imageUrls && schedule.imageUrls[0]) || '',
+          scheduleId: ''
+        });
+        await machineService.updateMachine(schedule.machineId, {
+          lastMaintenanceDate: todayStr,
+          nextMaintenanceDate: '',
+          status: 'active'
+        });
+      } else {
+        // recurring=false: reservation -> real consumption + history log, then the schedule
+        // itself is deleted - all in one backend transaction (also updates the machine).
+        await machineService.executeSchedule(schedule.id, false);
       }
-
-      await machineService.updateMachine(schedule.machineId, {
-        lastMaintenanceDate: todayStr,
-        nextMaintenanceDate: '',
-        status: 'active'
-      });
 
       setConfirmCompleteSchedule(null);
       onRefresh();
@@ -5871,6 +5927,11 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
                                 <span>{branch.name}</span>
                               </span>
                             )}
+                            {log.status === 'planned' && (
+                              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded-md border border-amber-200 uppercase tracking-wide">
+                                Запланировано
+                              </span>
+                            )}
                           </div>
 
                           <h4 className="text-sm font-bold text-slate-900 leading-snug truncate">
@@ -5886,8 +5947,18 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
                              {new Date(log.date).toLocaleDateString('ru-RU')}
                            </div>
                            <div className="flex items-center gap-1 mt-1 justify-end">
+                             {log.status === 'planned' && canEditLog && (
+                               <button
+                                 onClick={() => handleCompleteLog(log.id)}
+                                 className="px-2 py-1 flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-bold transition-colors"
+                                 title="Отметить как выполненное и списать запчасти со склада"
+                               >
+                                 <CheckCircle2 className="w-3 h-3" />
+                                 Выполнено
+                               </button>
+                             )}
                              {canEditLog && (
-                               <button 
+                               <button
                                  onClick={() => setEditingLog(log)}
                                  className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
                                  title="Редактировать запись"
@@ -6821,14 +6892,6 @@ function InventoryTab({
   const [searchQuery, setSearchQuery] = useState('');
   const [branchFilter, setBranchFilter] = useState<string>('all');
 
-  const lowStockParts = safeParts.filter(p => (p.quantity || 0) <= (p.minQuantity || 0));
-
-  // Warehouse wide totals
-  const totalWarehouseSum = safeParts.reduce((acc, p) => acc + ((p.quantity || 0) * (p.unitPrice || 0)), 0);
-  const totalWarehouseQty = safeParts.reduce((acc, p) => acc + (p.quantity || 0), 0);
-  const lowStockRestockSum = lowStockParts.reduce((acc, p) => acc + (Math.max(0, (p.minQuantity * 2) - p.quantity) * (p.unitPrice || 0)), 0);
-  const avgUnitPrice = totalWarehouseQty > 0 ? Math.round(totalWarehouseSum / totalWarehouseQty) : 0;
-
   // Filtered parts
   const filteredParts = safeParts.filter(part => {
     const q = searchQuery.toLowerCase().trim();
@@ -6861,108 +6924,6 @@ function InventoryTab({
 
   return (
     <div className="space-y-4 sm:space-y-6 lg:max-h-[700px] lg:overflow-y-auto lg:pr-2 custom-scrollbar">
-      {/* Top Metrics Banner - Total Warehouse Value & Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-        {/* KPI 1: Total Warehouse Sum */}
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white px-3.5 py-2.5 rounded-xl shadow-xs flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-2 -bottom-2 opacity-10 pointer-events-none">
-            <Receipt className="w-12 h-12" />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-0.5">
-              <span className="text-[9px] font-black uppercase tracking-wider text-blue-100 flex items-center gap-1">
-                <CircleDollarSign className="w-3 h-3" />
-                Общая сумма склада
-              </span>
-              <span className="bg-white/20 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                Итого
-              </span>
-            </div>
-            <div className="text-lg lg:text-xl font-mono font-black tracking-tight leading-snug">
-              {totalWarehouseSum.toLocaleString('ru-RU')} ₽
-            </div>
-          </div>
-          <p className="text-[10px] text-blue-100/90 font-medium mt-1 border-t border-white/10 pt-1 flex items-center justify-between">
-            <span>Баланс остатков</span>
-            <span className="font-bold">{safeParts.length} наим.</span>
-          </p>
-        </div>
-
-        {/* KPI 2: Total Items Quantity */}
-        <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-0.5">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                <Boxes className="w-3 h-3 text-blue-600" />
-                Всего позиций
-              </span>
-              <span className="bg-blue-50 text-blue-700 text-[8px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                Номенклатура
-              </span>
-            </div>
-            <div className="text-lg lg:text-xl font-mono font-bold text-slate-800 leading-snug">
-              {safeParts.length}
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-400 font-medium mt-1 border-t border-slate-100 pt-1 flex items-center justify-between">
-            <span>Физический объем:</span>
-            <span className="font-bold text-slate-700">{totalWarehouseQty.toLocaleString('ru-RU')} ед.</span>
-          </p>
-        </div>
-
-        {/* KPI 3: Average Unit Cost */}
-        <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-0.5">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                <Tag className="w-3 h-3 text-emerald-600" />
-                Средняя цена ед.
-              </span>
-              <span className="bg-emerald-50 text-emerald-700 text-[8px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                Расчетная
-              </span>
-            </div>
-            <div className="text-lg lg:text-xl font-mono font-bold text-slate-800 leading-snug">
-              {avgUnitPrice.toLocaleString('ru-RU')} ₽
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-400 font-medium mt-1 border-t border-slate-100 pt-1 flex items-center justify-between">
-            <span>Средневзвешенная</span>
-            <span className="font-bold text-emerald-600">на складе</span>
-          </p>
-        </div>
-
-        {/* KPI 4: Low Stock Alert & Sum to order */}
-        <div className={`px-3.5 py-2.5 rounded-xl border shadow-xs flex flex-col justify-between transition-all ${
-          lowStockParts.length > 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'
-        }`}>
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-0.5">
-              <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${
-                lowStockParts.length > 0 ? 'text-rose-700' : 'text-slate-500'
-              }`}>
-                <AlertCircle className={`w-3 h-3 ${lowStockParts.length > 0 ? 'text-rose-600' : 'text-slate-400'}`} />
-                Критический запас
-              </span>
-              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                lowStockParts.length > 0 ? 'bg-rose-200 text-rose-800' : 'bg-slate-100 text-slate-600'
-              }`}>
-                {lowStockParts.length > 0 ? 'Требует заказа' : 'В норме'}
-              </span>
-            </div>
-            <div className={`text-lg lg:text-xl font-mono font-bold leading-snug ${
-              lowStockParts.length > 0 ? 'text-rose-700' : 'text-slate-800'
-            }`}>
-              {lowStockParts.length} <span className="text-[11px] font-normal text-slate-500">поз.</span>
-            </div>
-          </div>
-          <div className="mt-1 border-t border-rose-200/60 pt-1 flex items-center justify-between text-[10px]">
-            <span className="text-slate-500">К закупке:</span>
-            <span className="font-bold font-mono text-rose-700">{lowStockRestockSum.toLocaleString('ru-RU')} ₽</span>
-          </div>
-        </div>
-      </div>
-
       {/* Top action bar and filter controls */}
       <div className="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row gap-2 items-stretch lg:items-center justify-between">
         <div className="flex flex-1 flex-wrap items-center gap-2 w-full min-w-0">
@@ -7001,7 +6962,7 @@ function InventoryTab({
               <tr>
                 <th className="px-6 py-4">Наименование</th>
                 <th className="px-4 py-4">Артикул / SKU</th>
-                <th className="px-4 py-4">В наличии</th>
+                <th className="px-4 py-4">Всего / Резерв / Доступно</th>
                 <th className="px-4 py-4">Мин. запас</th>
                 <th className="px-4 py-4">Цена / ЕД</th>
                 <th className="px-5 py-4 bg-blue-50/60 text-blue-900">Итого сумма (₽)</th>
@@ -7012,7 +6973,7 @@ function InventoryTab({
             <tbody className="text-sm divide-y divide-slate-100">
               {filteredParts.map(part => {
                 const rowTotalSum = (part.quantity || 0) * (part.unitPrice || 0);
-                const isLow = (part.quantity || 0) <= (part.minQuantity || 0);
+                const isLow = (part.availableQuantity ?? part.quantity ?? 0) <= (part.minQuantity || 0);
                 const partImages = (part.imageUrls && part.imageUrls.length > 0)
                   ? part.imageUrls
                   : (part.imageUrl ? [part.imageUrl] : []);
@@ -7067,9 +7028,15 @@ function InventoryTab({
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <span className={`text-sm font-black font-mono whitespace-nowrap ${isLow ? 'text-rose-600' : 'text-slate-900'}`}>
-                          {part.quantity} {part.unit || 'шт'}
+                          {part.availableQuantity ?? part.quantity} {part.unit || 'шт'}
                         </span>
                         {isLow && <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono font-semibold whitespace-nowrap mt-0.5">
+                        Всего: {part.quantity}
+                        {(part.reservedQuantity ?? 0) > 0 && (
+                          <span className="text-amber-600"> • Резерв: {part.reservedQuantity}</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-4 text-slate-500 text-xs font-bold font-mono whitespace-nowrap">

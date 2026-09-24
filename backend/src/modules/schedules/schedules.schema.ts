@@ -29,5 +29,10 @@ export const createScheduleSchema = z.object({
 
 export const updateScheduleSchema = createScheduleSchema.partial();
 
+export const executeScheduleSchema = z.object({
+  recurring: z.boolean().optional(),
+});
+
 export type CreateScheduleInput = z.infer<typeof createScheduleSchema>;
 export type UpdateScheduleInput = z.infer<typeof updateScheduleSchema>;
+export type ExecuteScheduleInput = z.infer<typeof executeScheduleSchema>;

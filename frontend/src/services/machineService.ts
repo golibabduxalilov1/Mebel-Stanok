@@ -152,7 +152,7 @@ export const machineService = {
     return apiClient.get<SparePart[]>('/spare-parts');
   },
 
-  async addSparePart(part: Omit<SparePart, 'id' | 'createdBy'>) {
+  async addSparePart(part: Omit<SparePart, 'id' | 'createdBy' | 'reservedQuantity' | 'availableQuantity'>) {
     const created = await apiClient.post<SparePart>('/spare-parts', part);
     return created.id;
   },
@@ -161,7 +161,7 @@ export const machineService = {
     await apiClient.delete(`/spare-parts/${id}`);
   },
 
-  async updateSparePart(id: string, part: Partial<Omit<SparePart, 'id' | 'createdBy'>>) {
+  async updateSparePart(id: string, part: Partial<Omit<SparePart, 'id' | 'createdBy' | 'reservedQuantity' | 'availableQuantity'>>) {
     await apiClient.put(`/spare-parts/${id}`, part);
   },
 
@@ -214,6 +214,11 @@ export const machineService = {
     await apiClient.put(`/schedules/${id}`, normalizeDates(toIsoStrings(updates)));
   },
 
+  /** Converts the schedule's reserved parts into real stock consumption and creates a history log, in one backend transaction. */
+  async executeSchedule(id: string, recurring?: boolean): Promise<{ log: MaintenanceLog; schedule: MaintenanceSchedule | null }> {
+    return apiClient.post(`/schedules/${id}/execute`, { recurring });
+  },
+
   // --- Transfers ---
   async getTransfers(machineId: string): Promise<Transfer[]> {
     return apiClient.get<Transfer[]>(`/machines/${machineId}/transfers`);
@@ -246,6 +251,11 @@ export const machineService = {
 
   async updateLog(id: string, updates: Partial<MaintenanceLog>) {
     await apiClient.put(`/logs/${id}`, dropEmptyScheduleId(normalizeDates(toIsoStrings(updates))));
+  },
+
+  /** Confirms a planned log's work is done: reservation -> real stock consumption, in one backend transaction. */
+  async completeLog(id: string): Promise<MaintenanceLog> {
+    return apiClient.post(`/logs/${id}/complete`);
   },
 
   calculateCurrentValue(machine: Machine) {

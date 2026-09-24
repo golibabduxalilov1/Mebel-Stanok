@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma';
 import { emitEntity } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { writeActivity } from '../../utils/activityLog';
+import { getReservedTotals } from '../../utils/partsStock';
 import {
   assertMachineInScope,
   getSparePartBranchId,
@@ -9,6 +10,12 @@ import {
   type BranchScope,
 } from '../../utils/branchScope';
 import type { CreateSparePartInput, UpdateSparePartInput } from './spareParts.schema';
+
+function withAvailability<T extends { id: string; quantity: unknown }>(part: T, reserved: number) {
+  const reservedQuantity = reserved;
+  const availableQuantity = Number(part.quantity) - reservedQuantity;
+  return { ...part, reservedQuantity, availableQuantity };
+}
 
 interface Actor {
   userId: string;
@@ -30,7 +37,9 @@ async function assertPartTargetInScope(input: { branchId?: string; machineId?: s
 
 export const sparePartsService = {
   async list(scope: BranchScope) {
-    return prisma.sparePart.findMany({ where: sparePartScopeWhere(scope), orderBy: { name: 'asc' } });
+    const parts = await prisma.sparePart.findMany({ where: sparePartScopeWhere(scope), orderBy: { name: 'asc' } });
+    const reserved = await getReservedTotals(prisma, parts.map((p) => p.id));
+    return parts.map((p) => withAvailability(p, reserved.get(p.id) ?? 0));
   },
 
   async create(input: CreateSparePartInput, actor: Actor, scope: BranchScope) {

@@ -306,8 +306,9 @@ export function CreateToirScheduleModal({
     const currentQty = existingIndex >= 0 ? selectedParts[existingIndex].quantity : 0;
     const totalDesired = Math.round((currentQty + qtyToAdd) * 1000) / 1000;
 
-    if (totalDesired > part.quantity) {
-      alert(`Недостаточно на складе! В наличии всего ${part.quantity} ${part.unit || 'ед.'}, а запрошено ${totalDesired} ${part.unit || 'ед.'}`);
+    const available = part.availableQuantity;
+    if (totalDesired > available) {
+      alert(`Недостаточно на складе! Доступно ${available} ${part.unit || 'ед.'} (в наличии ${part.quantity}, в резерве ${part.reservedQuantity}), а запрошено ${totalDesired} ${part.unit || 'ед.'}`);
       return;
     }
 
@@ -324,7 +325,7 @@ export function CreateToirScheduleModal({
           quantity: qtyToAdd,
           unit: part.unit || 'шт',
           unitPrice: part.unitPrice || 0,
-          availableStock: part.quantity
+          availableStock: available
         }
       ]);
     }
@@ -359,18 +360,8 @@ export function CreateToirScheduleModal({
 
     setLoading(true);
     try {
-      // 1. Deduct spare parts from warehouse stock
-      if (selectedParts.length > 0) {
-        for (const item of selectedParts) {
-          const matchedPart = parts.find(p => p.id === item.partId);
-          if (matchedPart) {
-            const newQty = Math.round(Math.max(0, (matchedPart.quantity || 0) - item.quantity) * 1000) / 1000;
-            await machineService.updatePartQuantity(item.partId, newQty);
-          }
-        }
-      }
-
-      // 2. Add maintenance schedule
+      // Selected parts are reserved server-side (transactionally, with the schedule itself) -
+      // stock isn't touched until the task is actually executed.
       await machineService.addSchedule({
         machineId,
         taskName: taskName.trim(),
@@ -601,8 +592,13 @@ export function CreateToirScheduleModal({
                       ? '[🏢 Филиал] ' 
                       : '[📦 Склад] ';
                   return (
-                    <option key={p.id} value={p.id} disabled={p.quantity <= 0}>
-                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • В наличии: {p.quantity} {p.unit || 'шт'} {p.quantity <= 0 ? '(НЕТ НА СКЛАДЕ)' : ''} {p.unitPrice ? `• ${p.unitPrice} ₽` : ''}
+                    <option
+                      key={p.id}
+                      value={p.id}
+                      disabled={p.availableQuantity <= 0}
+                      style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
+                    >
+                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • Доступно: {p.availableQuantity} {p.unit || 'шт'}{p.reservedQuantity > 0 ? ` (резерв: ${p.reservedQuantity})` : ''} {p.availableQuantity <= 0 ? '(НЕТ НА СКЛАДЕ)' : ''} {p.unitPrice ? `• ${p.unitPrice} ₽` : ''}
                     </option>
                   );
                 })}
@@ -659,7 +655,7 @@ export function CreateToirScheduleModal({
                   ))}
                 </div>
                 <span className="text-[10px] text-blue-600 ml-auto font-medium">
-                  Остаток: <b>{selectedPartObj?.quantity || 0} {selectedPartObj?.unit || 'ед.'}</b>
+                  Доступно: <b>{selectedPartObj?.availableQuantity || 0} {selectedPartObj?.unit || 'ед.'}</b>
                 </span>
               </div>
             )}
@@ -1016,13 +1012,13 @@ export function EditToirScheduleModal({
     const currentQty = existingIndex >= 0 ? selectedParts[existingIndex].quantity : 0;
     const totalDesired = Math.round((currentQty + qtyToAdd) * 1000) / 1000;
 
-    // Previously already allocated in this schedule
+    // Previously already allocated in this schedule (its own reservation shouldn't count against itself)
     const previouslyAllocated = schedule.partsUsed?.find(p => p.partId === selectedPartId)?.quantity || 0;
-    // Max allowable = available stock right now + what was already allocated
-    const maxAvailable = Math.round((part.quantity + previouslyAllocated) * 1000) / 1000;
+    // Max allowable = available stock right now + what this schedule already has reserved
+    const maxAvailable = Math.round((part.availableQuantity + previouslyAllocated) * 1000) / 1000;
 
     if (totalDesired > maxAvailable) {
-      alert(`Недостаточно на складе! В наличии доступно ${part.quantity} ${part.unit || 'ед.'}, а суммарно запрошено ${totalDesired} ${part.unit || 'ед.'}`);
+      alert(`Недостаточно на складе! Доступно ${maxAvailable} ${part.unit || 'ед.'}, а суммарно запрошено ${totalDesired} ${part.unit || 'ед.'}`);
       return;
     }
 
@@ -1039,7 +1035,7 @@ export function EditToirScheduleModal({
           quantity: qtyToAdd,
           unit: part.unit || 'шт',
           unitPrice: part.unitPrice || 0,
-          availableStock: part.quantity
+          availableStock: maxAvailable
         }
       ]);
     }
@@ -1065,28 +1061,8 @@ export function EditToirScheduleModal({
 
     setLoading(true);
     try {
-      // 1. Synchronize warehouse stock based on delta
-      const originalParts = schedule.partsUsed || [];
-      const newParts = selectedParts;
-
-      const diffs: { [partId: string]: number } = {};
-      for (const p of originalParts) {
-        diffs[p.partId] = (diffs[p.partId] || 0) - p.quantity;
-      }
-      for (const p of newParts) {
-        diffs[p.partId] = (diffs[p.partId] || 0) + p.quantity;
-      }
-
-      for (const [partId, diff] of Object.entries(diffs)) {
-        if (diff === 0) continue;
-        const matched = parts.find(p => p.id === partId);
-        if (matched) {
-          const newStock = Math.round(Math.max(0, (matched.quantity || 0) - diff) * 1000) / 1000;
-          await machineService.updatePartQuantity(partId, newStock);
-        }
-      }
-
-      // 2. Update schedule in database
+      // The reservation diff (old parts -> new parts) is applied server-side, transactionally,
+      // by updateSchedule itself - stock isn't touched until the task is executed.
       await machineService.updateSchedule(schedule.id, {
         taskName: taskName.trim(),
         taskType: selectedType,
@@ -1249,8 +1225,13 @@ export function EditToirScheduleModal({
                       ? '[🏢 Филиал] ' 
                       : '[📦 Склад] ';
                   return (
-                    <option key={p.id} value={p.id} disabled={p.quantity <= 0}>
-                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • В наличии: {p.quantity} {p.unit || 'шт'} {p.quantity <= 0 ? '(НЕТ НА СКЛАДЕ)' : ''} {p.unitPrice ? `• ${p.unitPrice} ₽` : ''}
+                    <option
+                      key={p.id}
+                      value={p.id}
+                      disabled={p.availableQuantity <= 0}
+                      style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
+                    >
+                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • Доступно: {p.availableQuantity} {p.unit || 'шт'}{p.reservedQuantity > 0 ? ` (резерв: ${p.reservedQuantity})` : ''} {p.availableQuantity <= 0 ? '(НЕТ НА СКЛАДЕ)' : ''} {p.unitPrice ? `• ${p.unitPrice} ₽` : ''}
                     </option>
                   );
                 })}
@@ -1307,7 +1288,7 @@ export function EditToirScheduleModal({
                   ))}
                 </div>
                 <span className="text-[10px] text-blue-600 ml-auto font-medium">
-                  Остаток: <b>{selectedPartObj?.quantity || 0} {selectedPartObj?.unit || 'ед.'}</b>
+                  Доступно: <b>{selectedPartObj?.availableQuantity || 0} {selectedPartObj?.unit || 'ед.'}</b>
                 </span>
               </div>
             )}

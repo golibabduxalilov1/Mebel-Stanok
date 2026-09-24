@@ -72,6 +72,8 @@ const STATUS_LABELS: Record<string, string> = {
   maintenance: 'на ТО',
   repair: 'в ремонте',
   retired: 'списан',
+  planned: 'запланировано',
+  completed: 'выполнено',
 };
 
 const LOG_TYPE_LABELS: Record<string, string> = {

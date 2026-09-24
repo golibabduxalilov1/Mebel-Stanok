@@ -15,6 +15,7 @@ export const createLogSchema = z.object({
   date: z.coerce.date(),
   technicianName: z.string().optional(),
   type: logType,
+  status: z.enum(['planned', 'completed']).default('completed'),
   taskType: toirTaskType.optional(),
   notes: z.string().optional(),
   cost: z.coerce.number().min(0).default(0),

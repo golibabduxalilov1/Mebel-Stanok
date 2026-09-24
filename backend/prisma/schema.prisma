@@ -46,6 +46,16 @@ enum LogType {
   emergency
 }
 
+enum LogStatus {
+  planned
+  completed
+}
+
+enum ReservationSourceType {
+  toir_schedule
+  maintenance_log
+}
+
 enum ActionType {
   create
   update
@@ -165,8 +175,23 @@ model SparePart {
 
   scheduleParts MaintenanceSchedulePart[]
   logParts      MaintenanceLogPart[]
+  reservations  PartReservation[]
 
   @@map("spare_parts")
+}
+
+model PartReservation {
+  id         String                @id @default(uuid())
+  partId     String                @map("part_id")
+  part       SparePart             @relation(fields: [partId], references: [id], onDelete: Cascade)
+  quantity   Decimal               @db.Decimal(14, 3)
+  sourceType ReservationSourceType @map("source_type")
+  sourceId   String                @map("source_id")
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([partId])
+  @@index([sourceType, sourceId])
+  @@map("part_reservations")
 }
 
 model MaintenanceSchedule {
@@ -227,6 +252,7 @@ model MaintenanceLog {
   date                DateTime              @db.Timestamptz
   technicianName      String?               @map("technician_name")
   type                LogType
+  status              LogStatus             @default(completed)
   taskType            ToirTaskType?         @map("task_type")
   notes               String?
   cost                Decimal               @default(0) @db.Decimal(14, 2)
