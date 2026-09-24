@@ -3,6 +3,12 @@ import { emitEntity } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { getDiffDetails, writeActivity } from '../../utils/activityLog';
 import { adjustPartQuantity, diffPartUsage } from '../../utils/partsStock';
+import {
+  assertMachineInScope,
+  assertSparePartsInScope,
+  getMachineBranchId,
+  type BranchScope,
+} from '../../utils/branchScope';
 import type { CreateLogInput, UpdateLogInput } from './logs.schema';
 
 interface Actor {
@@ -40,14 +46,16 @@ export const logsService = {
     return rows.map(toApi);
   },
 
-  async listAll() {
-    const rows = await prisma.maintenanceLog.findMany({ orderBy: { date: 'desc' }, include: { parts: true } });
+  async listAll(scope: BranchScope) {
+    const rows = await prisma.maintenanceLog.findMany({ where: scope ? { machine: { branchId: scope } } : undefined, orderBy: { date: 'desc' }, include: { parts: true } });
     return rows.map(toApi);
   },
 
   /** Creates the log, consumes spare_parts stock, and records the activity - all in one transaction. */
-  async create(input: CreateLogInput, actor: Actor) {
+  async create(input: CreateLogInput, actor: Actor, scope: BranchScope) {
     const { partsUsed, ...data } = input;
+    await assertMachineInScope(scope, data.machineId);
+    await assertSparePartsInScope(scope, (partsUsed ?? []).map((p) => p.partId));
 
     const log = await prisma.$transaction(async (tx) => {
       const created = await tx.maintenanceLog.create({ data: { ...data, performedBy: actor.userId } });
@@ -75,15 +83,20 @@ export const logsService = {
     });
 
     const api = toApi(log);
-    emitEntity('log', 'created', api);
+    emitEntity('log', 'created', api, await getMachineBranchId(api.machineId));
     emitEntity('sparePart', 'changed', { reason: 'log:created', logId: api.id });
     return api;
   },
 
   /** Updates the log, applies the delta between old/new parts usage to stock, all in one transaction. */
-  async update(id: string, input: UpdateLogInput, actor: Actor) {
+  async update(id: string, input: UpdateLogInput, actor: Actor, scope: BranchScope) {
     const original = await prisma.maintenanceLog.findUnique({ where: { id }, include: { parts: true } });
     if (!original) throw Errors.notFound('Maintenance log');
+    await assertMachineInScope(scope, original.machineId).catch(() => {
+      throw Errors.notFound('Maintenance log');
+    });
+    if (input.machineId) await assertMachineInScope(scope, input.machineId);
+    await assertSparePartsInScope(scope, (input.partsUsed ?? []).map((p) => p.partId));
 
     const { partsUsed, ...data } = input;
 
@@ -120,15 +133,18 @@ export const logsService = {
     });
 
     const api = toApi(log);
-    emitEntity('log', 'updated', api);
+    emitEntity('log', 'updated', api, await getMachineBranchId(api.machineId));
     emitEntity('sparePart', 'changed', { reason: 'log:updated', logId: api.id });
     return api;
   },
 
   /** Deletes the log and returns any consumed parts back to stock, all in one transaction. */
-  async remove(id: string, actor: Actor) {
+  async remove(id: string, actor: Actor, scope: BranchScope) {
     const original = await prisma.maintenanceLog.findUnique({ where: { id }, include: { parts: true } });
     if (!original) throw Errors.notFound('Maintenance log');
+    await assertMachineInScope(scope, original.machineId).catch(() => {
+      throw Errors.notFound('Maintenance log');
+    });
 
     await prisma.$transaction(async (tx) => {
       for (const p of original.parts) {

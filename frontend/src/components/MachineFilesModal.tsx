@@ -410,9 +410,10 @@ export function MachineFilesModal({
         // Synthetic entry sourced from machine.imageUrl/imageUrls, not a real attachment row.
         const updatedImageUrls = (machine.imageUrls || (machine.imageUrl ? [machine.imageUrl] : []))
           .filter(url => url !== itemToDelete.url);
+        // machine.imageUrl is null (not undefined) from the API when unset, and the backend rejects null here.
         const updatedMainImageUrl = machine.imageUrl === itemToDelete.url
           ? (updatedImageUrls[0] || '')
-          : machine.imageUrl;
+          : (machine.imageUrl || '');
 
         await machineService.updateMachine(machine.id, {
           imageUrls: updatedImageUrls,

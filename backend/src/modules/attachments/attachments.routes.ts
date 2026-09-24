@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { requireAuth } from '../../middleware/auth';
 import { requirePermission } from '../../middleware/permissions';
+import { requireAttachmentInScope, requireMachineParamInScope } from '../../utils/branchScope';
 import { validate } from '../../middleware/validate';
 import { env } from '../../env';
 import { attachmentsController } from './attachments.controller';
@@ -16,6 +17,7 @@ const uploadFields = upload.fields([
 /** Mounted at /api/v1/machines/:machineId/attachments */
 export const attachmentsRouter = Router({ mergeParams: true });
 attachmentsRouter.use(requireAuth);
+attachmentsRouter.use(requireMachineParamInScope);
 attachmentsRouter.get('/', requirePermission('machines.files', 'view'), attachmentsController.listForMachine);
 attachmentsRouter.post(
   '/',
@@ -27,6 +29,7 @@ attachmentsRouter.post(
 /** Mounted at /api/v1/attachments */
 export const attachmentsStandaloneRouter = Router();
 attachmentsStandaloneRouter.use(requireAuth);
+attachmentsStandaloneRouter.use('/:id', requireAttachmentInScope);
 attachmentsStandaloneRouter.get('/:id/download', requirePermission('machines.files', 'view'), attachmentsController.download);
 attachmentsStandaloneRouter.get('/:id/thumbnail', requirePermission('machines.files', 'view'), attachmentsController.downloadThumbnail);
 attachmentsStandaloneRouter.patch(

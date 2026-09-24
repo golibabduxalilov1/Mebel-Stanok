@@ -1,7 +1,8 @@
 import { prisma } from '../../lib/prisma';
-import { emitEntity } from '../../lib/socket';
+import { emitEntity, emitToBranchUsers } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { writeActivity } from '../../utils/activityLog';
+import type { BranchScope } from '../../utils/branchScope';
 import type { CreateTransferInput } from './transfers.schema';
 
 interface Actor {
@@ -15,10 +16,10 @@ export const transfersService = {
   },
 
   /** Creates the transfer record and moves the machine to its new branch in a single transaction. */
-  async create(input: CreateTransferInput, actor: Actor) {
+  async create(input: CreateTransferInput, actor: Actor, scope: BranchScope) {
     const { transfer, machine } = await prisma.$transaction(async (tx) => {
       const machineRow = await tx.machine.findUnique({ where: { id: input.machineId } });
-      if (!machineRow) throw Errors.notFound('Machine');
+      if (!machineRow || (scope && machineRow.branchId !== scope)) throw Errors.notFound('Machine');
 
       const toBranch = await tx.branch.findUnique({ where: { id: input.toBranchId } });
       if (!toBranch) throw Errors.notFound('Destination branch');
@@ -51,8 +52,9 @@ export const transfersService = {
       return { transfer: transferRow, machine: updatedMachine };
     });
 
-    emitEntity('transfer', 'created', transfer);
-    emitEntity('machine', 'updated', machine);
+    emitEntity('transfer', 'created', transfer, transfer.toBranchId);
+    emitToBranchUsers(transfer.fromBranchId, 'machine:deleted', { id: machine.id });
+    emitEntity('machine', 'updated', machine, machine.branchId);
     return transfer;
   },
 };

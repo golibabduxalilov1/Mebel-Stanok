@@ -13,7 +13,7 @@ export async function adjustPartQuantity(tx: Tx, partId: string, delta: number):
   await tx.$executeRaw`
     UPDATE spare_parts
     SET quantity = GREATEST(quantity + ${delta}, 0)
-    WHERE id = ${partId}::uuid
+    WHERE id = ${partId}
   `;
 }
 

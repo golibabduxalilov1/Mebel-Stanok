@@ -46,6 +46,14 @@ function normalizeDates<T extends Record<string, any>>(obj: T): T {
   return out;
 }
 
+// The UI uses `scheduleId: ''` for "not linked to a schedule", but the backend validates
+// scheduleId as an optional uuid - '' fails with 400, so it's omitted instead.
+function dropEmptyScheduleId<T extends Record<string, any>>(obj: T): T {
+  if (obj.scheduleId !== '') return obj;
+  const { scheduleId: _omit, ...rest } = obj;
+  return rest as T;
+}
+
 function toIsoStrings<T extends Record<string, any>>(obj: T): T {
   const out: any = { ...obj };
   for (const key of Object.keys(out)) {
@@ -228,7 +236,7 @@ export const machineService = {
   },
 
   async addLog(log: Omit<MaintenanceLog, 'id' | 'performedBy'>) {
-    const created = await apiClient.post<MaintenanceLog>('/logs', normalizeDates(toIsoStrings(log)));
+    const created = await apiClient.post<MaintenanceLog>('/logs', dropEmptyScheduleId(normalizeDates(toIsoStrings(log))));
     return created.id;
   },
 
@@ -237,7 +245,7 @@ export const machineService = {
   },
 
   async updateLog(id: string, updates: Partial<MaintenanceLog>) {
-    await apiClient.put(`/logs/${id}`, normalizeDates(toIsoStrings(updates)));
+    await apiClient.put(`/logs/${id}`, dropEmptyScheduleId(normalizeDates(toIsoStrings(updates))));
   },
 
   calculateCurrentValue(machine: Machine) {

@@ -2,6 +2,12 @@ import { prisma } from '../../lib/prisma';
 import { emitEntity } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { getDiffDetails, writeActivity } from '../../utils/activityLog';
+import {
+  assertMachineInScope,
+  assertSparePartsInScope,
+  getMachineBranchId,
+  type BranchScope,
+} from '../../utils/branchScope';
 import type { CreateScheduleInput, UpdateScheduleInput } from './schedules.schema';
 
 interface Actor {
@@ -20,13 +26,15 @@ export const schedulesService = {
     return rows.map(toApi);
   },
 
-  async listAll() {
-    const rows = await prisma.maintenanceSchedule.findMany({ include: { parts: true } });
+  async listAll(scope: BranchScope) {
+    const rows = await prisma.maintenanceSchedule.findMany({ where: scope ? { machine: { branchId: scope } } : undefined, include: { parts: true } });
     return rows.map(toApi);
   },
 
-  async create(input: CreateScheduleInput, actor: Actor) {
+  async create(input: CreateScheduleInput, actor: Actor, scope: BranchScope) {
     const { partsUsed, ...data } = input;
+    await assertMachineInScope(scope, data.machineId);
+    await assertSparePartsInScope(scope, (partsUsed ?? []).map((p) => p.partId));
     const schedule = await prisma.$transaction(async (tx) => {
       const created = await tx.maintenanceSchedule.create({ data: { ...data, createdBy: actor.userId } });
       if (partsUsed?.length) {
@@ -46,13 +54,18 @@ export const schedulesService = {
       return tx.maintenanceSchedule.findUniqueOrThrow({ where: { id: created.id }, include: { parts: true } });
     });
     const api = toApi(schedule);
-    emitEntity('schedule', 'created', api);
+    emitEntity('schedule', 'created', api, await getMachineBranchId(api.machineId));
     return api;
   },
 
-  async update(id: string, input: UpdateScheduleInput, actor: Actor) {
+  async update(id: string, input: UpdateScheduleInput, actor: Actor, scope: BranchScope) {
     const original = await prisma.maintenanceSchedule.findUnique({ where: { id }, include: { parts: true } });
     if (!original) throw Errors.notFound('Maintenance schedule');
+    await assertMachineInScope(scope, original.machineId).catch(() => {
+      throw Errors.notFound('Maintenance schedule');
+    });
+    if (input.machineId) await assertMachineInScope(scope, input.machineId);
+    await assertSparePartsInScope(scope, (input.partsUsed ?? []).map((p) => p.partId));
 
     const { partsUsed, ...data } = input;
     const schedule = await prisma.$transaction(async (tx) => {
@@ -78,13 +91,16 @@ export const schedulesService = {
       return tx.maintenanceSchedule.findUniqueOrThrow({ where: { id }, include: { parts: true } });
     });
     const api = toApi(schedule);
-    emitEntity('schedule', 'updated', api);
+    emitEntity('schedule', 'updated', api, await getMachineBranchId(api.machineId));
     return api;
   },
 
-  async remove(id: string, actor: Actor) {
+  async remove(id: string, actor: Actor, scope: BranchScope) {
     const original = await prisma.maintenanceSchedule.findUnique({ where: { id } });
     if (!original) throw Errors.notFound('Maintenance schedule');
+    await assertMachineInScope(scope, original.machineId).catch(() => {
+      throw Errors.notFound('Maintenance schedule');
+    });
 
     await prisma.$transaction(async (tx) => {
       await tx.maintenanceSchedule.delete({ where: { id } });

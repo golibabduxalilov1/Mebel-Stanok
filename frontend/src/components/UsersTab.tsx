@@ -126,7 +126,12 @@ export const UsersTab: React.FC<UsersTabProps> = ({
   // Confirm delete user
   const confirmDeleteUser = async () => {
     if (!deletingUser) return;
-    await userService.deleteUser(deletingUser.id, deletingUser.fullName);
+    try {
+      await userService.deleteUser(deletingUser.id, deletingUser.fullName);
+    } catch (err) {
+      alert('Ошибка при удалении пользователя' + (err instanceof Error ? `: ${err.message}` : ''));
+      return;
+    }
     if (activeAppUser?.id === deletingUser.id) {
       onSelectActiveUser(null);
     }
@@ -137,7 +142,12 @@ export const UsersTab: React.FC<UsersTabProps> = ({
   // Confirm delete role
   const confirmDeleteRole = async () => {
     if (!deletingRole) return;
-    await userService.deleteRole(deletingRole.id, deletingRole.name);
+    try {
+      await userService.deleteRole(deletingRole.id, deletingRole.name);
+    } catch (err) {
+      alert('Ошибка при удалении роли' + (err instanceof Error ? `: ${err.message}` : ''));
+      return;
+    }
     setDeletingRole(null);
     onRefresh?.();
   };
@@ -373,7 +383,12 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                           <button
                             onClick={async () => {
                               const newStatus = u.status === 'active' ? 'blocked' : 'active';
-                              await userService.updateUser(u.id, { status: newStatus });
+                              try {
+                                await userService.updateUser(u.id, { status: newStatus });
+                              } catch (err) {
+                                alert('Ошибка при смене статуса' + (err instanceof Error ? `: ${err.message}` : ''));
+                                return;
+                              }
                               onRefresh?.();
                             }}
                             className={`text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0 cursor-pointer transition-colors ${

@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma';
 import { emitEntity } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { getDiffDetails, writeActivity } from '../../utils/activityLog';
+import type { BranchScope } from '../../utils/branchScope';
 import type { CreateBranchInput, UpdateBranchInput } from './branches.schema';
 
 interface Actor {
@@ -10,8 +11,8 @@ interface Actor {
 }
 
 export const branchesService = {
-  async list() {
-    return prisma.branch.findMany({ orderBy: { name: 'asc' } });
+  async list(scope: BranchScope) {
+    return prisma.branch.findMany({ where: scope ? { id: scope } : undefined, orderBy: { name: 'asc' } });
   },
 
   async create(input: CreateBranchInput, actor: Actor) {
@@ -28,7 +29,7 @@ export const branchesService = {
       });
       return created;
     });
-    emitEntity('branch', 'created', branch);
+    emitEntity('branch', 'created', branch, branch.id);
     return branch;
   },
 
@@ -50,13 +51,22 @@ export const branchesService = {
       });
       return updated;
     });
-    emitEntity('branch', 'updated', branch);
+    emitEntity('branch', 'updated', branch, branch.id);
     return branch;
   },
 
   async remove(id: string, actor: Actor) {
     const original = await prisma.branch.findUnique({ where: { id } });
     if (!original) throw Errors.notFound('Branch');
+
+    // transfers.to_branch_id references the branch with ON DELETE RESTRICT.
+    const transfersTo = await prisma.transfer.count({ where: { toBranchId: id } });
+    if (transfersTo > 0) {
+      throw Errors.conflict(
+        'BRANCH_IN_USE',
+        `Нельзя удалить филиал "${original.name}": он указан как филиал назначения в истории перемещений (${transfersTo})`
+      );
+    }
 
     await prisma.$transaction(async (tx) => {
       await tx.branch.delete({ where: { id } });

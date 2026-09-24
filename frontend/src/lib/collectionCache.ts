@@ -50,6 +50,12 @@ export function createCollectionCache<T extends { id: string }>(opts: {
   }
 
   onSocketReady((socket) => {
+    // Events emitted while the socket was down are lost - re-sync from REST on every reconnect.
+    let connectedBefore = false;
+    socket.on('connect', () => {
+      if (connectedBefore && loaded) load();
+      connectedBefore = true;
+    });
     socket.on(`${opts.entity}:created`, (item: T) => {
       upsert(item);
       notify();

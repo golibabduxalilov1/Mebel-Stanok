@@ -1,7 +1,8 @@
 import { prisma } from '../../lib/prisma';
-import { emitEntity } from '../../lib/socket';
+import { emitEntity, emitToBranchUsers } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { getDiffDetails, writeActivity } from '../../utils/activityLog';
+import type { BranchScope } from '../../utils/branchScope';
 import type { CreateMachineInput, UpdateMachineInput } from './machines.schema';
 
 interface Actor {
@@ -20,10 +21,11 @@ async function assertSerialNumberFree(serialNumber: string, excludeId?: string) 
 }
 
 export const machinesService = {
-  async list(filter: { branchId?: string; status?: string }) {
+  async list(filter: { branchId?: string; status?: string }, scope: BranchScope) {
+    if (scope && filter.branchId && filter.branchId !== scope) return [];
     return prisma.machine.findMany({
       where: {
-        branchId: filter.branchId,
+        branchId: scope ?? filter.branchId,
         status: filter.status as any,
       },
       orderBy: { updatedAt: 'desc' },
@@ -31,16 +33,20 @@ export const machinesService = {
     });
   },
 
-  async getById(id: string) {
+  async getById(id: string, scope: BranchScope) {
     const machine = await prisma.machine.findUnique({
       where: { id },
       include: { attachments: true, branch: true },
     });
-    if (!machine) throw Errors.notFound('Machine');
+    if (!machine || (scope && machine.branchId !== scope)) throw Errors.notFound('Machine');
     return machine;
   },
 
-  async create(input: CreateMachineInput, actor: Actor) {
+  async create(input: CreateMachineInput, actor: Actor, scope: BranchScope) {
+    if (scope) {
+      if (input.branchId && input.branchId !== scope) throw Errors.forbidden('Нельзя добавлять оборудование в другой филиал');
+      input = { ...input, branchId: scope };
+    }
     await assertSerialNumberFree(input.serialNumber);
 
     const machine = await prisma.$transaction(async (tx) => {
@@ -59,13 +65,16 @@ export const machinesService = {
       return created;
     });
 
-    emitEntity('machine', 'created', machine);
+    emitEntity('machine', 'created', machine, machine.branchId);
     return machine;
   },
 
-  async update(id: string, input: UpdateMachineInput, actor: Actor) {
+  async update(id: string, input: UpdateMachineInput, actor: Actor, scope: BranchScope) {
     const original = await prisma.machine.findUnique({ where: { id } });
-    if (!original) throw Errors.notFound('Machine');
+    if (!original || (scope && original.branchId !== scope)) throw Errors.notFound('Machine');
+    if (scope && input.branchId && input.branchId !== scope) {
+      throw Errors.forbidden('Нельзя переносить оборудование в другой филиал');
+    }
 
     if (input.serialNumber && input.serialNumber !== original.serialNumber) {
       await assertSerialNumberFree(input.serialNumber, id);
@@ -86,13 +95,16 @@ export const machinesService = {
       return updated;
     });
 
-    emitEntity('machine', 'updated', machine);
+    if (original.branchId !== machine.branchId) {
+      emitToBranchUsers(original.branchId, 'machine:deleted', { id });
+    }
+    emitEntity('machine', 'updated', machine, machine.branchId);
     return machine;
   },
 
-  async remove(id: string, actor: Actor) {
+  async remove(id: string, actor: Actor, scope: BranchScope) {
     const original = await prisma.machine.findUnique({ where: { id } });
-    if (!original) throw Errors.notFound('Machine');
+    if (!original || (scope && original.branchId !== scope)) throw Errors.notFound('Machine');
 
     await prisma.$transaction(async (tx) => {
       await tx.machine.delete({ where: { id } });

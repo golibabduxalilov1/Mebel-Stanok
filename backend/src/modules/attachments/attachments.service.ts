@@ -4,6 +4,7 @@ import { storage } from '../../lib/storage';
 import { emitEntity } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { writeActivity } from '../../utils/activityLog';
+import { getMachineBranchId } from '../../utils/branchScope';
 
 interface Actor {
   userId: string;
@@ -73,7 +74,7 @@ export const attachmentsService = {
       return created;
     });
 
-    emitEntity('attachment', 'created', attachment);
+    emitEntity('attachment', 'created', attachment, await getMachineBranchId(attachment.machineId));
     return attachment;
   },
 
@@ -104,7 +105,7 @@ export const attachmentsService = {
       return updated;
     });
 
-    emitEntity('attachment', 'updated', attachment);
+    emitEntity('attachment', 'updated', attachment, await getMachineBranchId(attachment.machineId));
     return attachment;
   },
 
@@ -143,6 +144,6 @@ export const attachmentsService = {
 
     await storage.remove(attachment.storageKey);
     if (attachment.thumbnailKey) await storage.remove(attachment.thumbnailKey);
-    emitEntity('attachment', 'deleted', { id, machineId: attachment.machineId });
+    emitEntity('attachment', 'deleted', { id, machineId: attachment.machineId }, attachment.machine.branchId);
   },
 };

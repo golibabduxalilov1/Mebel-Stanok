@@ -1509,7 +1509,8 @@ export default function App() {
                       { label: 'Серийный номер', value: selectedMachine.serialNumber },
                       { label: 'Расположение', value: branches.find(b => b.id === selectedMachine.branchId)?.name || 'Не указан' },
                       { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
-                      { label: 'Дата установки', value: new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') },
+                      { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана' },
+                      { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана' },
                     ].map((item, idx) => (
                       <div key={idx} className="min-w-0">
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>
@@ -2512,8 +2513,20 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
   );
 }
 
+function useChartReady(deps: React.DependencyList) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReady(false);
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)));
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return ready;
+}
+
 function DepreciationChart({ machine }: { machine: Machine }) {
   const data = machineService.getDepreciationData(machine);
+  const ready = useChartReady([machine.id]);
 
   if (data.length === 0 || machine.purchasePrice <= 0) {
     return (
@@ -2523,6 +2536,10 @@ function DepreciationChart({ machine }: { machine: Machine }) {
         <p className="text-[10px] opacity-60">Укажите цену и дату закупки в данных оборудования</p>
       </div>
     );
+  }
+
+  if (!ready) {
+    return <div className="h-[250px] w-full" />;
   }
 
   return (
@@ -2571,6 +2588,7 @@ function DepreciationChart({ machine }: { machine: Machine }) {
 
 function TotalDepreciationChart({ machines }: { machines: Machine[] }) {
   const data = machineService.getTotalDepreciationData(machines);
+  const ready = useChartReady([machines.length]);
 
   if (data.length === 0) {
     return (
@@ -2579,6 +2597,10 @@ function TotalDepreciationChart({ machines }: { machines: Machine[] }) {
         <p className="text-xs font-medium">Нет данных для амортизационного отчета</p>
       </div>
     );
+  }
+
+  if (!ready) {
+    return <div className="h-[300px] w-full" />;
   }
 
   return (
@@ -3341,6 +3363,17 @@ function MachineDetailPhotoGallery({
   );
 }
 
+// <input type="date"> needs YYYY-MM-DD; the API returns full ISO timestamps.
+// Uses local date parts so the value matches what the detail view displays.
+function toDateInputValue(value?: string | null): string {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, branches: Branch[], onComplete: (data: Partial<Machine>) => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -3351,10 +3384,10 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
     serialNumber: machine.serialNumber,
     branchId: machine.branchId || '',
     purchasePrice: machine.purchasePrice || 0,
-    purchaseDate: machine.purchaseDate || new Date().toISOString().split('T')[0],
+    purchaseDate: toDateInputValue(machine.purchaseDate),
     usefulLifeYears: machine.usefulLifeYears || 10,
     status: machine.status,
-    installationDate: machine.installationDate || new Date().toISOString().split('T')[0],
+    installationDate: toDateInputValue(machine.installationDate),
     lastMaintenanceDate: machine.lastMaintenanceDate || new Date().toISOString().split('T')[0],
     nextMaintenanceDate: machine.nextMaintenanceDate || new Date().toISOString().split('T')[0],
     description: machine.description || '',
@@ -3473,9 +3506,18 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
             onChange={e => setFormData({...formData, purchaseDate: e.target.value})}
           />
         </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Дата установки</label>
+          <input
+            type="date"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            value={formData.installationDate}
+            onChange={e => setFormData({...formData, installationDate: e.target.value})}
+          />
+        </div>
         <div className="sm:col-span-2">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Описание</label>
-          <textarea 
+          <textarea
             className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             rows={3}
             value={formData.description}
@@ -4641,7 +4683,7 @@ function UnitsManagerModal({
       onRefresh();
     } catch (err) {
       console.error(err);
-      setError('Ошибка при обновлении единицы измерения');
+      setError('Ошибка при обновлении единицы измерения' + (err instanceof Error ? `: ${err.message}` : ''));
     } finally {
       setLoading(false);
     }
@@ -4655,7 +4697,8 @@ function UnitsManagerModal({
       onRefresh();
     } catch (err) {
       console.error(err);
-      setError('Ошибка при удалении единицы измерения');
+      setConfirmDeleteUnit(null);
+      setError('Ошибка при удалении единицы измерения' + (err instanceof Error ? `: ${err.message}` : ''));
     } finally {
       setDeletingId(null);
     }
@@ -4769,7 +4812,12 @@ function UnitsManagerModal({
                       <span className="text-xs font-semibold text-slate-800">{u.name}</span>
                     </div>
                     
-                    {confirmDeleteUnit?.id === u.id ? (
+                    {u.isSystem ? (
+                      // The backend rejects edit/delete of system units (403), so no buttons for them.
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1" title="Системная единица измерения не редактируется и не удаляется">
+                        Системная
+                      </span>
+                    ) : confirmDeleteUnit?.id === u.id ? (
                       <div className="flex items-center gap-1.5 bg-rose-50 p-1 rounded-lg border border-rose-200">
                         <span className="text-[11px] font-bold text-rose-700 px-1">Удалить?</span>
                         <button 
@@ -6471,6 +6519,8 @@ function BranchesTab({ branches, machines, onRefresh, role }: { branches: Branch
     
     const branchMachines = machines.filter(m => m.branchId === id);
     if (branchMachines.length > 0) {
+      // Close the dialog, otherwise the error banner stays hidden behind it and the button looks dead.
+      setConfirmDelete(null);
       setErrorMessage(`Нельзя удалить филиал "${name}", пока в нем числится оборудование (${branchMachines.length} шт). Сначала переместите или удалите оборудование филиала.`);
       return;
     }
@@ -6805,7 +6855,7 @@ function InventoryTab({
       setConfirmDeleteId(null);
       onRefresh();
     } catch (e) {
-      alert('Ошибка при удалении');
+      alert('Ошибка при удалении' + (e instanceof Error ? `: ${e.message}` : ''));
     }
   };
 

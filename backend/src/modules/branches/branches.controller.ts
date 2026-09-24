@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
+import { getBranchScope } from '../../utils/branchScope';
 import { branchesService } from './branches.service';
 
 export const branchesController = {
-  list: asyncHandler(async (_req: Request, res: Response) => {
-    res.json(await branchesService.list());
+  list: asyncHandler(async (req: Request, res: Response) => {
+    res.json(await branchesService.list(getBranchScope(req.user)));
   }),
   create: asyncHandler(async (req: Request, res: Response) => {
     res.status(201).json(await branchesService.create(req.body, { userId: req.user!.sub }));
