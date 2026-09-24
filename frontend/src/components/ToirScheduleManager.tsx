@@ -32,6 +32,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Machine, MaintenanceSchedule, MaintenanceLog, Branch, SparePart, ToirTaskType } from '../types';
 import { TOIR_CATEGORIES, getToirCategory, calculateDeadlineInfo, ToirCategoryConfig } from '../toirConstants';
 import { machineService } from '../services/machineService';
+import { ApiError } from '../lib/apiClient';
 import { MultiPhotoPicker, LightboxModal } from './PhotoPicker';
 
 export interface ToirScheduleItem extends MaintenanceSchedule {
@@ -1109,7 +1110,13 @@ export function EditToirScheduleModal({
       onClose();
     } catch (err) {
       console.error(err);
-      alert('Ошибка при обновлении задачи');
+      if (err instanceof ApiError && err.status === 404) {
+        alert('Эта задача уже была изменена или удалена в другом месте. Список будет обновлён.');
+        onUpdated();
+        onClose();
+      } else {
+        alert('Ошибка при обновлении задачи');
+      }
     } finally {
       setLoading(false);
     }
