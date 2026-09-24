@@ -2289,7 +2289,7 @@ function AddScheduleForm({ machineId, onComplete }: { machineId: string, onCompl
       machineId,
       taskName: taskName.trim(),
       taskType: selectedType,
-      description: description.trim() || activeCategory.goal,
+      description: description.trim(),
       intervalDays: Number(intervalDays) || 30,
       lastPerformed,
       nextDue: nextDueDate.toISOString().split('T')[0],
@@ -2977,7 +2977,6 @@ function PhotoUploadModal({
   onDelete?: () => Promise<void> | void; 
 }) {
   const [images, setImages] = useState<string[]>([]);
-  const [urlInput, setUrlInput] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -2989,7 +2988,6 @@ function PhotoUploadModal({
     } else {
       setImages([]);
     }
-    setUrlInput('');
     setError(null);
   }, [initialImageUrls, initialImageUrl, isOpen]);
 
@@ -3041,34 +3039,6 @@ function PhotoUploadModal({
           maxPhotos={10} 
           label="Загруженные фото" 
         />
-
-        {/* Alternative URL input */}
-        <div className="pt-2 border-t border-slate-100">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">
-            Добавить по ссылке (URL)
-          </label>
-          <div className="flex gap-2">
-            <input 
-              type="url" 
-              placeholder="https://example.com/photo.jpg" 
-              className="flex-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-              value={urlInput}
-              onChange={e => setUrlInput(e.target.value)}
-            />
-            <button 
-              type="button" 
-              onClick={() => {
-                if (urlInput.trim()) {
-                  setImages([...images, urlInput.trim()]);
-                  setUrlInput('');
-                }
-              }}
-              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
-            >
-              Добавить
-            </button>
-          </div>
-        </div>
 
         {/* Footer controls */}
         <div className="flex items-center justify-between pt-3 border-t border-slate-100">

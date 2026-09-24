@@ -70,8 +70,6 @@ export function MultiPhotoPicker({
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [urlInput, setUrlInput] = useState('');
-  const [showUrlInput, setShowUrlInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = async (files: FileList | File[]) => {
@@ -115,17 +113,6 @@ export function MultiPhotoPicker({
     onChange([target, ...rest]);
   };
 
-  const handleAddUrl = () => {
-    if (!urlInput.trim()) return;
-    if (safeImages.length >= maxPhotos) {
-      setError(`Достигнут лимит в ${maxPhotos} фото`);
-      return;
-    }
-    onChange([...safeImages, urlInput.trim()]);
-    setUrlInput('');
-    setShowUrlInput(false);
-  };
-
   return (
     <div className={compact ? "space-y-1.5 text-slate-900" : "space-y-2.5 text-slate-900"}>
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
@@ -133,37 +120,11 @@ export function MultiPhotoPicker({
           {label}
         </label>
         <div className="flex items-center gap-2 shrink-0 ml-auto">
-          <button
-            type="button"
-            onClick={() => setShowUrlInput(!showUrlInput)}
-            className="-my-3 py-3 text-[9px] text-blue-600 hover:text-blue-700 hover:underline font-bold whitespace-nowrap"
-          >
-            {showUrlInput ? 'Скрыть URL' : '+ по ссылке URL'}
-          </button>
           <span className={compact ? "text-[9px] font-bold text-slate-400 font-mono whitespace-nowrap" : "text-[10px] font-semibold text-slate-400 whitespace-nowrap"}>
             {safeImages.length} из {maxPhotos} фото
           </span>
         </div>
       </div>
-
-      {showUrlInput && (
-        <div className="flex gap-1.5 p-2 bg-slate-100 rounded-xl border border-slate-200 animate-fadeIn">
-          <input
-            type="url"
-            placeholder="https://example.com/photo.jpg"
-            value={urlInput}
-            onChange={e => setUrlInput(e.target.value)}
-            className="flex-1 px-2.5 py-1 bg-white rounded-lg border border-slate-300 text-xs outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          <button
-            type="button"
-            onClick={handleAddUrl}
-            className="px-3 py-1 bg-slate-900 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-all shadow-xs"
-          >
-            Добавить
-          </button>
-        </div>
-      )}
 
       {error && (
         <div className="p-2 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 border border-rose-100">
