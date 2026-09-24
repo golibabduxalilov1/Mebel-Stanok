@@ -995,6 +995,14 @@ export function EditToirScheduleModal({
     }
   };
 
+  const handleLastPerformedChange = (date: string) => {
+    setLastPerformed(date);
+    if (intervalDays > 0) {
+      const nextDate = new Date(new Date(date).getTime() + intervalDays * 24 * 60 * 60 * 1000);
+      setNextDue(nextDate.toISOString().split('T')[0]);
+    }
+  };
+
   const handleAddPart = () => {
     if (!selectedPartId) return;
     const part = parts.find(p => p.id === selectedPartId);
@@ -1400,7 +1408,7 @@ export function EditToirScheduleModal({
               <input
                 type="date"
                 value={lastPerformed}
-                onChange={e => setLastPerformed(e.target.value)}
+                onChange={e => handleLastPerformedChange(e.target.value)}
                 className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono"
               />
             </div>

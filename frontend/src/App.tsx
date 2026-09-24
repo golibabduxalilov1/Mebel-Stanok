@@ -1511,6 +1511,7 @@ export default function App() {
                       { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана' },
                       { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана' },
                       { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
+                      { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽/день` : 'Не указана' },
                     ].map((item, idx) => (
                       <div key={idx} className="min-w-0">
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>

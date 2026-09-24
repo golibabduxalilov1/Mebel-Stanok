@@ -263,6 +263,12 @@ export const machineService = {
     return Math.max(0, currentValue);
   },
 
+  calculateDailyDepreciation(machine: Machine) {
+    if (!machine.purchasePrice || !machine.purchaseDate) return 0;
+    const usefulLifeYears = machine.usefulLifeYears || 10;
+    return machine.purchasePrice / (usefulLifeYears * 365);
+  },
+
   getDepreciationData(machine: Machine) {
     if (!machine.purchasePrice || !machine.purchaseDate) return [];
     const usefulLifeYears = machine.usefulLifeYears || 10;
