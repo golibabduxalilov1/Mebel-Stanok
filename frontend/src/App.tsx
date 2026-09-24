@@ -1508,9 +1508,9 @@ export default function App() {
                       { label: 'Модель', value: selectedMachine.model },
                       { label: 'Серийный номер', value: selectedMachine.serialNumber },
                       { label: 'Расположение', value: branches.find(b => b.id === selectedMachine.branchId)?.name || 'Не указан' },
-                      { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
                       { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана' },
                       { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана' },
+                      { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
                     ].map((item, idx) => (
                       <div key={idx} className="min-w-0">
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>
