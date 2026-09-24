@@ -2551,28 +2551,32 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
   );
 }
 
-/** Only reports "ready" once the element has a real, non-zero measured size - so charts
- * never mount inside a still-animating (e.g. spring-transitioning drawer) container. */
-function useMeasuredSize<T extends HTMLElement>(): [React.RefObject<T>, boolean] {
+/** Tracks the element's real pixel size, so charts can be given concrete numeric
+ * width/height instead of percentages - Recharts' ResponsiveContainer always starts
+ * from an internal -1/-1 state when sized by percentage (even once its parent already
+ * has a real size), which is what produces the "-1" console warning. Feeding it real
+ * numbers instead bypasses that internal auto-measurement pass entirely. */
+function useMeasuredSize<T extends HTMLElement>(): [React.RefObject<T>, { width: number; height: number }] {
   const ref = useRef<T>(null);
-  const [hasSize, setHasSize] = useState(false);
+  const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    setHasSize(el.clientWidth > 0 && el.clientHeight > 0);
+    setSize({ width: el.clientWidth, height: el.clientHeight });
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
-      setHasSize(width > 0 && height > 0);
+      setSize({ width, height });
     });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-  return [ref, hasSize];
+  return [ref, size];
 }
 
 function DepreciationChart({ machine }: { machine: Machine }) {
   const data = machineService.getDepreciationData(machine);
-  const [containerRef, ready] = useMeasuredSize<HTMLDivElement>();
+  const [containerRef, size] = useMeasuredSize<HTMLDivElement>();
+  const ready = size.width > 0 && size.height > 0;
 
   if (data.length === 0 || machine.purchasePrice <= 0) {
     return (
@@ -2587,7 +2591,7 @@ function DepreciationChart({ machine }: { machine: Machine }) {
   return (
     <div ref={containerRef} className="h-[250px] w-full">
       {ready && (
-      <ResponsiveContainer width="100%" height="100%" debounce={300}>
+      <ResponsiveContainer width={size.width} height={size.height} debounce={300}>
         <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -2632,7 +2636,8 @@ function DepreciationChart({ machine }: { machine: Machine }) {
 
 function TotalDepreciationChart({ machines }: { machines: Machine[] }) {
   const data = machineService.getTotalDepreciationData(machines);
-  const [containerRef, ready] = useMeasuredSize<HTMLDivElement>();
+  const [containerRef, size] = useMeasuredSize<HTMLDivElement>();
+  const ready = size.width > 0 && size.height > 0;
 
   if (data.length === 0) {
     return (
@@ -2646,7 +2651,7 @@ function TotalDepreciationChart({ machines }: { machines: Machine[] }) {
   return (
     <div ref={containerRef} className="h-[300px] w-full">
       {ready && (
-      <ResponsiveContainer width="100%" height="100%" debounce={300}>
+      <ResponsiveContainer width={size.width} height={size.height} debounce={300}>
         <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorTotalValue" x1="0" y1="0" x2="0" y2="1">
