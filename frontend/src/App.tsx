@@ -939,15 +939,15 @@ export default function App() {
           ) : activeTab === 'all' ? (
             <>
               {/* Statistics */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-6 shrink-0">
-                <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                  <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5 sm:mb-1">Всего активов</p>
-                  <h3 className="text-xl sm:text-3xl font-mono font-bold text-slate-800">{machines.length}</h3>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 shrink-0">
+                <div className="bg-white p-2 sm:p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                  <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Всего активов</p>
+                  <h3 className="text-base sm:text-xl font-mono font-bold text-slate-800">{machines.length}</h3>
                 </div>
-                <div className="bg-white p-3.5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500 transition-all hover:shadow-md text-slate-800">
-                  <p className="text-[10px] sm:text-xs font-bold text-emerald-600 uppercase tracking-wider mb-0.5 sm:mb-1">В работе</p>
-                  <h3 className="text-xl sm:text-3xl font-mono font-bold text-slate-800">{machines.filter(m => m.status === 'active').length}</h3>
-                  <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">Готовы к эксплуатации</p>
+                <div className="bg-white p-2 sm:p-3 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500 transition-all hover:shadow-md text-slate-800">
+                  <p className="text-[9px] sm:text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">В работе</p>
+                  <h3 className="text-base sm:text-xl font-mono font-bold text-slate-800">{machines.filter(m => m.status === 'active').length}</h3>
+                  <p className="text-[8px] sm:text-[9px] text-slate-400 mt-0.5 truncate">Готовы к эксплуатации</p>
                 </div>
               </div>
 
@@ -1127,7 +1127,7 @@ export default function App() {
                   <span className="text-xs text-slate-400">Показано {filteredMachines.length} объектов</span>
                 </div>
 
-                <div>
+                <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead className="sticky top-0 bg-white z-10">
                       <tr className="text-xs text-slate-500 uppercase font-bold tracking-wider">
