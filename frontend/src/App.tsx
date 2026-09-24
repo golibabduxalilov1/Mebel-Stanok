@@ -6812,7 +6812,6 @@ function InventoryTab({
   const canEditPart = canPerformAction(role, 'inventory.parts_catalog', 'edit');
   const canDeletePart = canPerformAction(role, 'inventory.parts_catalog', 'delete');
   const canExportInventory = canPerformAction(role, 'inventory.parts_catalog', 'export') || canPerformAction(role, 'inventory.balances', 'export');
-  const canManageUnits = canPerformAction(role, 'inventory.units', 'view') || canPerformAction(role, 'inventory.units', 'edit');
 
   const safeParts = Array.isArray(parts) ? parts : [];
   const safeUnits = Array.isArray(units) ? units : [];
@@ -6820,8 +6819,6 @@ function InventoryTab({
   const [editingPart, setEditingPart] = useState<SparePart | null>(null);
   const [partLightbox, setPartLightbox] = useState<{ images: string[]; initialIndex: number; title?: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'normal' | 'low' | 'out'>('all');
-  const [unitFilter, setUnitFilter] = useState<string>('all');
   const [branchFilter, setBranchFilter] = useState<string>('all');
   const [machineFilter, setMachineFilter] = useState<string>('all');
 
@@ -6840,17 +6837,6 @@ function InventoryTab({
       part.name.toLowerCase().includes(q) || 
       (part.sku && part.sku.toLowerCase().includes(q));
     
-    let matchesStatus = true;
-    if (statusFilter === 'low') {
-      matchesStatus = (part.quantity || 0) <= (part.minQuantity || 0) && (part.quantity || 0) > 0;
-    } else if (statusFilter === 'out') {
-      matchesStatus = (part.quantity || 0) <= 0;
-    } else if (statusFilter === 'normal') {
-      matchesStatus = (part.quantity || 0) > (part.minQuantity || 0);
-    }
-
-    const matchesUnit = unitFilter === 'all' || (part.unit || 'шт') === unitFilter;
-
     // Filter by branch
     let matchesBranch = true;
     if (branchFilter !== 'all') {
@@ -6864,7 +6850,7 @@ function InventoryTab({
       matchesMachine = part.machineId === machineFilter;
     }
 
-    return matchesSearch && matchesStatus && matchesUnit && matchesBranch && matchesMachine;
+    return matchesSearch && matchesBranch && matchesMachine;
   });
 
   const filteredSum = filteredParts.reduce((acc, p) => acc + ((p.quantity || 0) * (p.unitPrice || 0)), 0);
@@ -6987,29 +6973,18 @@ function InventoryTab({
       {/* Top action bar and filter controls */}
       <div className="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row gap-2 items-stretch lg:items-center justify-between">
         <div className="flex flex-1 flex-wrap items-center gap-2 w-full min-w-0">
-          <div className="relative flex-1 basis-full sm:basis-48 min-w-0">
+          <div className="relative flex-1 basis-40 min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Поиск запчасти по наименованию или артикулу SKU..." 
+            <input
+              type="text"
+              placeholder="Поиск запчасти по наименованию или артикулу SKU..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full min-h-10 pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
             />
           </div>
 
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto min-w-0">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full sm:w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
-            >
-              <option value="all">Все статусы ({safeParts.length})</option>
-              <option value="normal">В норме ({safeParts.filter(p => (p.quantity || 0) > (p.minQuantity || 0)).length})</option>
-              <option value="low">Низкий запас ({safeParts.filter(p => (p.quantity || 0) <= (p.minQuantity || 0) && (p.quantity || 0) > 0).length})</option>
-              <option value="out">Отсутствует ({safeParts.filter(p => (p.quantity || 0) <= 0).length})</option>
-            </select>
-
+          <div className="flex flex-wrap items-center gap-1.5 w-auto min-w-0">
             <select
               value={branchFilter}
               onChange={(e) => {
@@ -7021,7 +6996,7 @@ function InventoryTab({
                   }
                 }
               }}
-              className="w-full sm:w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer sm:max-w-[130px] truncate"
+              className="w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[130px] truncate"
               title="Фильтр по филиалу"
             >
               <option value="all">🏢 Все филиалы</option>
@@ -7033,7 +7008,7 @@ function InventoryTab({
             <select
               value={machineFilter}
               onChange={(e) => setMachineFilter(e.target.value)}
-              className="w-full sm:w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer sm:max-w-[140px] truncate"
+              className="w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[140px] truncate"
               title="Фильтр по оборудованию"
             >
               <option value="all">🎯 Все станки</option>
@@ -7043,37 +7018,7 @@ function InventoryTab({
                   <option key={m.id} value={m.id}>🎯 {m.name}</option>
                 ))}
             </select>
-
-            <select
-              value={unitFilter}
-              onChange={(e) => setUnitFilter(e.target.value)}
-              className="w-full sm:w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
-            >
-              <option value="all">Все ЕИ</option>
-              {safeUnits.map(u => (
-                <option key={u.id} value={u.code}>{u.code} ({u.name})</option>
-              ))}
-            </select>
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto justify-between lg:justify-end">
-          {/* Summary badge of filtered view */}
-          <div className="min-h-10 px-2.5 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 flex flex-wrap items-center gap-x-1.5">
-            <span>Итого по выборке:</span>
-            <span className="font-mono font-black text-blue-700 whitespace-nowrap">{filteredSum.toLocaleString('ru-RU')} ₽</span>
-          </div>
-
-          {canManageUnits && onOpenUnitsModal && (
-            <button 
-              onClick={onOpenUnitsModal}
-              className="min-h-10 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs active:scale-95 cursor-pointer shrink-0"
-              title="Управление единицами измерения"
-            >
-              <Tag className="w-3.5 h-3.5 text-blue-600" />
-              <span>Единицы измерения {safeUnits.length > 0 ? `(${safeUnits.length})` : ''}</span>
-            </button>
-          )}
         </div>
       </div>
 
