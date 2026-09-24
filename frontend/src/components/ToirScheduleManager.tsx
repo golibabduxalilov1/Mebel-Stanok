@@ -1561,12 +1561,12 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className={`bg-white rounded-2xl border transition-all flex flex-col justify-between overflow-hidden group shadow-sm hover:shadow-md ${
-        deadline.isOverdue 
-          ? 'border-rose-300 ring-1 ring-rose-200 bg-rose-50/10' 
-          : deadline.isToday 
-            ? 'border-amber-300 ring-1 ring-amber-200' 
-            : 'border-slate-200 hover:border-slate-300'
+      className={`bg-white rounded-2xl border-2 transition-all flex flex-col justify-between overflow-hidden group shadow-sm hover:shadow-md ${
+        deadline.isOverdue
+          ? 'border-rose-300 ring-1 ring-rose-200 bg-rose-50/10'
+          : deadline.isToday
+            ? 'border-amber-300 ring-1 ring-amber-200'
+            : 'border-slate-300 hover:border-slate-400'
       }`}
     >
       {/* Top Bar: TOIR Badge & Urgency status */}
