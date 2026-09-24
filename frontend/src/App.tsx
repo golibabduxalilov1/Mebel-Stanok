@@ -117,6 +117,7 @@ import {
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
 import { machineService, DEFAULT_UNITS } from './services/machineService';
+import { ApiError } from './lib/apiClient';
 import { userService, canAccessTab, canPerformAction } from './services/userService';
 import { Machine, MachineStatus, MaintenanceLog, LogType, Branch, SparePart, MaintenanceSchedule, Transfer, ActivityLog, UnitOfMeasure, ToirTaskType, AppUser, Role } from './types';
 import { TOIR_CATEGORIES, getToirCategory, calculateDeadlineInfo, ToirCategoryConfig } from './toirConstants';
@@ -2008,7 +2009,13 @@ function ScheduleList({ machineId, parts, machines, branches, onRefresh, role }:
       loadSchedules();
       onRefresh();
     } catch (e) {
-      alert('Ошибка при выполнении задачи');
+      if (e instanceof ApiError && (e.status === 404 || e.status === 409)) {
+        alert('Эта задача уже была изменена или удалена в другом месте. Список будет обновлён.');
+        loadSchedules();
+        onRefresh();
+      } else {
+        alert('Ошибка при выполнении задачи');
+      }
     }
   };
 
