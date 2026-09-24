@@ -586,14 +586,14 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 md:hidden"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 lg:hidden"
             />
             <motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 w-72 sm:w-80 bg-[#1e293b] text-white flex flex-col z-50 shadow-2xl md:hidden"
+              className="fixed inset-y-0 left-0 w-72 sm:w-80 bg-[#1e293b] text-white flex flex-col z-50 shadow-2xl lg:hidden"
             >
               {/* Drawer Header */}
               <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-700/60">
@@ -658,14 +658,14 @@ export default function App() {
                         setActiveTab(tab.id as any);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                      className={`w-full flex items-center justify-between gap-2 px-3.5 py-3 rounded-xl text-sm text-left font-semibold transition-all cursor-pointer ${
                         isActive 
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' 
                           : 'text-slate-300 hover:text-white hover:bg-slate-800/80 active:bg-slate-800'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <tab.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                      <div className="flex items-center gap-3 min-w-0">
+                        <tab.icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                         <span>{tab.label}</span>
                       </div>
                       {tab.count !== undefined && (
@@ -694,7 +694,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <aside className="w-64 bg-[#1e293b] text-white hidden md:flex flex-col border-r border-slate-200 shrink-0">
+      <aside className="w-64 bg-[#1e293b] text-white hidden lg:flex flex-col border-r border-slate-200 shrink-0">
         <div className="p-6 flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
             <Settings className="w-5 h-5 text-white" />
@@ -707,10 +707,10 @@ export default function App() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all cursor-pointer ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+              className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-lg text-sm text-left font-medium transition-all cursor-pointer ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
             >
-              <div className="flex items-center gap-3">
-                <tab.icon className="w-5 h-5" />
+              <div className="flex items-center gap-3 min-w-0">
+                <tab.icon className="w-5 h-5 shrink-0" />
                 <span>{tab.label}</span>
               </div>
               {tab.count !== undefined && (
@@ -761,7 +761,7 @@ export default function App() {
             {/* Mobile Hamburger Button */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-2 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all active:scale-95 shrink-0"
+              className="lg:hidden p-2.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all active:scale-95 shrink-0"
               title="Открыть меню"
             >
               <MenuIcon className="w-5 h-5" />
@@ -784,7 +784,7 @@ export default function App() {
             {activeTab === 'all' && canPerformAction(currentRole, 'machines.catalog', 'create') && (
               <button 
                 onClick={() => setShowAddModal(true)}
-                className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
+                className="min-h-10 px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden xs:inline sm:inline">Добавить станок</span>
@@ -794,7 +794,7 @@ export default function App() {
             {activeTab === 'branches' && canPerformAction(currentRole, 'branches.branch_list', 'create') && (
               <button 
                 onClick={() => setShowBranchModal(true)}
-                className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
+                className="min-h-10 px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden xs:inline sm:inline">Создать филиал</span>
@@ -806,7 +806,7 @@ export default function App() {
                 {canPerformAction(currentRole, 'inventory.units', 'view') && (
                   <button 
                     onClick={() => setShowUnitsModal(true)}
-                    className="hidden sm:flex px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all items-center gap-1.5 active:scale-95"
+                    className="hidden sm:flex min-h-10 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all items-center gap-1.5 active:scale-95"
                     title="Управление единицами измерения"
                   >
                     <Tag className="w-4 h-4 text-blue-600" />
@@ -816,7 +816,7 @@ export default function App() {
                 {canPerformAction(currentRole, 'inventory.parts_catalog', 'create') && (
                   <button 
                     onClick={() => setShowPartModal(true)}
-                    className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
+                    className="min-h-10 px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
                   >
                     <Plus className="w-4 h-4" />
                     <span className="hidden xs:inline sm:inline">Оприходовать</span>
@@ -829,17 +829,17 @@ export default function App() {
             <button 
               onClick={refreshData}
               disabled={refreshing}
-              className="p-1.5 sm:p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all active:scale-90 shrink-0"
+              className="p-3 sm:p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all active:scale-90 shrink-0"
               title="Обновить данные"
             >
               <RefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
             </button>
 
             {/* Mobile Search Toggle */}
-            <div className="md:hidden">
+            <div className="lg:hidden">
               <button
                 onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-                className={`p-1.5 rounded-xl transition-all active:scale-90 ${
+                className={`p-3 rounded-xl transition-all active:scale-90 ${
                   isMobileSearchOpen ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:bg-slate-100'
                 }`}
                 title="Поиск"
@@ -849,7 +849,7 @@ export default function App() {
             </div>
 
             {/* Desktop Search Input */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-3">
               <div className="w-px h-6 bg-slate-200"></div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -858,7 +858,7 @@ export default function App() {
                   placeholder="Поиск..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all w-48 bg-slate-50"
+                  className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all w-48 bg-slate-50"
                 />
               </div>
             </div>
@@ -872,7 +872,7 @@ export default function App() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden bg-white px-3 py-2 border-b border-slate-200 overflow-hidden shrink-0"
+              className="lg:hidden bg-white px-3 py-2 border-b border-slate-200 overflow-hidden shrink-0"
             >
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -882,7 +882,7 @@ export default function App() {
                   placeholder="Поиск по названию, модели, SN..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full min-h-10 pl-9 pr-8 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {searchTerm && (
                   <button 
@@ -1011,15 +1011,15 @@ export default function App() {
                                 </span>
                               )}
                             </div>
-                            <h3 className="font-bold text-slate-900 text-sm truncate leading-snug">{machine.name}</h3>
+                            <h3 className="font-bold text-slate-900 text-sm line-clamp-2 break-words leading-snug">{machine.name}</h3>
                             <div className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase truncate">
                               {machine.model} • SN: {machine.serialNumber}
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 text-slate-600">
-                          <div className="flex items-center gap-1.5 truncate text-slate-500 text-[11px]">
+                        <div className="flex items-center justify-between gap-2 text-xs pt-2 border-t border-slate-100 text-slate-600">
+                          <div className="flex items-center gap-1.5 min-w-0 truncate text-slate-500 text-[11px]">
                             <MapPin className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                             <span className="truncate font-medium">{branches.find(b => b.id === machine.branchId)?.name || 'Не указан'}</span>
                           </div>
@@ -1036,7 +1036,7 @@ export default function App() {
                               e.stopPropagation();
                               setFilesModalMachine(machine);
                             }}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 shadow-2xs active:scale-95 cursor-pointer group/mobfolder"
+                            className="inline-flex items-center gap-1.5 min-h-10 px-3 py-1 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 shadow-2xs active:scale-95 cursor-pointer group/mobfolder"
                             title="Папка материалов станка (видео, фото, документы)"
                           >
                             <FolderOpen className="w-3.5 h-3.5 text-amber-600 group-hover/mobfolder:scale-110 transition-transform" />
@@ -1325,8 +1325,8 @@ export default function App() {
         </div>
 
         {/* Desktop Status Bar Footer */}
-        <footer className="hidden md:flex h-8 bg-[#007acc] text-white items-center px-4 text-[11px] font-medium shrink-0">
-          <div className="flex items-center gap-4">
+        <footer className="hidden lg:flex h-8 whitespace-nowrap overflow-hidden gap-4 bg-[#007acc] text-white items-center px-4 text-[11px] font-medium shrink-0">
+          <div className="flex items-center gap-4 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
               <span>БАЗА ДАННЫХ: ПОДКЛЮЧЕНО (POSTGRESQL)</span>
@@ -1334,7 +1334,7 @@ export default function App() {
             <div className="h-4 w-px bg-white/20"></div>
             <span>ПОСЛЕДНЯЯ СИНХРОНИЗАЦИЯ: {new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
-          <div className="ml-auto flex gap-4">
+          <div className="ml-auto flex gap-4 shrink-0">
             <span>v1.2.4-stable</span>
             <span className="uppercase tracking-tighter italic opacity-80">Cloud-Native Runtime</span>
           </div>
@@ -1359,9 +1359,9 @@ export default function App() {
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="relative w-full max-w-2xl bg-white h-screen shadow-2xl flex flex-col"
             >
-              <div className="p-4 sm:p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="min-w-0 flex-1 mr-2">
-                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 truncate">{selectedMachine.name}</h3>
+              <div className="p-4 sm:p-6 md:p-8 border-b border-slate-100 flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-2 bg-slate-50/50">
+                <div className="min-w-0 order-last sm:order-none w-full sm:w-auto sm:flex-1 sm:mr-2">
+                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 line-clamp-2 break-words">{selectedMachine.name}</h3>
                   <div className="flex flex-wrap items-center gap-2">
                      <span className={`px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white ${getStatusColor(selectedMachine.status)}`}>
                       {getStatusLabel(selectedMachine.status)}
@@ -1371,7 +1371,7 @@ export default function App() {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0 ml-auto">
                   {(canPerformAction(currentRole, 'machines.catalog', 'edit') || canPerformAction(currentRole, 'machines.cards', 'edit')) && (
                     <button 
                       onClick={() => {
@@ -1380,7 +1380,7 @@ export default function App() {
                           status: nextStatus
                         }).then(() => setSelectedMachine(prev => prev ? {...prev, status: nextStatus} : null));
                       }}
-                      className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all"
+                      className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all"
                       title="Сменить статус"
                     >
                       <Cog className="w-4 h-4" />
@@ -1392,7 +1392,7 @@ export default function App() {
                         setMachineToTransfer(selectedMachine);
                         setTransferTargetBranchId(selectedMachine.branchId || (branches[0]?.id ?? ''));
                       }}
-                      className="p-1.5 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-all"
+                      className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-all"
                       title="Переместить станок в другой филиал"
                     >
                       <ArrowRightLeft className="w-4 h-4" />
@@ -1401,7 +1401,7 @@ export default function App() {
                   {selectedMachine.status !== 'retired' && (canPerformAction(currentRole, 'machines.decommission', 'create') || canPerformAction(currentRole, 'machines.decommission', 'edit')) && (
                     <button 
                       onClick={() => setMachineToDecommission(selectedMachine)}
-                      className="p-1.5 hover:bg-amber-50 rounded-lg text-slate-400 hover:text-amber-600 transition-all"
+                      className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-amber-50 rounded-lg text-slate-400 hover:text-amber-600 transition-all"
                       title="Списать оборудование"
                     >
                       <Archive className="w-4 h-4" />
@@ -1410,7 +1410,7 @@ export default function App() {
                   {(canPerformAction(currentRole, 'machines.catalog', 'edit') || canPerformAction(currentRole, 'machines.cards', 'edit')) && (
                     <button 
                       onClick={() => setIsEditingMachine(true)}
-                      className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
+                      className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
                       title="Редактировать"
                     >
                       <Pencil className="w-4 h-4" />
@@ -1422,7 +1422,7 @@ export default function App() {
                       onClick={() => {
                         if (selectedMachine) setMachineToDeleteId(selectedMachine.id);
                       }}
-                      className={`p-1.5 transition-all rounded-lg ${refreshing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-rose-50 text-slate-400 hover:text-rose-600'}`}
+                      className={`min-h-10 min-w-10 flex items-center justify-center p-1.5 transition-all rounded-lg ${refreshing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-rose-50 text-slate-400 hover:text-rose-600'}`}
                       title="Удалить"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -1431,7 +1431,7 @@ export default function App() {
                   <div className="w-px h-4 bg-slate-200 mx-1" />
                   <button 
                     onClick={() => setSelectedMachine(null)}
-                    className="p-1.5 sm:p-2 hover:bg-slate-200/50 rounded-full text-slate-400 transition-colors"
+                    className="min-h-10 min-w-10 flex items-center justify-center p-1.5 sm:p-2 hover:bg-slate-200/50 rounded-full text-slate-400 transition-colors"
                   >
                     <X className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
@@ -1453,31 +1453,31 @@ export default function App() {
                 />
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
                        <Clock className="w-3 h-3" />
                        Амортизация (текущая цена)
                     </p>
-                    <p className="text-xl font-bold text-slate-900">
+                    <p className="text-lg sm:text-xl font-bold text-slate-900 wrap-anywhere">
                       {machineService.calculateCurrentValue(selectedMachine).toLocaleString()} ₽
                     </p>
                     <p className="text-[10px] text-slate-400 mt-1 uppercase">Закупка: {(selectedMachine.purchasePrice || 0).toLocaleString()} ₽</p>
                   </div>
-                  <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100">
-                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50 border border-indigo-100">
+                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
                        <Building2 className="w-3 h-3" />
                        Текущий филиал
                     </p>
-                    <p className="text-lg font-bold text-indigo-600">
+                    <p className="text-base sm:text-lg font-bold text-indigo-600 break-words">
                       {branches.find(b => b.id === selectedMachine.branchId)?.name || 'Неизвестно'}
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-100">
-                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-100">
+                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
                        <CheckCircle2 className="w-3 h-3" />
                        Последнее ТО
                     </p>
@@ -1485,8 +1485,8 @@ export default function App() {
                       {new Date(selectedMachine.lastMaintenanceDate).toLocaleDateString('ru-RU')}
                     </p>
                   </div>
-                  <div className="p-5 rounded-2xl bg-amber-50 border border-amber-100">
-                    <p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-100">
+                    <p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
                        <Calendar className="w-3 h-3" />
                        След. ТО
                     </p>
@@ -1502,7 +1502,7 @@ export default function App() {
                     <Wrench className="w-4 h-4 text-indigo-500" />
                     Технические данные
                   </h4>
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-8 px-2">
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-4 sm:gap-x-8 px-1 sm:px-2">
                     {[
                       { label: 'Производитель', value: selectedMachine.manufacturer || 'Не указан' },
                       { label: 'Модель', value: selectedMachine.model },
@@ -1511,9 +1511,9 @@ export default function App() {
                       { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
                       { label: 'Дата установки', value: new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') },
                     ].map((item, idx) => (
-                      <div key={idx}>
+                      <div key={idx} className="min-w-0">
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>
-                        <p className="font-semibold text-slate-900">{item.value}</p>
+                        <p className="font-semibold text-slate-900 break-words">{item.value}</p>
                       </div>
                     ))}
                   </div>
@@ -1528,7 +1528,7 @@ export default function App() {
                     <TrendingDown className="w-4 h-4 text-blue-500" />
                     График амортизации
                   </h4>
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                  <div className="bg-slate-50 p-3 sm:p-6 rounded-2xl border border-slate-100">
                     <DepreciationChart machine={selectedMachine} />
                   </div>
                 </section>
@@ -1982,15 +1982,15 @@ function ScheduleList({ machineId, parts, machines, branches, onRefresh, role }:
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-blue-600" />
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2 min-w-0">
+          <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
           График регламентных работ (ТОиР)
         </h4>
         {canCreateSchedule && (
           <button 
             onClick={() => setShowAddForm(!showAddForm)}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-all"
+            className="min-h-10 whitespace-nowrap shrink-0 text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-all"
           >
             {showAddForm ? <ChevronDown className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
             {showAddForm ? 'Скрыть форму' : '+ Новая задача'}
@@ -2040,7 +2040,7 @@ function ScheduleList({ machineId, parts, machines, branches, onRefresh, role }:
                         {deadline.label}
                       </span>
                     </div>
-                    <h5 className="font-bold text-slate-900 leading-tight text-xs sm:text-sm">{schedule.taskName}</h5>
+                    <h5 className="font-bold text-slate-900 leading-tight text-xs sm:text-sm break-words">{schedule.taskName}</h5>
                     {schedule.description && (
                       <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{schedule.description}</p>
                     )}
@@ -2064,7 +2064,7 @@ function ScheduleList({ machineId, parts, machines, branches, onRefresh, role }:
                     {canEditSchedule && (
                       <button 
                         onClick={() => setEditingSchedule(schedule)}
-                        className="p-1.5 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-lg transition-colors"
+                        className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-lg transition-colors"
                         title="Редактировать"
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -2089,7 +2089,7 @@ function ScheduleList({ machineId, parts, machines, branches, onRefresh, role }:
                       ) : (
                         <button 
                           onClick={() => setDeletingScheduleId(schedule.id)}
-                          className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
+                          className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
                           title="Удалить"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -2185,7 +2185,7 @@ function EditScheduleForm({ schedule, onComplete }: { schedule: MaintenanceSched
               key={cat.type}
               type="button"
               onClick={() => setSelectedType(cat.type)}
-              className={`p-2 rounded-xl border text-center transition-all ${
+              className={`min-h-10 p-2 rounded-xl border text-center transition-all ${
                 selectedType === cat.type ? `${cat.colorClasses.badgeBg} border-2 ${cat.colorClasses.border} font-bold text-slate-900` : 'bg-slate-50 border-slate-200 text-slate-600'
               }`}
             >
@@ -2197,7 +2197,7 @@ function EditScheduleForm({ schedule, onComplete }: { schedule: MaintenanceSched
 
       <div>
         <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Название задачи *</label>
-        <input required type="text" className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold" value={formData.taskName} onChange={e => setFormData({...formData, taskName: e.target.value})} />
+        <input required type="text" className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold" value={formData.taskName} onChange={e => setFormData({...formData, taskName: e.target.value})} />
       </div>
 
       <div>
@@ -2208,20 +2208,20 @@ function EditScheduleForm({ schedule, onComplete }: { schedule: MaintenanceSched
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Интервал (дней)</label>
-          <input required type="number" min="1" className="w-full p-2 rounded-xl border border-slate-200 text-xs font-mono font-bold" value={formData.intervalDays} onChange={e => setFormData({...formData, intervalDays: Number(e.target.value)})} />
+          <input required type="number" min="1" className="w-full min-h-10 p-2 rounded-xl border border-slate-200 text-xs font-mono font-bold" value={formData.intervalDays} onChange={e => setFormData({...formData, intervalDays: Number(e.target.value)})} />
         </div>
         <div>
           <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Дата прошлого ТО</label>
-          <input required type="date" className="w-full p-2 rounded-xl border border-slate-200 text-xs font-mono" value={formData.lastPerformed} onChange={e => setFormData({...formData, lastPerformed: e.target.value})} />
+          <input required type="date" className="w-full min-h-10 p-2 rounded-xl border border-slate-200 text-xs font-mono" value={formData.lastPerformed} onChange={e => setFormData({...formData, lastPerformed: e.target.value})} />
         </div>
       </div>
 
       <div>
         <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Ответственный мастер</label>
-        <input type="text" className="w-full p-2 rounded-xl border border-slate-200 text-xs" value={formData.assignedTechnician} onChange={e => setFormData({...formData, assignedTechnician: e.target.value})} />
+        <input type="text" className="w-full min-h-10 p-2 rounded-xl border border-slate-200 text-xs" value={formData.assignedTechnician} onChange={e => setFormData({...formData, assignedTechnician: e.target.value})} />
       </div>
 
-      <button disabled={loading} type="submit" className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-md hover:bg-blue-600 transition-all">
+      <button disabled={loading} type="submit" className="w-full min-h-10 py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-md hover:bg-blue-600 transition-all">
         {loading ? 'Обновление...' : 'Обновить задачу'}
       </button>
     </form>
@@ -2281,7 +2281,7 @@ function AddScheduleForm({ machineId, onComplete }: { machineId: string, onCompl
                 key={cat.type}
                 type="button"
                 onClick={() => setSelectedType(cat.type)}
-                className={`p-2 rounded-xl border text-center transition-all ${
+                className={`min-h-10 p-2 rounded-xl border text-center transition-all ${
                   isSel ? `${cat.colorClasses.badgeBg} border-2 ${cat.colorClasses.border} font-bold text-slate-900 shadow-xs` : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -2315,7 +2315,7 @@ function AddScheduleForm({ machineId, onComplete }: { machineId: string, onCompl
           required 
           type="text" 
           placeholder="Название задачи по ТОиР..." 
-          className="w-full p-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-slate-900" 
+          className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-slate-900" 
           value={taskName} 
           onChange={e => setTaskName(e.target.value)} 
         />
@@ -2335,19 +2335,19 @@ function AddScheduleForm({ machineId, onComplete }: { machineId: string, onCompl
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <div>
           <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Интервал (дней)</label>
-          <input required type="number" min="1" className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs font-mono font-bold" value={intervalDays} onChange={e => setIntervalDays(Number(e.target.value))} />
+          <input required type="number" min="1" className="w-full min-h-10 p-2 rounded-xl border border-slate-200 bg-white text-xs font-mono font-bold" value={intervalDays} onChange={e => setIntervalDays(Number(e.target.value))} />
         </div>
         <div>
           <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Дата прошлого ТО</label>
-          <input required type="date" className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs font-mono" value={lastPerformed} onChange={e => setLastPerformed(e.target.value)} />
+          <input required type="date" className="w-full min-h-10 p-2 rounded-xl border border-slate-200 bg-white text-xs font-mono" value={lastPerformed} onChange={e => setLastPerformed(e.target.value)} />
         </div>
         <div className="col-span-2 sm:col-span-1">
           <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Мастер</label>
-          <input type="text" placeholder="Инженер" className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs" value={assignedTechnician} onChange={e => setAssignedTechnician(e.target.value)} />
+          <input type="text" placeholder="Инженер" className="w-full min-h-10 p-2 rounded-xl border border-slate-200 bg-white text-xs" value={assignedTechnician} onChange={e => setAssignedTechnician(e.target.value)} />
         </div>
       </div>
 
-      <button disabled={loading} type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-200 transition-all disabled:opacity-50">
+      <button disabled={loading} type="submit" className="w-full min-h-10 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-200 transition-all disabled:opacity-50">
         {loading ? 'Добавление...' : 'Запланировать задачу ТОиР'}
       </button>
     </form>
@@ -2387,8 +2387,8 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-6">
-        <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6">
+        <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 min-w-0">
           <HistoryIcon className="w-4 h-4 text-indigo-500" />
           История обслуживания
         </h4>
@@ -2402,21 +2402,21 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
           </div>
         ) : logs.length > 0 ? (
           logs.map(log => (
-            <div key={log.id} className="p-4 rounded-xl border border-slate-100 bg-white shadow-sm flex items-start gap-4 hover:shadow-md transition-all">
+            <div key={log.id} className="p-3 sm:p-4 rounded-xl border border-slate-100 bg-white shadow-sm flex items-start gap-3 sm:gap-4 hover:shadow-md transition-all">
               <div className={`p-2 rounded-lg shrink-0 ${log.type === 'repair' ? 'bg-rose-50 text-rose-500' : log.type === 'routine' ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-500'}`}>
                 {log.type === 'repair' ? <Wrench className="w-4 h-4" /> : <Hammer className="w-4 h-4" />}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start mb-1">
+                <div className="flex flex-wrap justify-between items-start gap-x-2 mb-1">
                   <p className="font-bold text-slate-900">
                     {log.type === 'routine' ? 'Плановое ТО' : log.type === 'repair' ? 'Ремонт' : 'Инспекция'}
                   </p>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0 ml-auto">
                     <span className="text-xs text-slate-400 font-mono mr-2">{new Date(log.date).toLocaleDateString('ru-RU')}</span>
                     {canEditLog && (
                       <button 
                         onClick={() => setEditingLog(log)}
-                        className="p-1.5 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
+                        className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
                         title="Редактировать запись"
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -2441,7 +2441,7 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
                       ) : (
                         <button 
                           onClick={() => setDeletingLogId(log.id)}
-                          className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
+                          className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
                           title="Удалить запись"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -2451,7 +2451,7 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
                   </div>
                 </div>
                 <p className="text-xs font-medium text-slate-500 mb-2">Мистер {log.technicianName || 'Техник'}</p>
-                <p className="text-sm text-slate-600 whitespace-pre-wrap">{log.notes}</p>
+                <p className="text-sm text-slate-600 whitespace-pre-wrap break-words">{log.notes}</p>
                 
                 {log.imageUrl && (
                   <div className="mt-2.5">
@@ -2637,7 +2637,7 @@ function Modal({ isOpen, onClose, title, children, size = 'xl' }: { isOpen: bool
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -2649,15 +2649,15 @@ function Modal({ isOpen, onClose, title, children, size = 'xl' }: { isOpen: bool
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className={`relative w-full ${sizeClasses[size]} bg-white rounded-3xl shadow-2xl overflow-hidden`}
+            className={`relative w-full ${sizeClasses[size]} bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden`}
           >
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-slate-900">
-              <h3 className="text-lg font-black uppercase tracking-tight">{title}</h3>
-              <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/50 text-slate-900">
+              <h3 className="text-base sm:text-lg font-black uppercase tracking-tight min-w-0 break-words">{title}</h3>
+              <button onClick={onClose} className="p-2.5 shrink-0 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div className="p-4 sm:p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
               {children}
             </div>
           </motion.div>
@@ -2769,9 +2769,9 @@ function MultiPhotoPicker({
 
   return (
     <div className={compact ? "space-y-1.5 text-slate-900" : "space-y-3 text-slate-900"}>
-      <div className="flex items-center justify-between">
-        <label className={compact ? "text-[9px] font-black uppercase tracking-wider text-slate-400 block px-0.5" : "text-xs font-bold uppercase tracking-wider text-slate-400 block"}>{label}</label>
-        <span className={compact ? "text-[9px] font-bold text-slate-400 font-mono" : "text-[11px] font-semibold text-slate-400"}>{safeImages.length} из {maxPhotos} фото</span>
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <label className={compact ? "text-[9px] font-black uppercase tracking-wider text-slate-400 block px-0.5 min-w-0 break-words" : "text-xs font-bold uppercase tracking-wider text-slate-400 block min-w-0 break-words"}>{label}</label>
+        <span className={compact ? "text-[9px] font-bold text-slate-400 font-mono whitespace-nowrap shrink-0 ml-auto" : "text-[11px] font-semibold text-slate-400 whitespace-nowrap shrink-0 ml-auto"}>{safeImages.length} из {maxPhotos} фото</span>
       </div>
 
       {error && (
@@ -3388,13 +3388,13 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           {error}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4 text-slate-900 overflow-y-auto max-h-[70vh] p-1 custom-scrollbar">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-slate-900 overflow-y-auto max-h-[70vh] p-1 custom-scrollbar">
+        <div className="sm:col-span-2">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Наименование</label>
           <input 
             required 
             type="text" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.name}
             onChange={e => setFormData({...formData, name: e.target.value})}
           />
@@ -3403,7 +3403,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Филиал</label>
           <select 
             required
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.branchId}
             onChange={e => setFormData({...formData, branchId: e.target.value})}
           >
@@ -3415,7 +3415,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Статус</label>
           <select 
             required
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.status}
             onChange={e => setFormData({...formData, status: e.target.value as MachineStatus})}
           >
@@ -3430,7 +3430,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           <input 
             type="text" 
             placeholder="Например: Haas, Trumpf, DMG MORI..."
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.manufacturer}
             onChange={e => setFormData({...formData, manufacturer: e.target.value})}
           />
@@ -3440,7 +3440,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           <input 
             required 
             type="text" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.model}
             onChange={e => setFormData({...formData, model: e.target.value})}
           />
@@ -3450,7 +3450,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           <input 
             required 
             type="text" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.serialNumber}
             onChange={e => setFormData({...formData, serialNumber: e.target.value})}
           />
@@ -3459,7 +3459,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Цена закупки (₽)</label>
           <input 
             type="number" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.purchasePrice}
             onChange={e => setFormData({...formData, purchasePrice: Number(e.target.value)})}
           />
@@ -3468,12 +3468,12 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Дата закупки</label>
           <input 
             type="date" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.purchaseDate}
             onChange={e => setFormData({...formData, purchaseDate: e.target.value})}
           />
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Описание</label>
           <textarea 
             className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
@@ -3482,7 +3482,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
             onChange={e => setFormData({...formData, description: e.target.value})}
           />
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <MultiPhotoPicker 
             images={formData.imageUrls} 
             onChange={(imgs) => setFormData({ ...formData, imageUrls: imgs, imageUrl: imgs[0] || '' })} 
@@ -3550,13 +3550,13 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           {error}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4 text-slate-900">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-slate-900">
+        <div className="sm:col-span-2">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Наименование</label>
           <input 
             required 
             type="text" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             placeholder="Токарный станок CNC..."
             value={formData.name}
             onChange={e => setFormData({...formData, name: e.target.value})}
@@ -3566,7 +3566,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Производитель / Бренд</label>
           <input 
             type="text" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             placeholder="Например: Haas, Trumpf, DMG MORI..."
             value={formData.manufacturer}
             onChange={e => setFormData({...formData, manufacturer: e.target.value})}
@@ -3576,7 +3576,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Филиал</label>
           <select 
             required
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.branchId}
             onChange={e => setFormData({...formData, branchId: e.target.value})}
           >
@@ -3589,7 +3589,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           <input 
             required 
             type="text" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.model}
             onChange={e => setFormData({...formData, model: e.target.value})}
           />
@@ -3599,7 +3599,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           <input 
             required 
             type="text" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.serialNumber}
             onChange={e => setFormData({...formData, serialNumber: e.target.value})}
           />
@@ -3608,7 +3608,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Цена закупки (₽)</label>
           <input 
             type="number" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.purchasePrice}
             onChange={e => setFormData({...formData, purchasePrice: Number(e.target.value)})}
           />
@@ -3617,7 +3617,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Дата закупки</label>
           <input 
             type="date" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.purchaseDate}
             onChange={e => setFormData({...formData, purchaseDate: e.target.value})}
           />
@@ -3626,7 +3626,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Срок службы (лет)</label>
           <input 
             type="number" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.usefulLifeYears}
             onChange={e => setFormData({...formData, usefulLifeYears: Number(e.target.value)})}
           />
@@ -3635,12 +3635,12 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Дата установки</label>
           <input 
             type="date" 
-            className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.installationDate}
             onChange={e => setFormData({...formData, installationDate: e.target.value})}
           />
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Описание/Заметки</label>
           <textarea 
             rows={3}
@@ -3649,7 +3649,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
             onChange={e => setFormData({...formData, description: e.target.value})}
           />
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <MultiPhotoPicker 
             images={formData.imageUrls} 
             onChange={(imgs) => setFormData({ ...formData, imageUrls: imgs, imageUrl: imgs[0] || '' })} 
@@ -3898,14 +3898,14 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
       
       {!initialMachineId && machines && (
         <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/80 space-y-1.5">
-          <div className="flex items-center justify-between px-0.5">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 px-0.5">
             <label className="text-[9px] font-black uppercase tracking-wider text-slate-400">Оборудование</label>
             {filteredMachines && <span className="text-[9px] font-bold text-slate-400">Доступно: {filteredMachines.length}</span>}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             <select 
-              className="w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-medium h-7 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="min-h-10 w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-medium h-7 focus:ring-1 focus:ring-blue-500 outline-none"
               value={selectedBranchId}
               onChange={e => setSelectedBranchId(e.target.value)}
             >
@@ -3915,7 +3915,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
 
             <select 
               required
-              className="w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-bold text-slate-800 shadow-xs h-7 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="min-h-10 w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-bold text-slate-800 shadow-xs h-7 focus:ring-1 focus:ring-blue-500 outline-none"
               value={formData.machineId}
               onChange={e => setFormData({...formData, machineId: e.target.value})}
             >
@@ -3939,7 +3939,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
           <div>
             <span className="text-slate-400 block text-[8px] uppercase tracking-wider mb-0.5 font-bold">Категория ТОиР</span>
             <select 
-              className="w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-bold h-7 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="min-h-10 w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-bold h-7 focus:ring-1 focus:ring-blue-500 outline-none"
               value={formData.type}
               onChange={e => {
                 const val = e.target.value as LogType;
@@ -3959,17 +3959,17 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
             <span className="text-slate-400 block text-[8px] uppercase tracking-wider mb-0.5 font-bold">Дата проведения</span>
             <input 
               type="date" 
-              className="w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-bold h-7 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="min-h-10 w-full px-2 py-1 bg-white rounded-lg border border-slate-200 text-[11px] font-bold h-7 focus:ring-1 focus:ring-blue-500 outline-none"
               value={formData.date}
               onChange={e => setFormData({...formData, date: e.target.value})}
             />
           </div>
 
-          <div className="col-span-2 bg-indigo-50/60 border border-indigo-100 rounded-lg p-1.5 flex items-center justify-between gap-2">
+          <div className="col-span-2 bg-indigo-50/60 border border-indigo-100 rounded-lg p-1.5 flex flex-wrap items-center justify-between gap-2">
             <span className="text-indigo-600 text-[9px] uppercase tracking-wider font-bold shrink-0">След. ТО:</span>
             <input 
               type="date" 
-              className="px-2 py-0.5 bg-white rounded-md border border-indigo-200 text-[11px] font-bold h-6 text-indigo-900 focus:ring-1 focus:ring-indigo-500 outline-none flex-1 max-w-[180px]"
+              className="min-h-10 px-2 py-0.5 bg-white rounded-md border border-indigo-200 text-[11px] font-bold h-6 text-indigo-900 focus:ring-1 focus:ring-indigo-500 outline-none flex-1 max-w-[180px]"
               value={formData.nextMaintenanceDate}
               onChange={e => setFormData({...formData, nextMaintenanceDate: e.target.value})}
             />
@@ -3982,7 +3982,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
           
           <div className="flex gap-1.5">
             <select 
-              className="flex-1 px-2 py-1 bg-white rounded-lg border border-slate-200 text-[10px] font-medium h-7 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="min-h-10 flex-1 px-2 py-1 bg-white rounded-lg border border-slate-200 text-[10px] font-medium h-7 focus:ring-1 focus:ring-blue-500 outline-none"
               value={selectedPart}
               onChange={e => setSelectedPart(e.target.value)}
             >
@@ -4014,7 +4014,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
                 step="any"
                 min="0.001" 
                 placeholder="Кол-во"
-                className="w-16 px-1.5 py-1 bg-white rounded-lg border border-slate-200 text-[10px] font-bold h-7 text-center focus:ring-1 focus:ring-blue-500 outline-none"
+                className="min-h-10 w-16 px-1.5 py-1 bg-white rounded-lg border border-slate-200 text-[10px] font-bold h-7 text-center focus:ring-1 focus:ring-blue-500 outline-none"
                 value={partQty}
                 onChange={e => setPartQty(e.target.value)}
                 title="Можно вводить дробное количество (например: 0.3, 0.5, 0.7)"
@@ -4098,11 +4098,11 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
       <div className="grid grid-cols-2 gap-2">
         <div className={initialMachineId ? "col-span-1" : "col-span-1"}>
           <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Исполнитель / Мастер</label>
-          <input required type="text" className="w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="ФИО исполнителя" value={formData.technicianName} onChange={e => setFormData({...formData, technicianName: e.target.value})} />
+          <input required type="text" className="min-h-10 w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="ФИО исполнителя" value={formData.technicianName} onChange={e => setFormData({...formData, technicianName: e.target.value})} />
         </div>
         <div className="col-span-1">
           <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость работ (₽)</label>
-          <input type="number" className="w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 ₽" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
+          <input type="number" className="min-h-10 w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 ₽" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
         </div>
       </div>
 
@@ -4358,11 +4358,11 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
           {error}
         </div>
       )}
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
         <div className="col-span-1">
           <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Тип работ</label>
           <select 
-            className="w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none"
+            className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none"
             value={formData.type}
             onChange={e => setFormData({...formData, type: e.target.value as LogType})}
           >
@@ -4373,11 +4373,11 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
         </div>
         <div className="col-span-1">
           <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Дата проведения</label>
-          <input required type="date" className="w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+          <input required type="date" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
         </div>
         <div className="col-span-1">
           <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость (₽)</label>
-          <input type="number" className="w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 ₽" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
+          <input type="number" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 ₽" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
         </div>
       </div>
 
@@ -4385,7 +4385,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
         <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 block px-0.5">Запчасти со склада</label>
         <div className="flex gap-1.5">
           <select 
-            className="flex-1 px-2 py-1 rounded-lg border border-slate-200 text-[10px] font-medium bg-white h-7 focus:ring-1 focus:ring-blue-500 outline-none" 
+            className="min-h-10 flex-1 px-2 py-1 rounded-lg border border-slate-200 text-[10px] font-medium bg-white h-7 focus:ring-1 focus:ring-blue-500 outline-none" 
             value={selectedPart} 
             onChange={e => setSelectedPart(e.target.value)}
           >
@@ -4411,7 +4411,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
               );
             })}
           </select>
-          <input type="number" min="1" className="w-12 px-1 py-1 rounded-lg border border-slate-200 text-[10px] font-bold bg-white h-7 text-center" value={partQty} onChange={e => setPartQty(Number(e.target.value))} />
+          <input type="number" min="1" className="min-h-10 w-12 px-1 py-1 rounded-lg border border-slate-200 text-[10px] font-bold bg-white h-7 text-center" value={partQty} onChange={e => setPartQty(Number(e.target.value))} />
           <button type="button" onClick={addPart} className="px-2.5 bg-slate-900 text-white rounded-lg hover:bg-blue-600 transition-colors h-7 flex items-center justify-center shrink-0 font-bold active:scale-95 text-[10px]">
             +
           </button>
@@ -4473,7 +4473,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
         <div>
           <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Связь с регламентом</label>
           <select 
-            className="w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-medium h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none"
+            className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-medium h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none"
             value={selectedScheduleId}
             onChange={e => setSelectedScheduleId(e.target.value)}
           >
@@ -4488,7 +4488,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
           <input 
             required 
             type="date" 
-            className="w-full px-2 py-1 rounded-lg border border-indigo-200 bg-indigo-50/40 text-[11px] font-bold h-7 focus:ring-1 focus:ring-indigo-500 outline-none text-indigo-900" 
+            className="min-h-10 w-full px-2 py-1 rounded-lg border border-indigo-200 bg-indigo-50/40 text-[11px] font-bold h-7 focus:ring-1 focus:ring-indigo-500 outline-none text-indigo-900" 
             value={nextMaintenanceDate} 
             onChange={e => setNextMaintenanceDate(e.target.value)} 
           />
@@ -4548,7 +4548,7 @@ function AddBranchForm({ onComplete }: { onComplete: () => void }) {
         <input 
           required 
           type="text" 
-          className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+          className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
           placeholder="Например: Цех №1"
           value={formData.name} 
           onChange={e => setFormData({...formData, name: e.target.value})} 
@@ -4558,7 +4558,7 @@ function AddBranchForm({ onComplete }: { onComplete: () => void }) {
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Адрес / Локация</label>
         <input 
           type="text" 
-          className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+          className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
           placeholder="Город, улица..."
           value={formData.location} 
           onChange={e => setFormData({...formData, location: e.target.value})} 
@@ -4681,7 +4681,7 @@ function UnitsManagerModal({
                 placeholder="Напр.: м³" 
                 value={code} 
                 onChange={e => setCode(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                className="min-h-10 w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none bg-white"
               />
             </div>
             <div className="col-span-2">
@@ -4695,7 +4695,7 @@ function UnitsManagerModal({
                   placeholder="Напр.: Кубический метр" 
                   value={name} 
                   onChange={e => setName(e.target.value)}
-                  className="flex-1 p-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  className="min-h-10 flex-1 p-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                 />
                 <button 
                   type="submit" 
@@ -4732,14 +4732,14 @@ function UnitsManagerModal({
                       value={editCode} 
                       onChange={e => setEditCode(e.target.value)} 
                       placeholder="Код (напр. шт)" 
-                      className="w-24 px-2.5 py-1.5 bg-white border border-blue-300 rounded-lg text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="min-h-10 w-24 px-2.5 py-1.5 bg-white border border-blue-300 rounded-lg text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <input 
                       type="text" 
                       value={editName} 
                       onChange={e => setEditName(e.target.value)} 
                       placeholder="Полное наименование" 
-                      className="flex-1 px-2.5 py-1.5 bg-white border border-blue-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="min-h-10 flex-1 px-2.5 py-1.5 bg-white border border-blue-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <div className="flex items-center gap-1.5 shrink-0 justify-end">
                       <button 
@@ -4919,43 +4919,43 @@ function AddPartForm({
         </div>
       )}
       <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Наименование запчасти</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">Наименование запчасти</label>
         <input 
           required 
           type="text" 
-          className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium transition-all" 
+          className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium transition-all" 
           placeholder="Например: Фильтр масляный гидравлический" 
           value={formData.name} 
           onChange={e => setFormData({...formData, name: e.target.value})} 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Артикул / SKU</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">Артикул / SKU</label>
           <input 
             required 
             type="text" 
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono transition-all uppercase" 
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono transition-all uppercase" 
             placeholder="SKU-12345" 
             value={formData.sku} 
             onChange={e => setFormData({...formData, sku: e.target.value})} 
           />
         </div>
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1.5 sm:mb-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">Ед. измерения</label>
             <button 
               type="button" 
               onClick={onOpenUnitsModal}
-              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 hover:underline"
+              className="-my-3 py-3 text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 hover:underline whitespace-nowrap shrink-0"
             >
               <Plus className="w-3 h-3" />
               Добавить ЕИ
             </button>
           </div>
           <select 
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm font-semibold transition-all cursor-pointer"
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm font-semibold transition-all cursor-pointer"
             value={formData.unit || 'шт'}
             onChange={e => setFormData({ ...formData, unit: e.target.value })}
           >
@@ -4968,16 +4968,16 @@ function AddPartForm({
 
       {/* Привязка к филиалу и оборудованию */}
       <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-blue-600" />
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5 min-w-0 break-words">
+            <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
             Привязка к филиалу и станку (по выбору)
           </span>
           {(branchId || machineId) && (
             <button
               type="button"
               onClick={() => { setBranchId(''); setMachineId(''); }}
-              className="text-[10px] font-bold text-slate-400 hover:text-rose-600 transition-colors"
+              className="-my-3 py-3 text-[10px] font-bold text-slate-400 hover:text-rose-600 transition-colors whitespace-nowrap shrink-0"
             >
               Сбросить
             </button>
@@ -4992,7 +4992,7 @@ function AddPartForm({
             <select
               value={branchId}
               onChange={e => handleBranchChange(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
+              className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
             >
               <option value="">Для всех филиалов (общая)</option>
               {branches.map(b => (
@@ -5010,7 +5010,7 @@ function AddPartForm({
             <select
               value={machineId}
               onChange={e => handleMachineChange(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
+              className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
             >
               <option value="">Для любого оборудования (универсальная)</option>
               {filteredMachines.map(m => (
@@ -5035,9 +5035,9 @@ function AddPartForm({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
             Количество к оприходованию ({formData.unit || 'шт'})
           </label>
           <input 
@@ -5045,13 +5045,13 @@ function AddPartForm({
             type="number" 
             min="0"
             step="any"
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
             value={formData.quantity} 
             onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})} 
           />
         </div>
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
             Мин. запас ({formData.unit || 'шт'})
           </label>
           <input 
@@ -5059,7 +5059,7 @@ function AddPartForm({
             type="number" 
             min="0"
             step="any"
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
             value={formData.minQuantity} 
             onChange={e => setFormData({...formData, minQuantity: parseFloat(e.target.value) || 0})} 
           />
@@ -5067,7 +5067,7 @@ function AddPartForm({
       </div>
 
       <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
           Цена за 1 {formData.unit || 'ед.'} (₽)
         </label>
         <input 
@@ -5075,7 +5075,7 @@ function AddPartForm({
           type="number" 
           min="0"
           step="any"
-          className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
+          className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
           value={formData.unitPrice} 
           onChange={e => setFormData({...formData, unitPrice: parseFloat(e.target.value) || 0})} 
           placeholder="0.00"
@@ -5094,24 +5094,24 @@ function AddPartForm({
       </div>
 
       {/* Итоговая расчетная сумма оприходования */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50/70 border-2 border-blue-200 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
+      <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50/70 border-2 border-blue-200 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
               <Receipt className="w-6 h-6" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-700">Итого сумма оприходования</p>
               <p className="text-sm text-slate-500 font-mono mt-0.5 font-semibold">
                 {formData.quantity || 0} {formData.unit || 'шт'} × {(Number(formData.unitPrice) || 0).toLocaleString('ru-RU')} ₽
               </p>
             </div>
           </div>
-          <div className="text-right shrink-0">
-            <div className="text-3xl sm:text-4xl font-black font-mono text-blue-900 tracking-tight">
+          <div className="ml-auto text-right min-w-0">
+            <div className="text-2xl sm:text-3xl md:text-4xl wrap-anywhere font-black font-mono text-blue-900 tracking-tight">
               {totalSum.toLocaleString('ru-RU')} ₽
             </div>
-            <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mt-0.5">
+            <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mt-1">
               Сумма партии
             </div>
           </div>
@@ -5227,41 +5227,41 @@ function EditPartForm({
         </div>
       )}
       <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Наименование запчасти</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">Наименование запчасти</label>
         <input 
           required 
           type="text" 
-          className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium transition-all" 
+          className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium transition-all" 
           value={formData.name} 
           onChange={e => setFormData({...formData, name: e.target.value})} 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Артикул / SKU</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">Артикул / SKU</label>
           <input 
             required 
             type="text" 
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono transition-all uppercase" 
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono transition-all uppercase" 
             value={formData.sku} 
             onChange={e => setFormData({...formData, sku: e.target.value})} 
           />
         </div>
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1.5 sm:mb-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">Ед. измерения</label>
             <button 
               type="button" 
               onClick={onOpenUnitsModal}
-              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 hover:underline"
+              className="-my-3 py-3 text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 hover:underline whitespace-nowrap shrink-0"
             >
               <Plus className="w-3 h-3" />
               Добавить ЕИ
             </button>
           </div>
           <select 
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm font-semibold transition-all cursor-pointer"
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm font-semibold transition-all cursor-pointer"
             value={formData.unit || 'шт'}
             onChange={e => setFormData({ ...formData, unit: e.target.value })}
           >
@@ -5274,16 +5274,16 @@ function EditPartForm({
 
       {/* Привязка к филиалу и оборудованию */}
       <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-blue-600" />
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5 min-w-0 break-words">
+            <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
             Привязка к филиалу и станку (по выбору)
           </span>
           {(branchId || machineId) && (
             <button
               type="button"
               onClick={() => { setBranchId(''); setMachineId(''); }}
-              className="text-[10px] font-bold text-slate-400 hover:text-rose-600 transition-colors"
+              className="-my-3 py-3 text-[10px] font-bold text-slate-400 hover:text-rose-600 transition-colors whitespace-nowrap shrink-0"
             >
               Сбросить
             </button>
@@ -5298,7 +5298,7 @@ function EditPartForm({
             <select
               value={branchId}
               onChange={e => handleBranchChange(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
+              className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
             >
               <option value="">Для всех филиалов (общая)</option>
               {branches.map(b => (
@@ -5316,7 +5316,7 @@ function EditPartForm({
             <select
               value={machineId}
               onChange={e => handleMachineChange(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
+              className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
             >
               <option value="">Для любого оборудования (универсальная)</option>
               {filteredMachines.map(m => (
@@ -5341,9 +5341,9 @@ function EditPartForm({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
             Количество на складе ({formData.unit || 'шт'})
           </label>
           <input 
@@ -5351,13 +5351,13 @@ function EditPartForm({
             type="number" 
             min="0"
             step="any"
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
             value={formData.quantity} 
             onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})} 
           />
         </div>
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
             Мин. запас ({formData.unit || 'шт'})
           </label>
           <input 
@@ -5365,7 +5365,7 @@ function EditPartForm({
             type="number" 
             min="0"
             step="any"
-            className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
+            className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
             value={formData.minQuantity} 
             onChange={e => setFormData({...formData, minQuantity: parseFloat(e.target.value) || 0})} 
           />
@@ -5373,7 +5373,7 @@ function EditPartForm({
       </div>
 
       <div>
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
           Цена за 1 {formData.unit || 'ед.'} (₽)
         </label>
         <input 
@@ -5381,7 +5381,7 @@ function EditPartForm({
           type="number" 
           min="0"
           step="any"
-          className="w-full p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
+          className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold transition-all font-mono" 
           value={formData.unitPrice} 
           onChange={e => setFormData({...formData, unitPrice: parseFloat(e.target.value) || 0})} 
         />
@@ -5399,24 +5399,24 @@ function EditPartForm({
       </div>
 
       {/* Итоговая стоимость складского остатка */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50/70 border-2 border-blue-200 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
+      <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50/70 border-2 border-blue-200 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
               <Receipt className="w-6 h-6" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-700">Итого стоимость остатка</p>
               <p className="text-sm text-slate-500 font-mono mt-0.5 font-semibold">
                 {formData.quantity || 0} {formData.unit || 'шт'} × {(Number(formData.unitPrice) || 0).toLocaleString('ru-RU')} ₽
               </p>
             </div>
           </div>
-          <div className="text-right shrink-0">
-            <div className="text-3xl sm:text-4xl font-black font-mono text-blue-900 tracking-tight">
+          <div className="ml-auto text-right min-w-0">
+            <div className="text-2xl sm:text-3xl md:text-4xl wrap-anywhere font-black font-mono text-blue-900 tracking-tight">
               {totalSum.toLocaleString('ru-RU')} ₽
             </div>
-            <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mt-0.5">
+            <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mt-1">
               Стоимость на складе
             </div>
           </div>
@@ -5650,11 +5650,11 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
   return (
     <div className="flex flex-col flex-1 min-h-0 space-y-3">
       {/* Top Controls Panel */}
-      <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0">
-        <div className="flex items-center gap-2">
+      <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <button
             onClick={() => setShowGuideModal(true)}
-            className="px-3.5 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200 shrink-0 shadow-2xs"
+            className="min-h-10 px-3.5 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200 shrink-0 shadow-2xs"
             title="Справочник по 4 типам ТОиР"
           >
             <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
@@ -5664,7 +5664,7 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
           <select
             value={branchFilter}
             onChange={e => setBranchFilter(e.target.value)}
-            className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-full border border-slate-200 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 shrink-0 cursor-pointer shadow-2xs"
+            className="min-h-10 flex-1 sm:flex-none min-w-0 max-w-full sm:max-w-60 truncate px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-full border border-slate-200 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
           >
             <option value="all">Все филиалы</option>
             {branches.map(b => (
@@ -5677,7 +5677,7 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
           {canCreateSchedule && (
             <button
               onClick={() => setShowCreateScheduleModal(true)}
-              className="flex-1 sm:flex-none px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-200 shrink-0 active:scale-95"
+              className="flex-1 sm:flex-none min-h-10 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-200 shrink-0 active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+ Задача ТОиР</span>
@@ -5691,7 +5691,7 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
         <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5 sm:pb-0">
           <button
             onClick={() => setToirCategoryFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+            className={`min-h-10 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
               toirCategoryFilter === 'all'
                 ? 'bg-slate-900 text-white shadow-sm'
                 : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -5708,7 +5708,7 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
               <button
                 key={cat.type}
                 onClick={() => setToirCategoryFilter(cat.type)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+                className={`min-h-10 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
                   isSelected
                     ? `${cat.colorClasses.badgeBg} border-2 ${cat.colorClasses.border} text-slate-900 shadow-sm`
                     : `bg-white ${cat.colorClasses.border} text-slate-700 hover:bg-slate-50`
@@ -5727,7 +5727,7 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
       <div className="flex-1 min-h-0">
         {subTab === 'schedule' ? (
           <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-3.5">
               <AnimatePresence mode="popLayout">
                 {filteredSchedules.map((schedule) => {
                   const machine = machines.find(m => m.id === schedule.machineId);
@@ -5920,7 +5920,7 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
         ) : (
           /* Subtab === 'pending' (Ожидание ТО) */
           <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-3.5">
               <AnimatePresence mode="popLayout">
                 {/* Render overdue schedules */}
                 {pendingSchedules.map((schedule) => {
@@ -6510,23 +6510,23 @@ function BranchesTab({ branches, machines, onRefresh, role }: { branches: Branch
         </div>
       )}
 
-      <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-slate-800">
+      <div className="lg:max-h-[600px] lg:overflow-y-auto lg:pr-2 custom-scrollbar">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 text-slate-800">
           {branches.map(branch => (
             <div 
               key={branch.id} 
               onClick={() => setViewingMachinesBranch(branch)}
-              className={`bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group cursor-pointer hover:border-blue-300 ${deletingId === branch.id ? 'opacity-50 grayscale scale-95' : ''}`}
+              className={`bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group cursor-pointer hover:border-blue-300 ${deletingId === branch.id ? 'opacity-50 grayscale scale-95' : ''}`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-transform" />
-                  <div>
-                    <h3 className="font-bold text-slate-900">{branch.name}</h3>
-                    <p className="text-xs text-slate-400">{branch.location}</p>
+              <div className="flex items-start justify-between gap-2 mb-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Building2 className="w-8 h-8 shrink-0 text-blue-500 group-hover:scale-110 transition-transform" />
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-slate-900 break-words">{branch.name}</h3>
+                    <p className="text-xs text-slate-400 break-words">{branch.location}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   {canEditBranch && (
                     <button 
                       onClick={(e) => {
@@ -6535,7 +6535,7 @@ function BranchesTab({ branches, machines, onRefresh, role }: { branches: Branch
                         setEditingBranch(branch);
                       }}
                       disabled={deletingId === branch.id}
-                      className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all disabled:opacity-30 cursor-pointer"
+                      className="p-2.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all disabled:opacity-30 cursor-pointer"
                       title="Редактировать филиал"
                     >
                       <Pencil className="w-4 h-4" />
@@ -6549,7 +6549,7 @@ function BranchesTab({ branches, machines, onRefresh, role }: { branches: Branch
                         setConfirmDelete({id: branch.id, name: branch.name});
                       }}
                       disabled={deletingId === branch.id}
-                      className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all disabled:opacity-30 cursor-pointer"
+                      className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all disabled:opacity-30 cursor-pointer"
                       title="Удалить филиал"
                     >
                       <Trash2 className={`w-5 h-5 ${deletingId === branch.id ? 'animate-pulse text-rose-600' : ''}`} />
@@ -6693,7 +6693,7 @@ function EditBranchForm({ branch, onComplete }: { branch: Branch, onComplete: ()
         <input 
           required 
           type="text" 
-          className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+          className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
           placeholder="Например: Цех №1"
           value={formData.name} 
           onChange={e => setFormData({...formData, name: e.target.value})} 
@@ -6703,7 +6703,7 @@ function EditBranchForm({ branch, onComplete }: { branch: Branch, onComplete: ()
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Адрес / Локация</label>
         <input 
           type="text" 
-          className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
+          className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" 
           placeholder="Город, улица..."
           value={formData.location} 
           onChange={e => setFormData({...formData, location: e.target.value})} 
@@ -6810,7 +6810,7 @@ function InventoryTab({
   };
 
   return (
-    <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
+    <div className="space-y-4 sm:space-y-6 lg:max-h-[700px] lg:overflow-y-auto lg:pr-2 custom-scrollbar">
       {/* Top Metrics Banner - Total Warehouse Value & Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         {/* KPI 1: Total Warehouse Sum */}
@@ -6819,7 +6819,7 @@ function InventoryTab({
             <Receipt className="w-12 h-12" />
           </div>
           <div>
-            <div className="flex items-center justify-between mb-0.5">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-0.5">
               <span className="text-[9px] font-black uppercase tracking-wider text-blue-100 flex items-center gap-1">
                 <CircleDollarSign className="w-3 h-3" />
                 Общая сумма склада
@@ -6841,7 +6841,7 @@ function InventoryTab({
         {/* KPI 2: Total Items Quantity */}
         <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-0.5">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-0.5">
               <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
                 <Boxes className="w-3 h-3 text-blue-600" />
                 Всего позиций
@@ -6863,7 +6863,7 @@ function InventoryTab({
         {/* KPI 3: Average Unit Cost */}
         <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-0.5">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-0.5">
               <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
                 <Tag className="w-3 h-3 text-emerald-600" />
                 Средняя цена ед.
@@ -6887,7 +6887,7 @@ function InventoryTab({
           lowStockParts.length > 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <div className="flex items-center justify-between mb-0.5">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-0.5">
               <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${
                 lowStockParts.length > 0 ? 'text-rose-700' : 'text-slate-500'
               }`}>
@@ -6914,24 +6914,24 @@ function InventoryTab({
       </div>
 
       {/* Top action bar and filter controls */}
-      <div className="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-2 items-center justify-between">
-        <div className="flex flex-1 items-center gap-2 w-full">
-          <div className="relative flex-1">
+      <div className="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row gap-2 items-stretch lg:items-center justify-between">
+        <div className="flex flex-1 flex-wrap items-center gap-2 w-full min-w-0">
+          <div className="relative flex-1 basis-full sm:basis-48 min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
             <input 
               type="text" 
               placeholder="Поиск запчасти по наименованию или артикулу SKU..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+              className="w-full min-h-10 pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto min-w-0">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full sm:w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
             >
               <option value="all">Все статусы ({safeParts.length})</option>
               <option value="normal">В норме ({safeParts.filter(p => (p.quantity || 0) > (p.minQuantity || 0)).length})</option>
@@ -6950,7 +6950,7 @@ function InventoryTab({
                   }
                 }
               }}
-              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[130px] truncate"
+              className="w-full sm:w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer sm:max-w-[130px] truncate"
               title="Фильтр по филиалу"
             >
               <option value="all">🏢 Все филиалы</option>
@@ -6962,7 +6962,7 @@ function InventoryTab({
             <select
               value={machineFilter}
               onChange={(e) => setMachineFilter(e.target.value)}
-              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[140px] truncate"
+              className="w-full sm:w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer sm:max-w-[140px] truncate"
               title="Фильтр по оборудованию"
             >
               <option value="all">🎯 Все станки</option>
@@ -6976,7 +6976,7 @@ function InventoryTab({
             <select
               value={unitFilter}
               onChange={(e) => setUnitFilter(e.target.value)}
-              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full sm:w-auto min-w-0 min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
             >
               <option value="all">Все ЕИ</option>
               {safeUnits.map(u => (
@@ -6986,17 +6986,17 @@ function InventoryTab({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-between md:justify-end">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto justify-between lg:justify-end">
           {/* Summary badge of filtered view */}
-          <div className="px-2.5 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+          <div className="min-h-10 px-2.5 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 flex flex-wrap items-center gap-x-1.5">
             <span>Итого по выборке:</span>
-            <span className="font-mono font-black text-blue-700">{filteredSum.toLocaleString('ru-RU')} ₽</span>
+            <span className="font-mono font-black text-blue-700 whitespace-nowrap">{filteredSum.toLocaleString('ru-RU')} ₽</span>
           </div>
 
           {canManageUnits && onOpenUnitsModal && (
             <button 
               onClick={onOpenUnitsModal}
-              className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs active:scale-95 cursor-pointer shrink-0"
+              className="min-h-10 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs active:scale-95 cursor-pointer shrink-0"
               title="Управление единицами измерения"
             >
               <Tag className="w-3.5 h-3.5 text-blue-600" />
@@ -7058,8 +7058,8 @@ function InventoryTab({
                             <Boxes className="w-5 h-5 opacity-40" />
                           </div>
                         )}
-                        <div>
-                          <p className="font-bold text-slate-800">{part.name}</p>
+                        <div className="min-w-48">
+                          <p className="font-bold text-slate-800 break-words">{part.name}</p>
                           <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                             <span className="text-[10px] text-slate-400 font-mono uppercase">ЕИ: {part.unit || 'шт'}</span>
                             {part.machineId ? (
@@ -7075,38 +7075,38 @@ function InventoryTab({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-slate-600 font-mono text-xs font-semibold">
+                    <td className="px-4 py-4 text-slate-600 font-mono text-xs font-semibold whitespace-nowrap">
                       {part.sku || '—'}
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-black font-mono ${isLow ? 'text-rose-600' : 'text-slate-900'}`}>
+                        <span className={`text-sm font-black font-mono whitespace-nowrap ${isLow ? 'text-rose-600' : 'text-slate-900'}`}>
                           {part.quantity} {part.unit || 'шт'}
                         </span>
                         {isLow && <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-slate-500 text-xs font-bold font-mono">
+                    <td className="px-4 py-4 text-slate-500 text-xs font-bold font-mono whitespace-nowrap">
                       {part.minQuantity} {part.unit || 'шт'}
                     </td>
-                    <td className="px-4 py-4 text-slate-600 text-xs font-mono font-medium">
+                    <td className="px-4 py-4 text-slate-600 text-xs font-mono font-medium whitespace-nowrap">
                       {(part.unitPrice || 0).toLocaleString('ru-RU')} ₽
                     </td>
                     {/* Итого сумма по позиции */}
-                    <td className="px-5 py-4 bg-blue-50/30 font-mono font-black text-sm text-blue-900">
+                    <td className="px-5 py-4 bg-blue-50/30 font-mono font-black text-sm text-blue-900 whitespace-nowrap">
                       {rowTotalSum.toLocaleString('ru-RU')} ₽
                     </td>
                     <td className="px-4 py-4">
                       {isOut ? (
-                        <span className="bg-rose-100 text-rose-800 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shadow-xs border border-rose-200">
+                        <span className="bg-rose-100 text-rose-800 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shadow-xs border border-rose-200 whitespace-nowrap">
                           Нет на складе
                         </span>
                       ) : isLow ? (
-                        <span className="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shadow-xs border border-amber-200">
+                        <span className="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shadow-xs border border-amber-200 whitespace-nowrap">
                           Низкий запас
                         </span>
                       ) : (
-                        <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border border-emerald-200">
+                        <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border border-emerald-200 whitespace-nowrap">
                           В норме
                         </span>
                       )}
@@ -7300,10 +7300,10 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
   }, 0);
 
   return (
-    <div className="space-y-8 overflow-auto pb-20 px-1 custom-scrollbar">
+    <div className="space-y-4 sm:space-y-8 overflow-auto pb-20 px-1 custom-scrollbar">
       {/* Search & Filter Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 sm:space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-600" />
             Панель управления отчетом
@@ -7311,7 +7311,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
           {canExport && (
             <button 
               onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 min-h-10 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0"
             >
               <Printer className="w-4 h-4" />
               Печать отчета
@@ -7319,7 +7319,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3 sm:gap-4">
           <div>
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Филиал</label>
             <select 
@@ -7379,33 +7379,33 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
       </div>
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-4 sm:gap-6">
         {canEquipment && (
-          <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-xl">
+          <div className="bg-slate-900 text-white p-4 sm:p-6 rounded-2xl border border-slate-800 shadow-xl min-w-0">
             <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Стоимость активов</p>
-            <p className="text-3xl font-mono font-black">{totalValue.toLocaleString()} ₽</p>
+            <p className="text-xl sm:text-2xl font-mono font-black wrap-anywhere">{totalValue.toLocaleString()} ₽</p>
             <p className="text-[10px] text-slate-500 mt-2">На основе текущих фильтров</p>
           </div>
         )}
         {canToir && (
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm min-w-0">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Затраты на ТО / Ремонт</p>
-            <p className="text-3xl font-mono font-black text-rose-600">{totalMaintenanceCost.toLocaleString()} ₽</p>
+            <p className="text-xl sm:text-2xl font-mono font-black text-rose-600 wrap-anywhere">{totalMaintenanceCost.toLocaleString()} ₽</p>
             <p className="text-[10px] text-slate-400 mt-2 uppercase">{relevantLogs.length} операций проведено</p>
           </div>
         )}
         {canInventory && (
           <>
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Баланс склада (Общий)</p>
-              <p className="text-3xl font-mono font-black text-blue-600">
+              <p className="text-xl sm:text-2xl font-mono font-black text-blue-600 wrap-anywhere">
                 {parts.reduce((acc, p) => acc + (p.quantity * (p.unitPrice || 0)), 0).toLocaleString()} ₽
               </p>
               <p className="text-[10px] text-slate-400 mt-2 uppercase">{parts.length} наименований</p>
             </div>
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Расход запчастей</p>
-              <p className="text-3xl font-mono font-black text-amber-600">
+              <p className="text-xl sm:text-2xl font-mono font-black text-amber-600 wrap-anywhere">
                 {totalPartsUsedCost.toLocaleString('ru-RU')} ₽
               </p>
               <p className="text-[10px] text-slate-400 mt-2 uppercase">Использовано {totalPartsUsedQty} ед. запчастей</p>
@@ -7416,34 +7416,34 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
 
       {canEquipment && (
         filterMachineId !== 'all' ? (
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                <TrendingDown className="w-5 h-5 text-blue-600" />
+          <div className="bg-white p-4 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 min-w-0 break-words">
+                <TrendingDown className="w-5 h-5 text-blue-600 shrink-0" />
                 Прогноз амортизационной стоимости: {machines.find(m => m.id === filterMachineId)?.name}
               </h3>
             </div>
-            <div className="h-80 w-full">
+            <div className="h-64 sm:h-80 w-full">
               <DepreciationChart machine={machines.find(m => m.id === filterMachineId)!} />
             </div>
           </div>
         ) : (
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                <TrendingDown className="w-5 h-5 text-indigo-600" />
+          <div className="bg-white p-4 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 min-w-0 break-words">
+                <TrendingDown className="w-5 h-5 text-indigo-600 shrink-0" />
                 Сводный прогноз амортизации активов
               </h3>
             </div>
-            <div className="h-80 w-full">
+            <div className="h-64 sm:h-80 w-full">
               <TotalDepreciationChart machines={filteredMachines} />
             </div>
           </div>
         )
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <div className="xl:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-8">
+        <div className="xl:col-span-2 space-y-4 sm:space-y-8 min-w-0">
            {/* Branch Performance Summary */}
            {canSummary && (
              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-fit">
@@ -7472,8 +7472,8 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
                       
                       return (
                         <tr key={branch.id} className="hover:bg-blue-50/20 transition-colors">
-                          <td className="px-6 py-4 font-bold text-slate-800">{branch.name}</td>
-                          <td className="px-6 py-4 text-slate-600">{branchMachines.length} шт</td>
+                          <td className="px-6 py-4 font-bold text-slate-800 min-w-40">{branch.name}</td>
+                          <td className="px-6 py-4 text-slate-600 whitespace-nowrap">{branchMachines.length} шт</td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
                               <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -7482,7 +7482,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
                               <span className="text-[10px] font-mono font-bold">{uptime.toFixed(0)}%</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">{branchSpending.toLocaleString()} ₽</td>
+                          <td className="px-6 py-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">{branchSpending.toLocaleString()} ₽</td>
                         </tr>
                       );
                     })}
@@ -7495,7 +7495,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
           {/* Machine Cost Analysis Table */}
           {canToir && (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <div className="px-4 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap justify-between items-center gap-2">
                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
                   <HistoryIcon className="w-4 h-4 text-blue-500" />
                   Журнал обслуживания и ремонтов
@@ -7519,7 +7519,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
                         <tr key={log.id} className="hover:bg-blue-50/20 transition-colors">
                           <td className="px-6 py-4">
                             <p className="text-xs font-mono text-slate-400 mb-0.5">{new Date(log.date).toLocaleDateString('ru-RU')}</p>
-                            <p className="font-bold text-slate-800 leading-tight">{machine?.name || '—'}</p>
+                            <p className="font-bold text-slate-800 leading-tight min-w-40">{machine?.name || '—'}</p>
                             <p className="text-[10px] text-slate-400 font-mono uppercase">{machine?.model}</p>
                           </td>
                           <td className="px-6 py-4">
@@ -7540,7 +7540,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
                                )) || '—'}
                              </div>
                           </td>
-                          <td className="px-6 py-4 text-right font-black text-slate-900">{(log.cost || 0).toLocaleString()} ₽</td>
+                          <td className="px-6 py-4 text-right font-black text-slate-900 whitespace-nowrap">{(log.cost || 0).toLocaleString()} ₽</td>
                         </tr>
                       );
                     })}
@@ -7559,8 +7559,8 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
         <div className="space-y-6">
           {/* Top 5 Most Expensive Machines */}
           {canToir && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4 sm:mb-6 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-rose-500" />
                 Самые затратные станки
               </h3>
@@ -7613,8 +7613,8 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
 
           {/* Spare Parts Usage Ranking */}
           {canInventory && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4 sm:mb-6 flex items-center gap-2">
                 <Boxes className="w-4 h-4 text-blue-500" />
                 Расход запчастей (ТОП-5)
               </h3>
@@ -7799,23 +7799,23 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
   });
 
   return (
-    <div className="flex flex-col h-full space-y-6 overflow-hidden">
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm shrink-0 flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+    <div className="flex flex-col h-full space-y-4 sm:space-y-6 overflow-hidden">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm shrink-0 flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch lg:items-center justify-between">
+        <div className="relative flex-1 w-full min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input 
             type="text" 
             placeholder="Поиск по истории изменений или объекту..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+            className="w-full min-h-10 pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
           />
         </div>
-        <div className="flex gap-4 w-full md:w-auto">
+        <div className="flex gap-2 sm:gap-4 w-full lg:w-auto min-w-0">
           <select 
             value={actionFilter} 
             onChange={(e) => setActionFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 lg:flex-none min-w-0 min-h-10 bg-slate-50 border border-slate-200 rounded px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Все действия</option>
             <option value="create">Создание</option>
@@ -7826,7 +7826,7 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
           <select 
             value={entityFilter} 
             onChange={(e) => setEntityFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 lg:flex-none min-w-0 min-h-10 bg-slate-50 border border-slate-200 rounded px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Все объекты</option>
             <option value="machine">Станки</option>
@@ -7838,7 +7838,7 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
           {canExportHistory && (
             <button
               onClick={() => window.print()}
-              className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95"
+              className="min-h-10 min-w-10 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0 shadow-xs active:scale-95"
               title="Печать журнала действий"
             >
               <Printer className="w-3.5 h-3.5 text-blue-600" />
@@ -7849,7 +7849,7 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
       </div>
 
       <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-y-auto flex-1 p-6">
+        <div className="overflow-y-auto flex-1 p-4 sm:p-6">
           {filteredLogs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-slate-400">
               <History className="w-16 h-16 mb-4 opacity-10" />
@@ -7940,7 +7940,7 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
                       {getActionIcon(log.actionType)}
                     </div>
 
-                    <div className="bg-slate-50 border border-slate-100 p-4 rounded-lg hover:bg-slate-100/50 transition-colors">
+                    <div className="bg-slate-50 border border-slate-100 p-3 sm:p-4 rounded-lg hover:bg-slate-100/50 transition-colors min-w-0">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getActionBadgeColor(log.actionType)}`}>
@@ -7949,20 +7949,20 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300 uppercase">
                             {getEntityLabel(log.entityType)}
                           </span>
-                          <span className="font-semibold text-slate-800 text-sm">{log.entityName}</span>
+                          <span className="font-semibold text-slate-800 text-sm min-w-0 break-words">{log.entityName}</span>
                         </div>
                         <span className="text-xs text-slate-400 font-mono">
                           {new Date(log.timestamp).toLocaleString('ru-RU')}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-600 font-medium">{log.details}</p>
+                      <p className="text-sm text-slate-600 font-medium break-words">{log.details}</p>
 
                       {extraInfo}
 
                       {log.userEmail && (
-                        <div className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 border-t border-slate-100 pt-1.5">
+                        <div className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex flex-wrap items-center gap-1 border-t border-slate-100 pt-1.5">
                           <span>Администратор:</span>
-                          <span className="text-slate-500 font-mono lowercase">{log.userEmail}</span>
+                          <span className="text-slate-500 font-mono lowercase break-all">{log.userEmail}</span>
                         </div>
                       )}
                     </div>

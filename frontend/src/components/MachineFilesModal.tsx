@@ -534,21 +534,21 @@ export function MachineFilesModal({
           }}
         />
         {/* Header */}
-        <div className="px-5 py-4 sm:px-8 sm:py-5 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 min-w-0">
+        <div className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-100 bg-slate-50/80 flex items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-amber-100/90 text-amber-800 flex items-center justify-center shadow-xs shrink-0">
               <FolderOpen className="w-6 h-6 text-amber-600" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg sm:text-xl font-black text-slate-900 truncate">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h3 className="text-base sm:text-xl font-black text-slate-900 break-words min-w-0">
                   Папка материалов станка
                 </h3>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap">
                   {attachments.length} {attachments.length === 1 ? 'файл' : attachments.length < 5 ? 'файла' : 'файлов'}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 truncate mt-0.5">
+              <p className="text-xs text-slate-500 line-clamp-2 break-words mt-0.5">
                 <span className="font-semibold text-slate-700">{machine.name}</span>
                 {machine.model && <span> • Модель: {machine.model}</span>}
                 {machine.serialNumber && <span> • С/Н: {machine.serialNumber}</span>}
@@ -558,7 +558,7 @@ export function MachineFilesModal({
 
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-200/60 rounded-full text-slate-400 hover:text-slate-700 transition-colors shrink-0"
+            className="min-h-10 min-w-10 flex items-center justify-center p-2 hover:bg-slate-200/60 rounded-full text-slate-400 hover:text-slate-700 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1044,14 +1044,14 @@ export function MachineFilesModal({
         </div>
 
         {/* Footer info bar */}
-        <div className="px-5 py-3 sm:px-8 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <div className="flex items-center gap-2">
-            <HardDrive className="w-4 h-4 text-slate-400" />
-            <span>Папка привязана к станку: <strong className="text-slate-700">{machine.name}</strong></span>
+        <div className="px-4 py-3 sm:px-8 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2 min-w-0">
+            <HardDrive className="w-4 h-4 text-slate-400 shrink-0" />
+            <span className="min-w-0 break-words">Папка привязана к станку: <strong className="text-slate-700">{machine.name}</strong></span>
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition-all"
+            className="min-h-10 shrink-0 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold transition-all"
           >
             Закрыть
           </button>

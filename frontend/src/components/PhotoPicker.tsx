@@ -128,19 +128,19 @@ export function MultiPhotoPicker({
 
   return (
     <div className={compact ? "space-y-1.5 text-slate-900" : "space-y-2.5 text-slate-900"}>
-      <div className="flex items-center justify-between">
-        <label className={compact ? "text-[9px] font-black uppercase tracking-wider text-slate-400 block px-0.5" : "text-[10px] font-black uppercase tracking-wider text-slate-400 block"}>
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <label className={compact ? "text-[9px] font-black uppercase tracking-wider text-slate-400 block px-0.5 min-w-0 break-words" : "text-[10px] font-black uppercase tracking-wider text-slate-400 block min-w-0 break-words"}>
           {label}
         </label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
           <button
             type="button"
             onClick={() => setShowUrlInput(!showUrlInput)}
-            className="text-[9px] text-blue-600 hover:text-blue-700 hover:underline font-bold"
+            className="-my-3 py-3 text-[9px] text-blue-600 hover:text-blue-700 hover:underline font-bold whitespace-nowrap"
           >
             {showUrlInput ? 'Скрыть URL' : '+ по ссылке URL'}
           </button>
-          <span className={compact ? "text-[9px] font-bold text-slate-400 font-mono" : "text-[10px] font-semibold text-slate-400"}>
+          <span className={compact ? "text-[9px] font-bold text-slate-400 font-mono whitespace-nowrap" : "text-[10px] font-semibold text-slate-400 whitespace-nowrap"}>
             {safeImages.length} из {maxPhotos} фото
           </span>
         </div>

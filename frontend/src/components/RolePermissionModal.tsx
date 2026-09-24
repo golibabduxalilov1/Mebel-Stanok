@@ -190,13 +190,13 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
           className="relative w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border border-slate-200"
         >
           {/* Header Banner - Matches Warm/Orange Sky Atmosphere from Screenshots */}
-          <div className="relative bg-gradient-to-r from-[#b45309] via-[#ea580c] to-[#c2410c] text-white px-5 py-4 sm:px-8 sm:py-5 flex items-center justify-between shadow-md shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center border border-white/20 shadow-inner">
+          <div className="relative bg-gradient-to-r from-[#b45309] via-[#ea580c] to-[#c2410c] text-white px-4 py-3 sm:px-8 sm:py-5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 shadow-md shrink-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center border border-white/20 shadow-inner shrink-0">
                 <Shield className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight break-words">
                   {role ? 'Редактировать роль' : 'Добавить роль'}
                 </h2>
                 <p className="text-xs text-orange-100/90 font-medium">
@@ -205,7 +205,7 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
               {/* Quick Preset Buttons */}
               <div className="hidden lg:flex items-center gap-1.5 mr-2">
                 <button
@@ -231,7 +231,7 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
                 type="button"
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex items-center gap-2 bg-[#f97316] hover:bg-[#ea580c] active:bg-[#c2410c] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
+                className="min-h-10 flex items-center gap-2 bg-[#f97316] hover:bg-[#ea580c] active:bg-[#c2410c] text-white px-4 sm:px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all hover:shadow-lg disabled:opacity-50 cursor-pointer"
               >
                 {saving ? (
                   <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -245,7 +245,7 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+                className="min-h-10 min-w-10 flex items-center justify-center p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
                 title="Закрыть"
               >
                 <X className="w-6 h-6" />
@@ -280,7 +280,7 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Например: Технолог, Мастер цеха, Инженер ТОиР"
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm transition-all shadow-xs"
+                    className="w-full min-h-10 pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm transition-all shadow-xs"
                   />
                 </div>
               </div>
@@ -295,7 +295,7 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Краткое описание обязанностей и зоны ответственности"
-                  className="flex-1 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="flex-1 min-h-10 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
                 />
               </div>
             </div>
@@ -325,18 +325,18 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
 
             {/* Quick Bulk Action Buttons: "Выбрать всё" | "Отменить всё" */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <button
                   type="button"
                   onClick={handleSelectAllInTab}
-                  className="px-4 py-1.5 bg-white border border-slate-300 hover:border-orange-500 hover:text-orange-600 text-slate-700 text-xs font-semibold rounded-full shadow-xs transition-all cursor-pointer active:scale-95"
+                  className="min-h-10 px-4 py-1.5 bg-white border border-slate-300 hover:border-orange-500 hover:text-orange-600 text-slate-700 text-xs font-semibold rounded-full shadow-xs transition-all cursor-pointer active:scale-95"
                 >
                   Выбрать всё
                 </button>
                 <button
                   type="button"
                   onClick={handleDeselectAllInTab}
-                  className="px-4 py-1.5 bg-white border border-slate-300 hover:border-slate-400 text-slate-600 text-xs font-semibold rounded-full shadow-xs transition-all cursor-pointer active:scale-95"
+                  className="min-h-10 px-4 py-1.5 bg-white border border-slate-300 hover:border-slate-400 text-slate-600 text-xs font-semibold rounded-full shadow-xs transition-all cursor-pointer active:scale-95"
                 >
                   Отменить всё
                 </button>
@@ -405,7 +405,7 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleToggleCell(row.id, action.id)}
-                                  className="inline-flex items-center justify-center p-1 rounded-full hover:bg-orange-100/50 transition-all cursor-pointer focus:outline-none"
+                                  className="inline-flex items-center justify-center p-2.5 -m-1.5 rounded-full hover:bg-orange-100/50 transition-all cursor-pointer focus:outline-none"
                                   title={`${row.name}: ${action.label}`}
                                 >
                                   {/* Custom circular checkbox - Exactly as shown in screenshots */}
@@ -432,15 +432,15 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
           </div>
 
           {/* Footer Bar */}
-          <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between shrink-0">
-            <div className="text-xs text-slate-500">
+          <div className="bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="text-xs text-slate-500 min-w-0 break-words">
               Выбранная роль: <strong className="text-slate-800">{name || 'Без названия'}</strong>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 ml-auto">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-200 text-sm font-semibold transition-colors cursor-pointer"
+                className="min-h-10 px-4 sm:px-5 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-200 text-sm font-semibold transition-colors cursor-pointer"
               >
                 Отмена
               </button>
@@ -448,7 +448,7 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
                 type="button"
                 onClick={handleSubmit}
                 disabled={saving}
-                className="px-6 py-2 bg-[#f97316] hover:bg-[#ea580c] active:bg-[#c2410c] text-white rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                className="min-h-10 px-5 sm:px-6 py-2 bg-[#f97316] hover:bg-[#ea580c] active:bg-[#c2410c] text-white rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-50"
               >
                 {saving ? 'Сохранение...' : 'Сохранить роль'}
               </button>

@@ -485,7 +485,7 @@ export function CreateToirScheduleModal({
                       setMachineId(branchMachines[0].id);
                     }
                   }}
-                  className="w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="">Все филиалы ({machines.length} станков)</option>
                   {branches.map(b => (
@@ -509,7 +509,7 @@ export function CreateToirScheduleModal({
                       setBranchFilter(m.branchId);
                     }
                   }}
-                  className="w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="" disabled>-- Выберите оборудование --</option>
                   {filteredMachines.map(m => (
@@ -533,19 +533,19 @@ export function CreateToirScheduleModal({
               placeholder="Например: Замена масляного фильтра и смазка направляющих"
               value={taskName}
               onChange={e => setTaskName(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className="min-h-10 w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             />
           </div>
 
           {/* Step 4: Spare parts from warehouse with automatic deduction */}
           <div className="bg-slate-50 p-3 sm:p-3.5 rounded-xl border border-slate-200 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                <span className="p-1 bg-amber-100 text-amber-800 rounded-md">⚙️</span>
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+              <label className="text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5 min-w-0 break-words">
+                <span className="p-1 bg-amber-100 text-amber-800 rounded-md shrink-0">⚙️</span>
                 3. Запчасти со склада (списание при создании задачи)
               </label>
               {selectedParts.length > 0 && (
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap ml-auto">
                   Итого: {totalPartsCost.toLocaleString()} ₽
                 </span>
               )}
@@ -555,7 +555,7 @@ export function CreateToirScheduleModal({
               <select
                 value={selectedPartId}
                 onChange={e => setSelectedPartId(e.target.value)}
-                className="flex-1 p-2 bg-white rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none truncate"
+                className="min-h-10 flex-1 p-2 bg-white rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none truncate"
               >
                 <option value="">
                   {relevantParts.length === 0 
@@ -591,7 +591,7 @@ export function CreateToirScheduleModal({
                     placeholder="Кол-во"
                     value={partQty}
                     onChange={e => setPartQty(e.target.value)}
-                    className="w-20 p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="min-h-10 w-20 p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
                     title="Можно вводить дробное количество (например: 0.3, 0.5, 0.7)"
                   />
                   <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none select-none">
@@ -602,7 +602,7 @@ export function CreateToirScheduleModal({
                   type="button"
                   onClick={handleAddPart}
                   disabled={!selectedPartId}
-                  className="px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                  className="min-h-10 px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Добавить</span>
@@ -758,7 +758,7 @@ export function CreateToirScheduleModal({
                 min="1"
                 value={intervalDays}
                 onChange={e => handleIntervalChange(Number(e.target.value))}
-                className="w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none"
               />
               <div className="flex gap-1 mt-1">
                 {[7, 14, 30, 90, 180, 365].map(d => (
@@ -782,7 +782,7 @@ export function CreateToirScheduleModal({
                 type="date"
                 value={lastPerformed}
                 onChange={e => handleLastPerformedChange(e.target.value)}
-                className="w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none uppercase"
+                className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none uppercase"
               />
             </div>
 
@@ -795,7 +795,7 @@ export function CreateToirScheduleModal({
                 type="date"
                 value={nextDue}
                 onChange={e => setNextDue(e.target.value)}
-                className="w-full p-2 bg-white rounded-lg border-2 border-blue-400 text-xs font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none uppercase"
+                className="min-h-10 w-full p-2 bg-white rounded-lg border-2 border-blue-400 text-xs font-mono font-bold text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none uppercase"
               />
             </div>
           </div>
@@ -811,12 +811,12 @@ export function CreateToirScheduleModal({
                 placeholder="ФИО инженера / бригады"
                 value={assignedTechnician}
                 onChange={e => setAssignedTechnician(e.target.value)}
-                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex items-center justify-between">
+              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex flex-wrap items-center justify-between gap-x-2">
                 <span>Стоимость работ (₽)</span>
                 <span className="text-[9px] text-emerald-600 font-bold lowercase">работа/услуга</span>
               </label>
@@ -827,7 +827,7 @@ export function CreateToirScheduleModal({
                 placeholder="0 ₽"
                 value={laborCost}
                 onChange={e => setLaborCost(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
-                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
@@ -838,7 +838,7 @@ export function CreateToirScheduleModal({
               <select
                 value={priority}
                 onChange={e => setPriority(e.target.value as any)}
-                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value="low">Низкий (Плановый)</option>
                 <option value="medium">Обычный (Стандарт)</option>
@@ -1170,7 +1170,7 @@ export function EditToirScheduleModal({
               type="text"
               value={taskName}
               onChange={e => setTaskName(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+              className="min-h-10 w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
 
@@ -1189,13 +1189,13 @@ export function EditToirScheduleModal({
 
           {/* Spare parts from warehouse with automatic sync */}
           <div className="bg-slate-50 p-3 sm:p-3.5 rounded-xl border border-slate-200 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                <span className="p-1 bg-amber-100 text-amber-800 rounded-md">⚙️</span>
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+              <label className="text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5 min-w-0 break-words">
+                <span className="p-1 bg-amber-100 text-amber-800 rounded-md shrink-0">⚙️</span>
                 Запчасти со склада (авто-списание при изменении)
               </label>
               {selectedParts.length > 0 && (
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap ml-auto">
                   Итого: {totalPartsCost.toLocaleString()} ₽
                 </span>
               )}
@@ -1205,7 +1205,7 @@ export function EditToirScheduleModal({
               <select
                 value={selectedPartId}
                 onChange={e => setSelectedPartId(e.target.value)}
-                className="flex-1 p-2 bg-white rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none truncate"
+                className="min-h-10 flex-1 p-2 bg-white rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none truncate"
               >
                 <option value="">
                   {relevantParts.length === 0 
@@ -1241,7 +1241,7 @@ export function EditToirScheduleModal({
                     placeholder="Кол-во"
                     value={partQty}
                     onChange={e => setPartQty(e.target.value)}
-                    className="w-20 p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="min-h-10 w-20 p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
                     title="Можно вводить дробное количество (например: 0.3, 0.5, 0.7)"
                   />
                   <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none select-none">
@@ -1252,7 +1252,7 @@ export function EditToirScheduleModal({
                   type="button"
                   onClick={handleAddPart}
                   disabled={!selectedPartId}
-                  className="px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                  className="min-h-10 px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Добавить</span>
@@ -1392,7 +1392,7 @@ export function EditToirScheduleModal({
                 min="1"
                 value={intervalDays}
                 onChange={e => handleIntervalChange(Number(e.target.value))}
-                className="w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono font-bold"
+                className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono font-bold"
               />
             </div>
             <div>
@@ -1401,7 +1401,7 @@ export function EditToirScheduleModal({
                 type="date"
                 value={lastPerformed}
                 onChange={e => setLastPerformed(e.target.value)}
-                className="w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono"
+                className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-mono"
               />
             </div>
             <div>
@@ -1411,7 +1411,7 @@ export function EditToirScheduleModal({
                 type="date"
                 value={nextDue}
                 onChange={e => setNextDue(e.target.value)}
-                className="w-full p-2 bg-white rounded-lg border border-blue-400 text-xs font-mono font-bold text-blue-900"
+                className="min-h-10 w-full p-2 bg-white rounded-lg border border-blue-400 text-xs font-mono font-bold text-blue-900"
               />
             </div>
           </div>
@@ -1427,12 +1427,12 @@ export function EditToirScheduleModal({
                 placeholder="ФИО инженера / бригады"
                 value={assignedTechnician}
                 onChange={e => setAssignedTechnician(e.target.value)}
-                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex items-center justify-between">
+              <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex flex-wrap items-center justify-between gap-x-2">
                 <span>Стоимость работ (₽)</span>
                 <span className="text-[9px] text-emerald-600 font-bold lowercase">работа/услуга</span>
               </label>
@@ -1443,7 +1443,7 @@ export function EditToirScheduleModal({
                 placeholder="0 ₽"
                 value={laborCost}
                 onChange={e => setLaborCost(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
-                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
@@ -1454,7 +1454,7 @@ export function EditToirScheduleModal({
               <select
                 value={priority}
                 onChange={e => setPriority(e.target.value as any)}
-                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value="low">Низкий (Плановый)</option>
                 <option value="medium">Обычный (Стандарт)</option>
@@ -1566,29 +1566,29 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
           ? 'border-rose-300 ring-1 ring-rose-200 bg-rose-50/10'
           : deadline.isToday
             ? 'border-amber-300 ring-1 ring-amber-200'
-            : 'border-slate-300 hover:border-slate-400'
+            : 'border-slate-400 hover:border-slate-500'
       }`}
     >
       {/* Top Bar: TOIR Badge & Urgency status */}
       <div className="p-3 sm:p-3.5 pb-2">
-        <div className="flex items-center justify-between gap-1.5 mb-2">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
           {/* TOIR Type Badge */}
-          <div className="flex items-center gap-1.5">
-            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tight border ${category.colorClasses.badgeBorder} ${category.colorClasses.badgeBg}`}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tight whitespace-nowrap border ${category.colorClasses.badgeBorder} ${category.colorClasses.badgeBg}`}>
               {getToirIcon(schedule.taskType, "w-3 h-3 shrink-0")}
               <span>{category.badgeLabel}</span>
             </span>
           </div>
 
           {/* Urgency Badge */}
-          <div className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border text-right shrink-0 flex items-center gap-1 ${deadline.badgeClass}`}>
+          <div className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border text-right shrink-0 whitespace-nowrap flex items-center gap-1 ${deadline.badgeClass}`}>
             <Clock className="w-3 h-3 shrink-0" />
             <span>{deadline.label}</span>
           </div>
         </div>
 
         {/* Task Title */}
-        <h4 className="text-sm font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2 mb-2" title={schedule.taskName}>
+        <h4 className="text-sm font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2 break-words mb-2" title={schedule.taskName}>
           {schedule.taskName}
         </h4>
 
@@ -1596,7 +1596,7 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
         <div className="bg-slate-50/90 rounded-xl p-2.5 border border-slate-200/80 mb-2.5 space-y-1.5 shadow-2xs">
           {/* Branch Name - prominent in middle/upper section */}
           <div className="flex items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-800 bg-indigo-50/90 border border-indigo-200/80 px-2 py-0.5 rounded-lg truncate shadow-2xs">
+            <div className="flex items-center gap-1.5 min-w-0 text-xs font-bold text-indigo-800 bg-indigo-50/90 border border-indigo-200/80 px-2 py-0.5 rounded-lg truncate shadow-2xs">
               <MapPin className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
               <span className="truncate font-black tracking-tight">{branch?.name || schedule.branchName || 'Филиал не указан'}</span>
             </div>
@@ -1678,7 +1678,7 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
         )}
 
         {/* Meta Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-2 bg-slate-50/80 rounded-xl border border-slate-100 text-[10px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 2xl:grid-cols-4 gap-1.5 p-2 bg-slate-50/80 rounded-xl border border-slate-100 text-[10px]">
           <div>
             <div className="text-[8px] font-bold uppercase text-slate-400 tracking-wider">Срок ТО</div>
             <div className={`font-bold font-mono truncate ${deadline.isOverdue ? 'text-rose-600' : 'text-slate-800'}`}>
@@ -1714,7 +1714,7 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
         {canExecute ? (
           <button
             onClick={handleExecute}
-            className="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
+            className="flex-1 min-h-10 py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
             title="Выполнить задачу и перенести запись в историю обслуживания"
           >
             <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-white" />
@@ -1732,7 +1732,7 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
             {canEdit && onEdit && !schedule.isManual && (
               <button
                 onClick={() => onEdit(schedule)}
-                className="p-1.5 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-lg transition-colors border border-transparent hover:border-amber-200"
+                className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-lg transition-colors border border-transparent hover:border-amber-200"
                 title="Редактировать задачу ТОиР"
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -1742,7 +1742,7 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
             {canDelete && onDelete && (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors border border-transparent hover:border-rose-200"
+                className="min-h-10 min-w-10 flex items-center justify-center p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors border border-transparent hover:border-rose-200"
                 title="Удалить задачу из графика"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -1792,7 +1792,7 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
               <div className="flex items-center justify-end gap-2 mt-4">
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                  className="min-h-10 px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
                 >
                   Нет
                 </button>
@@ -1801,7 +1801,7 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
                     setConfirmDelete(false);
                     onDelete && onDelete(schedule);
                   }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors"
+                  className="min-h-10 px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors"
                 >
                   Да, удалить
                 </button>

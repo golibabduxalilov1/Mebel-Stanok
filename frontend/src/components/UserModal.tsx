@@ -151,13 +151,13 @@ export const UserModal: React.FC<UserModalProps> = ({
           className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 my-8 flex flex-col max-h-[90vh]"
         >
           {/* Header */}
-          <div className="px-6 py-5 bg-slate-900 text-white flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-md">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 bg-slate-900 text-white flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shrink-0">
                 <User className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-white break-words">
                   {user ? 'Редактировать сотрудника' : 'Добавить пользователя'}
                 </h3>
                 <p className="text-xs text-slate-400">
@@ -167,7 +167,7 @@ export const UserModal: React.FC<UserModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              className="min-h-10 min-w-10 flex items-center justify-center shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -198,7 +198,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Иванов Алексей Петрович"
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="min-h-10 w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -214,7 +214,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                     value={position}
                     onChange={(e) => setPosition(e.target.value)}
                     placeholder="Инженер-технолог ЧПУ"
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="min-h-10 w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -238,13 +238,13 @@ export const UserModal: React.FC<UserModalProps> = ({
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="technolog_ivanov"
-                    className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="min-h-10 w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <p className="text-[10px] text-slate-400 mt-1">Используется для входа в приложение</p>
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
                     <label className="text-xs font-bold text-slate-700">
                       Пароль {!user && <span className="text-rose-500">*</span>}
                     </label>
@@ -268,7 +268,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={user ? 'Оставьте пустым, чтобы не менять' : '••••••••'}
-                      className={`w-full pl-3 pr-10 py-2 border rounded-xl text-sm font-mono font-bold tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`min-h-10 w-full pl-3 pr-10 py-2 border rounded-xl text-sm font-mono font-bold tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         !canEditCredentials
                           ? 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed'
                           : 'bg-white border-slate-300'
@@ -297,11 +297,11 @@ export const UserModal: React.FC<UserModalProps> = ({
             {/* Role and Branch Assignment */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <span>Назначить роль <span className="text-rose-500">*</span></span>
                   {currentRole && (
                     <span 
-                      className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white shadow-2xs"
+                      className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white shadow-2xs whitespace-nowrap"
                       style={{ backgroundColor: currentRole.color || '#f97316' }}
                     >
                       {currentRole.name}
@@ -313,7 +313,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                   <select
                     value={roleId}
                     onChange={(e) => setRoleId(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="min-h-10 w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {roles.map((r) => (
                       <option key={r.id} value={r.id}>
@@ -338,7 +338,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                   <select
                     value={branchId}
                     onChange={(e) => setBranchId(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="min-h-10 w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="all">Все филиалы и цеха</option>
                     {branches.map((b) => (
@@ -364,7 +364,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="worker@company.ru"
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="min-h-10 w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -380,15 +380,15 @@ export const UserModal: React.FC<UserModalProps> = ({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+7 (999) 000-00-00"
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="min-h-10 w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
             </div>
 
             {/* Status Switcher */}
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <div>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="min-w-0 flex-1">
                 <span className="text-xs font-bold text-slate-800 block">Статус учетной записи</span>
                 <span className="text-[11px] text-slate-500">
                   {status === 'active' ? 'Пользователь может авторизоваться и работать' : 'Доступ в систему заблокирован'}
@@ -397,7 +397,7 @@ export const UserModal: React.FC<UserModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStatus(status === 'active' ? 'blocked' : 'active')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                className={`min-h-10 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                   status === 'active' 
                     ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
                     : 'bg-rose-100 text-rose-800 border border-rose-300'
@@ -423,11 +423,11 @@ export const UserModal: React.FC<UserModalProps> = ({
           </form>
 
           {/* Modal Footer */}
-          <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+          <div className="bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 text-sm font-semibold transition-colors cursor-pointer"
+              className="min-h-10 px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 text-sm font-semibold transition-colors cursor-pointer"
             >
               Отмена
             </button>
@@ -435,7 +435,7 @@ export const UserModal: React.FC<UserModalProps> = ({
               type="button"
               onClick={handleSubmit}
               disabled={saving}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+              className="min-h-10 px-5 sm:px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
             >
               {saving ? 'Сохранение...' : (user ? 'Сохранить изменения' : 'Добавить пользователя')}
             </button>
