@@ -636,6 +636,8 @@ export const UsersTab: React.FC<UsersTabProps> = ({
           setEditingRole(null);
         }}
         role={editingRole}
+        roles={roles}
+        onSelectRole={(roleId) => setEditingRole(roleId ? roles.find(r => r.id === roleId) || null : null)}
         onSave={handleSaveRole}
       />
 

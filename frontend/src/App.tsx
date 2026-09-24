@@ -1507,11 +1507,11 @@ export default function App() {
                       { label: 'Модель', value: selectedMachine.model },
                       { label: 'Серийный номер', value: selectedMachine.serialNumber },
                       { label: 'Расположение', value: branches.find(b => b.id === selectedMachine.branchId)?.name || 'Не указан' },
-                      { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана', fullWidth: true },
-                      { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана', fullWidth: true },
-                      { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет`, fullWidth: true },
-                      { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽/день` : 'Не указана' },
+                      { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана' },
                       { label: 'Годовая амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateYearlyDepreciation(selectedMachine).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽/год` : 'Не указана' },
+                      { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана' },
+                      { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽/день` : 'Не указана' },
+                      { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет`, fullWidth: true },
                     ].map((item, idx) => (
                       <div key={idx} className={`min-w-0 ${item.fullWidth ? 'col-span-2' : ''}`}>
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>

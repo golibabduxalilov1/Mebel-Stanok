@@ -23,6 +23,8 @@ interface RolePermissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   role?: Role | null;
+  roles?: Role[];
+  onSelectRole?: (roleId: string | null) => void;
   onSave: (roleData: { name: string; description?: string; color?: string; permissions: Record<string, PermissionMatrixItem> }) => Promise<void>;
 }
 
@@ -30,6 +32,8 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
   isOpen,
   onClose,
   role,
+  roles,
+  onSelectRole,
   onSave
 }) => {
   const [name, setName] = useState('');
@@ -261,6 +265,29 @@ export const RolePermissionModal: React.FC<RolePermissionModalProps> = ({
                 <button onClick={() => setError(null)} className="text-rose-400 hover:text-rose-700">
                   <X className="w-4 h-4" />
                 </button>
+              </div>
+            )}
+
+            {/* Existing Role Selector - lets you switch to editing an already added role without leaving the modal */}
+            {roles && roles.length > 0 && (
+              <div className="bg-orange-50/60 p-4 rounded-xl border border-orange-200/70">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                  <label className="text-sm font-semibold text-slate-700 sm:w-36 shrink-0">
+                    Редактировать роль
+                  </label>
+                  <select
+                    value={role?.id || ''}
+                    onChange={(e) => onSelectRole?.(e.target.value || null)}
+                    className="flex-1 min-h-10 px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm transition-all shadow-xs"
+                  >
+                    <option value="">+ Новая роль</option>
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}{r.isSystem ? ' (Базовая)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
 
