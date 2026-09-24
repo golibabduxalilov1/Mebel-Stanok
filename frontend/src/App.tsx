@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   LayoutDashboard, 
   Settings, 
@@ -2514,20 +2514,28 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
   );
 }
 
-function useChartReady(deps: React.DependencyList) {
-  const [ready, setReady] = useState(false);
+/** Only reports "ready" once the element has a real, non-zero measured size - so charts
+ * never mount inside a still-animating (e.g. spring-transitioning drawer) container. */
+function useMeasuredSize<T extends HTMLElement>(): [React.RefObject<T>, boolean] {
+  const ref = useRef<T>(null);
+  const [hasSize, setHasSize] = useState(false);
   useEffect(() => {
-    setReady(false);
-    const id = requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)));
-    return () => cancelAnimationFrame(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-  return ready;
+    const el = ref.current;
+    if (!el) return;
+    setHasSize(el.clientWidth > 0 && el.clientHeight > 0);
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setHasSize(width > 0 && height > 0);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, hasSize];
 }
 
 function DepreciationChart({ machine }: { machine: Machine }) {
   const data = machineService.getDepreciationData(machine);
-  const ready = useChartReady([machine.id]);
+  const [containerRef, ready] = useMeasuredSize<HTMLDivElement>();
 
   if (data.length === 0 || machine.purchasePrice <= 0) {
     return (
@@ -2539,12 +2547,9 @@ function DepreciationChart({ machine }: { machine: Machine }) {
     );
   }
 
-  if (!ready) {
-    return <div className="h-[250px] w-full" />;
-  }
-
   return (
-    <div className="h-[250px] w-full">
+    <div ref={containerRef} className="h-[250px] w-full">
+      {ready && (
       <ResponsiveContainer width="100%" height="100%" debounce={300}>
         <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
@@ -2572,24 +2577,25 @@ function DepreciationChart({ machine }: { machine: Machine }) {
             formatter={(val: number) => [`${val.toLocaleString()} ₽`, 'Стоимость']}
             labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
           />
-          <Area 
-            type="monotone" 
-            dataKey="value" 
-            stroke="#3b82f6" 
-            strokeWidth={2} 
-            fillOpacity={1} 
-            fill="url(#colorValue)" 
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorValue)"
             animationDuration={1500}
           />
         </AreaChart>
       </ResponsiveContainer>
+      )}
     </div>
   );
 }
 
 function TotalDepreciationChart({ machines }: { machines: Machine[] }) {
   const data = machineService.getTotalDepreciationData(machines);
-  const ready = useChartReady([machines.length]);
+  const [containerRef, ready] = useMeasuredSize<HTMLDivElement>();
 
   if (data.length === 0) {
     return (
@@ -2600,12 +2606,9 @@ function TotalDepreciationChart({ machines }: { machines: Machine[] }) {
     );
   }
 
-  if (!ready) {
-    return <div className="h-[300px] w-full" />;
-  }
-
   return (
-    <div className="h-[300px] w-full">
+    <div ref={containerRef} className="h-[300px] w-full">
+      {ready && (
       <ResponsiveContainer width="100%" height="100%" debounce={300}>
         <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
@@ -2633,17 +2636,18 @@ function TotalDepreciationChart({ machines }: { machines: Machine[] }) {
             formatter={(val: number) => [`${val.toLocaleString()} ₽`, 'Общая стоимость']}
             labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
           />
-          <Area 
-            type="monotone" 
-            dataKey="value" 
-            stroke="#8b5cf6" 
-            strokeWidth={2} 
-            fillOpacity={1} 
-            fill="url(#colorTotalValue)" 
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#8b5cf6"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorTotalValue)"
             animationDuration={1500}
           />
         </AreaChart>
       </ResponsiveContainer>
+      )}
     </div>
   );
 }
