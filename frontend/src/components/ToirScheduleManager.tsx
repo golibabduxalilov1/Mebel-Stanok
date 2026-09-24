@@ -557,7 +557,7 @@ export function CreateToirScheduleModal({
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col gap-2">
               <select
                 value={selectedPartId}
                 onChange={e => setSelectedPartId(e.target.value)}
@@ -588,7 +588,7 @@ export function CreateToirScheduleModal({
                 })}
               </select>
 
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5">
                 <div className="relative flex items-center w-24">
                   <input
                     type="number"
@@ -608,7 +608,7 @@ export function CreateToirScheduleModal({
                   type="button"
                   onClick={handleAddPart}
                   disabled={!selectedPartId}
-                  className="min-h-10 px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                  className="min-h-10 px-3 py-2 flex-1 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Добавить</span>
@@ -1198,7 +1198,7 @@ export function EditToirScheduleModal({
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col gap-2">
               <select
                 value={selectedPartId}
                 onChange={e => setSelectedPartId(e.target.value)}
@@ -1229,7 +1229,7 @@ export function EditToirScheduleModal({
                 })}
               </select>
 
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5">
                 <div className="relative flex items-center w-24">
                   <input
                     type="number"
@@ -1249,7 +1249,7 @@ export function EditToirScheduleModal({
                   type="button"
                   onClick={handleAddPart}
                   disabled={!selectedPartId}
-                  className="min-h-10 px-3 py-2 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                  className="min-h-10 px-3 py-2 flex-1 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Добавить</span>

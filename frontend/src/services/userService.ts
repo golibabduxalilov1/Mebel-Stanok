@@ -186,6 +186,13 @@ export function canAccessTab(role: Role | undefined | null, tabId: string): bool
   if (!role) return false;
 
   const permTabId = tabId === 'all' ? 'machines' : tabId;
+
+  // "История" is admin-only regardless of the role's permission matrix, so
+  // granting other rows/actions to a role (e.g. Мастер) never exposes it.
+  if (permTabId === 'history') {
+    return role.name?.toLowerCase().trim() === 'администратор';
+  }
+
   const permissions = role.permissions;
 
   // If no permissions object exists yet on the role
@@ -226,6 +233,11 @@ export function canPerformAction(
   // Superuser / Admin always has full access
   if (role.name?.toLowerCase().trim() === 'администратор') {
     return true;
+  }
+
+  // "История" is admin-only regardless of the role's permission matrix.
+  if (rowKey === 'history' || rowKey.startsWith('history.')) {
+    return false;
   }
 
   const permissions = role.permissions;
