@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../lib/prisma';
 import { emitEntity } from '../../lib/socket';
+import { env } from '../../env';
 import { Errors } from '../../utils/errors';
 import { writeActivity } from '../../utils/activityLog';
 import type { CreateUserInput, UpdateUserInput } from './users.schema';
@@ -9,6 +10,12 @@ interface Actor {
   userId: string;
   userEmail?: string;
 }
+
+// The bootstrap superadmin identified by SUPERADMIN_USERNAME/EMAIL in .env is
+// protected: nobody (including itself) can delete it, and only the account
+// itself can edit its own data - other admins cannot touch it.
+const isEnvSuperadmin = (user: { username: string; email: string }) =>
+  user.username === env.SUPERADMIN_USERNAME || user.email === env.SUPERADMIN_EMAIL;
 
 const safeSelect = {
   id: true,
@@ -61,6 +68,10 @@ export const usersService = {
     const original = await prisma.user.findUnique({ where: { id }, select: safeSelect });
     if (!original) throw Errors.notFound('User');
 
+    if (isEnvSuperadmin(original) && actor.userId !== id) {
+      throw Errors.forbidden('Only the superadmin can edit its own account');
+    }
+
     const user = await prisma.$transaction(async (tx) => {
       const updated = await tx.user.update({ where: { id }, data: input, select: safeSelect });
       await writeActivity(tx, {
@@ -83,6 +94,10 @@ export const usersService = {
     const original = await prisma.user.findUnique({ where: { id } });
     if (!original) throw Errors.notFound('User');
 
+    if (isEnvSuperadmin(original) && actor.userId !== id) {
+      throw Errors.forbidden('Only the superadmin can change its own password');
+    }
+
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id }, data: { passwordHash } });
@@ -102,6 +117,10 @@ export const usersService = {
   async remove(id: string, actor: Actor) {
     const original = await prisma.user.findUnique({ where: { id } });
     if (!original) throw Errors.notFound('User');
+
+    if (isEnvSuperadmin(original)) {
+      throw Errors.forbidden('The superadmin account cannot be deleted');
+    }
 
     await prisma.$transaction(async (tx) => {
       await tx.user.delete({ where: { id } });
