@@ -1129,7 +1129,7 @@ export default function App() {
                     {showArchive ? 'Архив (списанные)' : 'Список оборудования'}
                   </h2>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-slate-600">Показано {filteredMachines.length} объектов</span>
+                    <span className="text-sm text-slate-900">Показано {filteredMachines.length} объектов</span>
                     <button
                       onClick={() => setShowArchive(v => !v)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${showArchive ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
