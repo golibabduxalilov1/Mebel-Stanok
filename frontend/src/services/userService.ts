@@ -19,54 +19,54 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     id: 'machines',
     label: 'Оборудование',
     rows: [
-      { id: 'catalog', name: 'Реестр оборудования (Станки)' },
-      { id: 'cards', name: 'Карточка станка (Паспорт)' },
-      { id: 'files', name: 'Папка файлов (видео, фото, документы, схемы)' },
-      { id: 'depreciation', name: 'Амортизация и оценка стоимости' },
-      { id: 'transfers', name: 'Перемещение между филиалами' },
-      { id: 'decommission', name: 'Списание оборудования (Вывод из эксплуатации)' }
+      { id: 'catalog', name: 'Список станков' },
+      { id: 'cards', name: 'Карточка станка' },
+      { id: 'files', name: 'Файлы станка (фото, видео, документы)' },
+      { id: 'depreciation', name: 'Амортизация и стоимость станка' },
+      { id: 'transfers', name: 'Перемещение станка в другой филиал' },
+      { id: 'decommission', name: 'Списание станка' }
     ]
   },
   {
     id: 'maintenance',
     label: 'Техобслуживание',
     rows: [
-      { id: 'schedules', name: 'График регламентных работ (ТОиР)' },
-      { id: 'logs', name: 'Журнал выполненных работ (ТОиР)' }
+      { id: 'schedules', name: 'График ТО (запланированные работы)' },
+      { id: 'logs', name: 'Журнал ТО (выполненные работы)' }
     ]
   },
   {
     id: 'branches',
     label: 'Филиалы',
     rows: [
-      { id: 'branch_list', name: 'Справочник филиалов' }
+      { id: 'branch_list', name: 'Список филиалов' }
     ]
   },
   {
     id: 'inventory',
     label: 'Склад запчастей',
     rows: [
-      { id: 'parts_catalog', name: 'Каталог запчастей и расходников' },
-      { id: 'units', name: 'Справочник единиц измерения' }
+      { id: 'parts_catalog', name: 'Запчасти и расходники' },
+      { id: 'units', name: 'Единицы измерения (шт, кг, л…)' }
     ]
   },
   {
     id: 'users',
     label: 'Пользователи и роли',
     rows: [
-      { id: 'user_list', name: 'Сотрудники и учетные записи' },
-      { id: 'credentials', name: 'Логины и пароли' },
-      { id: 'roles_matrix', name: 'Роли и матрица прав доступа' }
+      { id: 'user_list', name: 'Сотрудники' },
+      { id: 'credentials', name: 'Пароли сотрудников' },
+      { id: 'roles_matrix', name: 'Роли и права доступа' }
     ]
   },
   {
     id: 'reports',
     label: 'Отчеты',
     rows: [
-      { id: 'equipment_report', name: 'Отчет по парку оборудования' },
-      { id: 'toir_report', name: 'Отчет по ТОиР и затратам' },
-      { id: 'inventory_report', name: 'Отчет по остаткам запчастей' },
-      { id: 'summary_report', name: 'Сводная аналитическая панель' }
+      { id: 'equipment_report', name: 'Отчёт по станкам' },
+      { id: 'toir_report', name: 'Отчёт по ТО и затратам' },
+      { id: 'inventory_report', name: 'Отчёт по остаткам запчастей' },
+      { id: 'summary_report', name: 'Сводная панель (общие показатели)' }
     ]
   },
   {
