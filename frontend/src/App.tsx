@@ -117,7 +117,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { machineService, DEFAULT_UNITS } from './services/machineService';
 import { ApiError } from './lib/apiClient';
-import { userService, canAccessTab, canPerformAction } from './services/userService';
+import { userService, canAccessTab, canPerformAction, resolveUserRole } from './services/userService';
 import { Machine, MachineStatus, MaintenanceLog, LogType, LogStatus, Branch, SparePart, MaintenanceSchedule, Transfer, ActivityLog, UnitOfMeasure, ToirTaskType, AppUser, Role } from './types';
 import { TOIR_CATEGORIES, getToirCategory, calculateDeadlineInfo, ToirCategoryConfig } from './toirConstants';
 import { partMatchesTarget, partMachineRank, partBoundMachines } from './utils/spareParts';
@@ -289,16 +289,13 @@ export default function App() {
     { id: 'history', permId: 'history', label: 'История изменений', icon: History }
   ], [machines.length, allSchedules.length, branches.length, spareParts.length, appUsers.length]);
 
-  const currentRole = useMemo(() => {
-    if (!activeAppUser) return null;
-    return appRoles.find(r => r.id === activeAppUser.roleId) || 
-           appRoles.find(r => r.name.toLowerCase().trim() === activeAppUser.roleName?.toLowerCase().trim()) || 
-           null;
-  }, [activeAppUser, appRoles]);
+  const currentRole = useMemo(() => resolveUserRole(activeAppUser, appRoles), [activeAppUser, appRoles]);
 
   const allowedTabs = useMemo(() => {
     return ALL_TABS.filter(tab => canAccessTab(currentRole, tab.permId));
   }, [ALL_TABS, currentRole]);
+
+  const canViewDepreciation = canPerformAction(currentRole, 'machines.depreciation', 'view');
 
   const canOpenMachineManagement = useMemo(() => {
     return canPerformAction(currentRole, 'machines.cards', 'view');
@@ -373,8 +370,7 @@ export default function App() {
       setActiveAppUser(matched);
 
       const roles = appRoles.length > 0 ? appRoles : await userService.getRoles();
-      const targetRole = roles.find(r => r.id === matched.roleId) ||
-                       roles.find(r => r.name.toLowerCase().trim() === matched.roleName?.toLowerCase().trim());
+      const targetRole = resolveUserRole(matched, roles);
 
       let nextTab: any = 'all';
       if (!canAccessTab(targetRole, 'machines')) {
@@ -626,7 +622,7 @@ export default function App() {
                 <div className="flex items-center gap-3">
                   <div 
                     className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm shrink-0"
-                    style={{ backgroundColor: activeAppUser?.roleColor || '#3b82f6' }}
+                    style={{ backgroundColor: currentRole?.color || activeAppUser?.roleColor || '#3b82f6' }}
                   >
                     {activeAppUser?.fullName
                       ? activeAppUser.fullName.split(' ').map(n => n[0]).slice(0, 2).join('')
@@ -639,7 +635,7 @@ export default function App() {
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600/40 text-blue-200">
-                        {activeAppUser?.roleName || 'Администратор'}
+                        {currentRole?.name || activeAppUser?.roleName || 'Без роли'}
                       </span>
                       {Boolean(activeAppUser?.branchIds?.length) && (
                         <span className="text-[10px] text-slate-400 truncate">
@@ -735,7 +731,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div 
               className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-sm shrink-0"
-              style={{ backgroundColor: activeAppUser?.roleColor || '#3b82f6' }}
+              style={{ backgroundColor: currentRole?.color || activeAppUser?.roleColor || '#3b82f6' }}
             >
               {activeAppUser?.fullName
                 ? activeAppUser.fullName.split(' ').map(n => n[0]).slice(0, 2).join('')
@@ -748,7 +744,7 @@ export default function App() {
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-600/40 text-blue-200">
-                  {activeAppUser?.roleName || 'Администратор'}
+                  {currentRole?.name || activeAppUser?.roleName || 'Без роли'}
                 </span>
               </div>
             </div>
@@ -843,7 +839,7 @@ export default function App() {
             </button>
 
             {/* Mobile Search Toggle */}
-            <div className="lg:hidden">
+            <div className={activeTab === 'users' ? 'hidden' : 'lg:hidden'}>
               <button
                 onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
                 className={`p-3 rounded-xl transition-all active:scale-90 ${
@@ -856,7 +852,7 @@ export default function App() {
             </div>
 
             {/* Desktop Search Input */}
-            {activeTab !== 'inventory' && (
+            {activeTab !== 'inventory' && activeTab !== 'users' && (
               <div className="hidden lg:flex items-center gap-3">
                 <div className="w-px h-6 bg-slate-200"></div>
                 {activeTab === 'all' && (
@@ -891,7 +887,7 @@ export default function App() {
 
         {/* Mobile Search Bar Expandable */}
         <AnimatePresence>
-          {isMobileSearchOpen && (
+          {isMobileSearchOpen && activeTab !== 'users' && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -1402,7 +1398,7 @@ export default function App() {
                       <Cog className="w-4 h-4" />
                     </button>
                   )}
-                  {(canPerformAction(currentRole, 'machines.transfers', 'create') || canPerformAction(currentRole, 'machines.transfers', 'edit')) && (
+                  {canPerformAction(currentRole, 'machines.transfers', 'create') && (
                     <button 
                       onClick={() => {
                         setMachineToTransfer(selectedMachine);
@@ -1459,7 +1455,7 @@ export default function App() {
                 <MachineDetailPhotoGallery 
                   machine={selectedMachine} 
                   onOpenManage={() => setShowPhotoModal(true)} 
-                  onOpenFiles={() => setFilesModalMachine(selectedMachine)}
+                  onOpenFiles={canPerformAction(currentRole, 'machines.files', 'view') ? () => setFilesModalMachine(selectedMachine) : undefined}
                   onOpenLightbox={(idx) => setLightboxState({
                     images: getMachineImages(selectedMachine).map(imgSrc),
                     initialIndex: idx,
@@ -1470,16 +1466,18 @@ export default function App() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
-                       <Clock className="w-3 h-3" />
-                       Амортизация (текущая цена)
-                    </p>
-                    <p className="text-lg sm:text-xl font-bold text-slate-900 wrap-anywhere">
-                      {machineService.calculateCurrentValue(selectedMachine).toLocaleString()} $
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-1 uppercase">Закупка: {(selectedMachine.purchasePrice || 0).toLocaleString()} $</p>
-                  </div>
+                  {canViewDepreciation && (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
+                         <Clock className="w-3 h-3" />
+                         Амортизация (текущая цена)
+                      </p>
+                      <p className="text-lg sm:text-xl font-bold text-slate-900 wrap-anywhere">
+                        {machineService.calculateCurrentValue(selectedMachine).toLocaleString()} $
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1 uppercase">Закупка: {(selectedMachine.purchasePrice || 0).toLocaleString()} $</p>
+                    </div>
+                  )}
                   <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50 border border-indigo-100">
                     <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
                        <Building2 className="w-3 h-3" />
@@ -1525,12 +1523,12 @@ export default function App() {
                       { label: 'Серийный номер', value: selectedMachine.serialNumber },
                       { label: 'Расположение', value: branches.find(b => b.id === selectedMachine.branchId)?.name || 'Не указан' },
                       { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана' },
-                      { label: 'Годовая амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateYearlyDepreciation(selectedMachine).toLocaleString('en-US', { maximumFractionDigits: 2 })} $/год` : 'Не указана' },
+                      canViewDepreciation && { label: 'Годовая амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateYearlyDepreciation(selectedMachine).toLocaleString('en-US', { maximumFractionDigits: 2 })} $/год` : 'Не указана' },
                       { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана' },
-                      { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('en-US', { maximumFractionDigits: 2 })} $/день` : 'Не указана' },
+                      canViewDepreciation && { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('en-US', { maximumFractionDigits: 2 })} $/день` : 'Не указана' },
                       { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
                       { label: 'Ампер', value: selectedMachine.amperage ? `${selectedMachine.amperage} А` : 'Не указан' },
-                    ].map((item, idx) => (
+                    ].filter(item => !!item).map((item, idx) => (
                       <div key={idx} className="min-w-0">
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>
                         <p className="font-semibold text-slate-900 break-words">{item.value}</p>
@@ -1543,15 +1541,17 @@ export default function App() {
                   </div>
                 </section>
 
-                <section>
-                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <TrendingDown className="w-4 h-4 text-blue-500" />
-                    График амортизации
-                  </h4>
-                  <div className="bg-slate-50 p-3 sm:p-6 rounded-2xl border border-slate-100">
-                    <DepreciationChart machine={selectedMachine} />
-                  </div>
-                </section>
+                {canViewDepreciation && (
+                  <section>
+                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <TrendingDown className="w-4 h-4 text-blue-500" />
+                      График амортизации
+                    </h4>
+                    <div className="bg-slate-50 p-3 sm:p-6 rounded-2xl border border-slate-100">
+                      <DepreciationChart machine={selectedMachine} />
+                    </div>
+                  </section>
+                )}
 
                 <ScheduleList machineId={selectedMachine.id} parts={spareParts} machines={machines} branches={branches} onRefresh={refreshData} role={currentRole} />
 
@@ -1861,6 +1861,7 @@ export default function App() {
         onClose={() => setShowUnitsModal(false)} 
         units={units} 
         onRefresh={refreshData} 
+        role={currentRole}
       />
 
       {/* Part Modal */}
@@ -1869,7 +1870,7 @@ export default function App() {
           units={units}
           branches={branches}
           machines={machines}
-          onOpenUnitsModal={() => setShowUnitsModal(true)}
+          onOpenUnitsModal={canPerformAction(currentRole, 'inventory.units', 'create') ? () => setShowUnitsModal(true) : undefined}
           onComplete={() => { setShowPartModal(false); refreshData(); }} 
         />
       </Modal>
@@ -4691,13 +4692,18 @@ function UnitsManagerModal({
   isOpen, 
   onClose, 
   units = [], 
-  onRefresh 
+  onRefresh,
+  role
 }: { 
   isOpen: boolean; 
   onClose: () => void; 
   units?: UnitOfMeasure[]; 
   onRefresh: () => void; 
+  role?: Role | null;
 }) {
+  const canCreateUnit = canPerformAction(role, 'inventory.units', 'create');
+  const canEditUnit = canPerformAction(role, 'inventory.units', 'edit');
+  const canDeleteUnit = canPerformAction(role, 'inventory.units', 'delete');
   const safeUnits = Array.isArray(units) ? units : [];
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -4777,6 +4783,7 @@ function UnitsManagerModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Управление единицами измерения">
       <div className="space-y-6 text-slate-900">
+        {canCreateUnit && (
         <form onSubmit={handleAdd} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
           <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
             <Plus className="w-4 h-4 text-blue-600" />
@@ -4821,6 +4828,7 @@ function UnitsManagerModal({
             </div>
           </div>
         </form>
+        )}
 
         <div>
           <div className="flex items-center justify-between mb-3 px-1">
@@ -4908,22 +4916,26 @@ function UnitsManagerModal({
                       </div>
                     ) : (
                       <div className="flex items-center gap-1">
-                        <button 
-                          type="button" 
-                          onClick={() => handleStartEdit(u)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                          title="Редактировать единицу измерения"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button 
-                          type="button" 
-                          onClick={() => setConfirmDeleteUnit(u)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                          title="Удалить единицу измерения"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {canEditUnit && (
+                          <button 
+                            type="button" 
+                            onClick={() => handleStartEdit(u)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            title="Редактировать единицу измерения"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {canDeleteUnit && (
+                          <button 
+                            type="button" 
+                            onClick={() => setConfirmDeleteUnit(u)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                            title="Удалить единицу измерения"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -5015,7 +5027,7 @@ function AddPartForm({
   units?: UnitOfMeasure[]; 
   branches?: Branch[];
   machines?: Machine[];
-  onOpenUnitsModal: () => void; 
+  onOpenUnitsModal?: () => void; 
   onComplete: () => void; 
 }) {
   const safeUnits = Array.isArray(units) ? units : [];
@@ -5127,14 +5139,16 @@ function AddPartForm({
         <div>
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1.5 sm:mb-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">Ед. измерения</label>
-            <button 
-              type="button" 
-              onClick={onOpenUnitsModal}
-              className="-my-3 py-3 text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 hover:underline whitespace-nowrap shrink-0"
-            >
-              <Plus className="w-3 h-3" />
-              Добавить ЕИ
-            </button>
+            {onOpenUnitsModal && (
+              <button 
+                type="button" 
+                onClick={onOpenUnitsModal}
+                className="-my-3 py-3 text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 hover:underline whitespace-nowrap shrink-0"
+              >
+                <Plus className="w-3 h-3" />
+                Добавить ЕИ
+              </button>
+            )}
           </div>
           <select 
             className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm font-semibold transition-all cursor-pointer"
@@ -5313,7 +5327,7 @@ function EditPartForm({
   units?: UnitOfMeasure[];
   branches?: Branch[];
   machines?: Machine[];
-  onOpenUnitsModal: () => void;
+  onOpenUnitsModal?: () => void;
   onComplete: () => void;
 }) {
   const safeUnits = Array.isArray(units) ? units : [];
@@ -5423,14 +5437,16 @@ function EditPartForm({
         <div>
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1.5 sm:mb-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">Ед. измерения</label>
-            <button 
-              type="button" 
-              onClick={onOpenUnitsModal}
-              className="-my-3 py-3 text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 hover:underline whitespace-nowrap shrink-0"
-            >
-              <Plus className="w-3 h-3" />
-              Добавить ЕИ
-            </button>
+            {onOpenUnitsModal && (
+              <button 
+                type="button" 
+                onClick={onOpenUnitsModal}
+                className="-my-3 py-3 text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 hover:underline whitespace-nowrap shrink-0"
+              >
+                <Plus className="w-3 h-3" />
+                Добавить ЕИ
+              </button>
+            )}
           </div>
           <select 
             className="min-h-10 w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm font-semibold transition-all cursor-pointer"
@@ -7314,9 +7330,7 @@ function InventoryTab({
             units={safeUnits}
             branches={branches}
             machines={machines}
-            onOpenUnitsModal={() => {
-              if (onOpenUnitsModal) onOpenUnitsModal();
-            }}
+            onOpenUnitsModal={canPerformAction(role, 'inventory.units', 'create') ? onOpenUnitsModal : undefined}
             onComplete={() => {
               setEditingPart(null);
               onRefresh();

@@ -185,5 +185,6 @@ export interface AppUser {
   lastLogin?: string;
   createdAt?: string;
   createdBy?: string;
+  isSuperadmin?: boolean; // Суперадмин из .env: всегда все права, удалить нельзя
 }
 

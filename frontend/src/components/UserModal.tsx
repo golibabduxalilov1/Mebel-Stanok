@@ -152,6 +152,9 @@ export const UserModal: React.FC<UserModalProps> = ({
   };
 
   const currentRole = roles.find(r => r.id === roleId);
+  // The .env superadmin is identified by its username/email and must keep its role and
+  // active status, so the backend rejects changes to these - lock them here too.
+  const isLocked = Boolean(user?.isSuperadmin);
 
   return (
     <AnimatePresence>
@@ -249,8 +252,9 @@ export const UserModal: React.FC<UserModalProps> = ({
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    disabled={isLocked}
                     placeholder="technolog_ivanov"
-                    className="min-h-10 w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="disabled:opacity-60 disabled:cursor-not-allowed min-h-10 w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <p className="text-[10px] text-slate-400 mt-1">Используется для входа в приложение</p>
                 </div>
@@ -325,7 +329,8 @@ export const UserModal: React.FC<UserModalProps> = ({
                   <select
                     value={roleId}
                     onChange={(e) => setRoleId(e.target.value)}
-                    className="min-h-10 w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isLocked}
+                    className="disabled:opacity-60 disabled:cursor-not-allowed min-h-10 w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {roles.map((r) => (
                       <option key={r.id} value={r.id}>
@@ -405,8 +410,9 @@ export const UserModal: React.FC<UserModalProps> = ({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLocked}
                     placeholder="worker@company.ru"
-                    className="min-h-10 w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="disabled:opacity-60 disabled:cursor-not-allowed min-h-10 w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -439,7 +445,8 @@ export const UserModal: React.FC<UserModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStatus(status === 'active' ? 'blocked' : 'active')}
-                className={`min-h-10 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                disabled={isLocked}
+                className={`disabled:opacity-60 disabled:cursor-not-allowed min-h-10 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                   status === 'active' 
                     ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
                     : 'bg-rose-100 text-rose-800 border border-rose-300'

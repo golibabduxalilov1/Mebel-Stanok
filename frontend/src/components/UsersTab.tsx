@@ -24,7 +24,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { AppUser, Role, Branch } from '../types';
-import { userService, canPerformAction, canAccessTab } from '../services/userService';
+import { userService, canPerformAction, canAccessTab, isAdminRole } from '../services/userService';
 import { RolePermissionModal } from './RolePermissionModal';
 import { UserModal } from './UserModal';
 
@@ -54,6 +54,15 @@ export const UsersTab: React.FC<UsersTabProps> = ({
   const canEditRole = canPerformAction(role, 'users.roles_matrix', 'edit');
   const canDeleteRole = canPerformAction(role, 'users.roles_matrix', 'delete');
   const canEditCredentials = canPerformAction(role, 'users.credentials', 'edit');
+
+  // Non-admins with users.* rights can't touch administrator accounts or the
+  // administrator role (the backend rejects it), so don't offer those actions.
+  const actorIsAdmin = isAdminRole(role);
+  // The .env superadmin can only be edited by itself and never deleted or blocked.
+  const isProtectedUser = (u: AppUser) =>
+    u.isSuperadmin ? u.id !== activeAppUser?.id : !actorIsAdmin && isAdminRole(roles.find(r => r.id === u.roleId));
+  const isProtectedRole = (r: Role) => !actorIsAdmin && isAdminRole(r);
+  const assignableRoles = actorIsAdmin ? roles : roles.filter(r => !isAdminRole(r));
 
   const [activeSection, setActiveSection] = useState<'users' | 'roles'>('users');
   const [searchTerm, setSearchTerm] = useState('');
@@ -382,7 +391,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                         </div>
 
                         {/* Status badge */}
-                        {canEditUser ? (
+                        {canEditUser && !isProtectedUser(u) && !u.isSuperadmin ? (
                           <button
                             onClick={async () => {
                               const newStatus = u.status === 'active' ? 'blocked' : 'active';
@@ -464,7 +473,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                         )}
                       </div>
 
-                      {(canEditUser || canDeleteUser) && (
+                      {(canEditUser || canDeleteUser) && !isProtectedUser(u) && (
                         <div className="flex items-center gap-1">
                           {canEditUser && (
                             <button
@@ -479,7 +488,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                             </button>
                           )}
 
-                          {canDeleteUser && (
+                          {canDeleteUser && !u.isSuperadmin && (
                             <button
                               onClick={() => setDeletingUser(u)}
                               className="min-h-10 min-w-10 flex items-center justify-center p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
@@ -588,7 +597,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                   </div>
 
                   {/* Actions */}
-                  {(canEditRole || canCreateRole || (canDeleteRole && !r.isSystem)) && (
+                  {(canEditRole || canCreateRole || (canDeleteRole && !r.isSystem)) && !isProtectedRole(r) && (
                     <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                       {canEditRole && (
                         <button
@@ -639,7 +648,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
           setEditingRole(null);
         }}
         role={editingRole}
-        roles={roles}
+        roles={assignableRoles}
         onSelectRole={(roleId) => setEditingRole(roleId ? roles.find(r => r.id === roleId) || null : null)}
         onSave={handleSaveRole}
       />
@@ -652,7 +661,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
           setEditingUser(null);
         }}
         user={editingUser}
-        roles={roles}
+        roles={assignableRoles}
         branches={branches}
         onSave={handleSaveUser}
         canEditCredentials={canEditCredentials}

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../lib/prisma';
 import { emitEntity } from '../../lib/socket';
-import { env } from '../../env';
+import { isEnvSuperadmin, SUPERADMIN_LOCKED_FIELDS } from '../../config/superadmin';
 import { Errors } from '../../utils/errors';
 import { writeActivity } from '../../utils/activityLog';
 import type { CreateUserInput, UpdateUserInput } from './users.schema';
@@ -10,12 +10,6 @@ interface Actor {
   userId: string;
   userEmail?: string;
 }
-
-// The bootstrap superadmin identified by SUPERADMIN_USERNAME/EMAIL in .env is
-// protected: nobody (including itself) can delete it, and only the account
-// itself can edit its own data - other admins cannot touch it.
-const isEnvSuperadmin = (user: { username: string; email: string }) =>
-  user.username === env.SUPERADMIN_USERNAME || user.email === env.SUPERADMIN_EMAIL;
 
 const safeSelect = {
   id: true,
@@ -34,12 +28,15 @@ const safeSelect = {
   createdBy: true,
 } as const;
 
-/** Flattens the user_branches join rows into a plain branchIds array for the API response. */
-export function mapUserBranches<T extends { userBranches: { branchId: string }[] }>(
+/**
+ * Flattens the user_branches join rows into a plain branchIds array for the API response,
+ * and flags the .env superadmin so the UI can hide the actions the API would reject.
+ */
+export function mapUserBranches<T extends { username: string; email: string; userBranches: { branchId: string }[] }>(
   user: T
-): Omit<T, 'userBranches'> & { branchIds: string[] } {
+): Omit<T, 'userBranches'> & { branchIds: string[]; isSuperadmin: boolean } {
   const { userBranches, ...rest } = user;
-  return { ...rest, branchIds: userBranches.map((ub) => ub.branchId) };
+  return { ...rest, branchIds: userBranches.map((ub) => ub.branchId), isSuperadmin: isEnvSuperadmin(user) };
 }
 
 export const usersService = {
@@ -83,8 +80,10 @@ export const usersService = {
     const original = await prisma.user.findUnique({ where: { id }, select: safeSelect });
     if (!original) throw Errors.notFound('User');
 
-    if (isEnvSuperadmin(original) && actor.userId !== id) {
-      throw Errors.forbidden('Only the superadmin can edit its own account');
+    if (isEnvSuperadmin(original)) {
+      if (actor.userId !== id) throw Errors.forbidden('Only the superadmin can edit its own account');
+      const changed = SUPERADMIN_LOCKED_FIELDS.filter((field) => input[field] !== undefined && input[field] !== original[field]);
+      if (changed.length) throw Errors.forbidden(`The superadmin's ${changed.join(', ')} cannot be changed`);
     }
 
     const { branchIds, ...rest } = input;

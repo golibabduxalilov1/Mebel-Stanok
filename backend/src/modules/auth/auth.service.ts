@@ -6,7 +6,8 @@ import { env } from '../../env';
 import { Errors } from '../../utils/errors';
 import { sha256Hex } from '../../utils/hash';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, type AccessTokenPayload } from '../../utils/jwt';
-import { ADMIN_ROLE_ID, normalizePermissions } from '../../config/permissions';
+import { ADMIN_ROLE_ID, createFullPermissions, normalizePermissions } from '../../config/permissions';
+import { isEnvSuperadmin } from '../../config/superadmin';
 import { writeActivityStandalone } from '../../utils/activityLog';
 import { mapUserBranches } from '../users/users.service';
 import type { LoginInput } from './auth.schema';
@@ -21,14 +22,16 @@ function isAdminRole(role: UserWithRole['role']): boolean {
 }
 
 function buildAccessPayload(user: UserWithRole): AccessTokenPayload {
+  // The .env superadmin always gets full rights and every branch, whatever its role says.
+  const superadmin = isEnvSuperadmin(user);
   return {
     sub: user.id,
     username: user.username,
     roleId: user.roleId,
     roleName: user.role?.name ?? null,
-    branchIds: user.userBranches.length ? user.userBranches.map((ub) => ub.branchId) : null,
-    permissions: normalizePermissions(user.role?.permissions),
-    isAdmin: isAdminRole(user.role),
+    branchIds: !superadmin && user.userBranches.length ? user.userBranches.map((ub) => ub.branchId) : null,
+    permissions: superadmin ? createFullPermissions() : normalizePermissions(user.role?.permissions),
+    isAdmin: superadmin || isAdminRole(user.role),
   };
 }
 
@@ -64,7 +67,7 @@ export const authService = {
     });
 
     if (!user) throw Errors.invalidCredentials();
-    if (user.status === 'blocked') throw Errors.forbidden('This account has been blocked');
+    if (user.status === 'blocked' && !isEnvSuperadmin(user)) throw Errors.forbidden('This account has been blocked');
 
     const valid = await bcrypt.compare(input.password, user.passwordHash);
     if (!valid) throw Errors.invalidCredentials();
@@ -104,7 +107,7 @@ export const authService = {
     }
 
     const user = await prisma.user.findUnique({ where: { id: payload.sub }, include: userWithRole });
-    if (!user || user.status === 'blocked') throw Errors.unauthorized('Account no longer active');
+    if (!user || (user.status === 'blocked' && !isEnvSuperadmin(user))) throw Errors.unauthorized('Account no longer active');
 
     // Rotate: revoke the used refresh token and issue a new pair.
     await prisma.refreshToken.update({ where: { id: stored.id }, data: { revokedAt: new Date() } });

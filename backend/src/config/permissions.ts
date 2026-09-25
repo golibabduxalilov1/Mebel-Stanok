@@ -210,7 +210,19 @@ interface RoleLike {
   permissions: Record<string, PermissionMatrixItem> | null | undefined;
 }
 
-function isAdminRole(role: RoleLike | null | undefined): boolean {
+/**
+ * The role matrix only exposes create/view/edit/delete. `menu` and `export` are still
+ * stored (presets set them) but can't be toggled, so they follow `view` instead of
+ * being read directly - otherwise unchecking every visible box could leave a tab or
+ * export silently enabled.
+ */
+const EDITABLE_ACTIONS = ['create', 'view', 'edit', 'delete'] as const;
+
+function effectiveAction(action: PermissionAction): (typeof EDITABLE_ACTIONS)[number] {
+  return action === 'menu' || action === 'export' ? 'view' : action;
+}
+
+export function isAdminRole(role: Pick<RoleLike, 'id' | 'name'> | null | undefined): boolean {
   if (!role) return false;
   return role.id === ADMIN_ROLE_ID || role.name?.trim().toLowerCase() === 'администратор';
 }
@@ -227,8 +239,7 @@ export function canAccessTab(role: RoleLike | null | undefined, tabId: string): 
 
   return tabKeys.some((key) => {
     const item = permissions[key];
-    if (!item) return false;
-    return Boolean(item.menu || item.view || item.create || item.edit || item.delete || item.export);
+    return Boolean(item && EDITABLE_ACTIONS.some((a) => item[a]));
   });
 }
 
@@ -243,6 +254,7 @@ export function canPerformAction(
   const permissions = role.permissions;
   if (!permissions) return false;
 
+  action = effectiveAction(action);
   const normalizedKey = ROW_KEY_ALIASES[rowKey] ?? rowKey;
 
   const item = permissions[normalizedKey];
@@ -252,10 +264,7 @@ export function canPerformAction(
     }
   } else if (normalizedKey === 'machines.files') {
     const fallbackItem = permissions['machines.cards'] || permissions['machines.catalog'];
-    if (fallbackItem && fallbackItem[action] !== undefined) {
-      return Boolean(fallbackItem[action]);
-    }
-    return true;
+    return Boolean(fallbackItem?.[action]);
   }
 
   const tabPrefix = `${normalizedKey}.`;

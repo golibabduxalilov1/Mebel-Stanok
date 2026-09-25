@@ -176,6 +176,20 @@ export function createTechnologistPermissions(): Record<string, PermissionMatrix
   return perms;
 }
 
+// The role matrix only exposes create/view/edit/delete. `menu` and `export` are still
+// stored (presets set them) but can't be toggled, so they follow `view` instead of
+// being read directly - otherwise unchecking every visible box could leave a tab or
+// export silently enabled. Mirrors backend/src/config/permissions.ts.
+const EDITABLE_ACTIONS = ['create', 'view', 'edit', 'delete'] as const;
+
+function effectiveAction(action: keyof PermissionMatrixItem): (typeof EDITABLE_ACTIONS)[number] {
+  return action === 'menu' || action === 'export' ? 'view' : action;
+}
+
+export function isAdminRole(role: Pick<Role, 'name'> | undefined | null): boolean {
+  return role?.name?.toLowerCase().trim() === 'администратор';
+}
+
 /**
  * Checks whether a given role has access to a top-level tab
  * @param role The user's role
@@ -209,8 +223,7 @@ export function canAccessTab(role: Role | undefined | null, tabId: string): bool
   // Check if at least ONE action on ANY row in this tab is true
   const hasAnyGranted = tabKeys.some(key => {
     const item = permissions[key];
-    if (!item) return false;
-    return Boolean(item.menu || item.view || item.create || item.edit || item.delete || item.export);
+    return Boolean(item && EDITABLE_ACTIONS.some(a => item[a]));
   });
 
   return hasAnyGranted;
@@ -244,6 +257,7 @@ export function canPerformAction(
     return false;
   }
 
+  action = effectiveAction(action);
   const normalizedKey = ROW_KEY_ALIASES[rowKey] ?? rowKey;
 
   // 1. Direct match on row key
@@ -254,10 +268,7 @@ export function canPerformAction(
     }
   } else if (normalizedKey === 'machines.files') {
     const fallbackItem = permissions['machines.cards'] || permissions['machines.catalog'];
-    if (fallbackItem && fallbackItem[action] !== undefined) {
-      return Boolean(fallbackItem[action]);
-    }
-    return true;
+    return Boolean(fallbackItem?.[action]);
   }
 
   // 2. Tab-level fallback (if passed e.g. 'maintenance', 'machines', 'branches', 'inventory')
@@ -270,9 +281,37 @@ export function canPerformAction(
   return false;
 }
 
+/**
+ * The role the UI should enforce for a user. The .env superadmin always has full rights
+ * (the backend ignores its DB role), so it gets the administrator role whatever it has.
+ */
+export function resolveUserRole(user: AppUser | null | undefined, roles: Role[]): Role | null {
+  if (!user) return null;
+  const role =
+    roles.find(r => r.id === user.roleId) ||
+    roles.find(r => r.name.toLowerCase().trim() === user.roleName?.toLowerCase().trim()) ||
+    null;
+  if (!user.isSuperadmin || isAdminRole(role)) return role;
+  return roles.find(r => isAdminRole(r)) || { id: '', name: 'Администратор', permissions: createFullPermissions() };
+}
+
+// The API returns the assigned role nested as `role: { id, name, color }`;
+// flatten it into roleName/roleColor, which is what the UI reads.
+type ApiUser = AppUser & { role?: { id: string; name: string; color?: string | null } | null };
+
+function mapUser(user: ApiUser): AppUser {
+  const { role, ...rest } = user;
+  return {
+    ...rest,
+    roleName: role?.name ?? rest.roleName,
+    roleColor: role?.color ?? rest.roleColor,
+  };
+}
+
 const usersCache = createCollectionCache<AppUser>({
   entity: 'user',
-  fetchAll: () => apiClient.get<AppUser[]>('/users'),
+  fetchAll: async () => (await apiClient.get<ApiUser[]>('/users')).map(mapUser),
+  map: mapUser,
   sort: (items) => [...items].sort((a, b) => a.fullName.localeCompare(b.fullName)),
 });
 
@@ -285,13 +324,13 @@ const rolesCache = createCollectionCache<Role>({
 export const userService = {
   // --- Auth ---
   async login(usernameOrEmail: string, password: string): Promise<AppUser> {
-    const { accessToken, user } = await apiClient.post<{ accessToken: string; user: AppUser }>('/auth/login', {
+    const { accessToken, user } = await apiClient.post<{ accessToken: string; user: ApiUser }>('/auth/login', {
       usernameOrEmail,
       password,
     });
     setAccessToken(accessToken);
     connectSocket(accessToken);
-    return user;
+    return mapUser(user);
   },
 
   async logout(): Promise<void> {
@@ -304,7 +343,7 @@ export const userService = {
   },
 
   async me(): Promise<AppUser> {
-    return apiClient.get<AppUser>('/auth/me');
+    return mapUser(await apiClient.get<ApiUser>('/auth/me'));
   },
 
   /** Tries to restore a session from the httpOnly refresh cookie on app load. Returns the user, or null if there isn't one. */
@@ -345,7 +384,7 @@ export const userService = {
   // `password` is required by the backend on create (zod-enforced, min 8 chars) even
   // though it's optional on the AppUser type - UserModal always supplies one here.
   async createUser(userData: Omit<AppUser, 'id' | 'createdAt'>): Promise<AppUser> {
-    return apiClient.post<AppUser>('/users', userData);
+    return mapUser(await apiClient.post<ApiUser>('/users', userData));
   },
 
   async updateUser(id: string, updates: Partial<AppUser>): Promise<void> {

@@ -11,7 +11,10 @@ export function createCollectionCache<T extends { id: string }>(opts: {
   entity: string;
   fetchAll: () => Promise<T[]>;
   sort?: (items: T[]) => T[];
+  /** Normalizes a raw socket payload into T (fetchAll is expected to return already-mapped items). */
+  map?: (raw: any) => T;
 }) {
+  const fromSocket = (raw: any): T => (opts.map ? opts.map(raw) : raw);
   let cache: T[] = [];
   let loaded = false;
   let loadPromise: Promise<void> | null = null;
@@ -57,11 +60,11 @@ export function createCollectionCache<T extends { id: string }>(opts: {
       connectedBefore = true;
     });
     socket.on(`${opts.entity}:created`, (item: T) => {
-      upsert(item);
+      upsert(fromSocket(item));
       notify();
     });
     socket.on(`${opts.entity}:updated`, (item: T) => {
-      upsert(item);
+      upsert(fromSocket(item));
       notify();
     });
     socket.on(`${opts.entity}:deleted`, (payload: { id: string }) => {

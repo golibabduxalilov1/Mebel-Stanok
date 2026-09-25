@@ -29,6 +29,7 @@ import { Machine, MachineAttachment, MachineAttachmentType, Role, AppUser } from
 import { compressImage } from './PhotoPicker';
 import { machineService } from '../services/machineService';
 import { ApiError } from '../lib/apiClient';
+import { canPerformAction } from '../services/userService';
 
 /** Generates a JPEG poster frame (~15-25KB) for a video, uploaded alongside it as the attachment's thumbnail. */
 async function generateVideoThumbnail(file: File | Blob): Promise<Blob | null> {
@@ -130,6 +131,13 @@ export function MachineFilesModal({
   const [activeFilter, setActiveFilter] = useState<'all' | 'image' | 'video' | 'pdf' | 'document' | 'archive'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab] = useState<'files'>('files');
+
+  const canUploadFiles = canPerformAction(role, 'machines.files', 'create');
+  const canEditFiles = canPerformAction(role, 'machines.files', 'edit');
+  const canDeleteFiles = canPerformAction(role, 'machines.files', 'delete');
+  // Legacy photos live on the machine record itself, so removing one is a machine edit.
+  const canEditMachine = canPerformAction(role, 'machines.catalog', 'edit') || canPerformAction(role, 'machines.cards', 'edit');
+  const canDeleteItem = (item: MachineAttachment) => canDeleteFiles && (!isLegacyPhoto(item) || canEditMachine);
 
   // Upload state
   const [dragActive, setDragActive] = useState(false);
@@ -303,6 +311,7 @@ export function MachineFilesModal({
 
   // Queue files chosen via the picker or drag-and-drop for review before uploading.
   const queueFiles = (files: FileList | File[]) => {
+    if (!canUploadFiles) return;
     const list = Array.from(files);
     if (list.length === 0) return;
     setUploadError(null);
@@ -659,7 +668,7 @@ export function MachineFilesModal({
         {/* Navigation Tabs */}
         <div className="px-5 sm:px-8 border-b border-slate-100 flex items-center justify-between gap-2 overflow-x-auto bg-white">
           <div className="flex gap-1 py-2">
-            <button
+            {canUploadFiles && <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
@@ -669,7 +678,7 @@ export function MachineFilesModal({
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Выбрать файлы</span>
               <span className="sm:hidden">Файлы</span>
-            </button>
+            </button>}
           </div>
 
           {activeTab === 'files' && (
@@ -760,10 +769,10 @@ export function MachineFilesModal({
                   <h4 className="text-base font-bold text-slate-800">
                     В папке станка пока нет файлов
                   </h4>
-                  <p className="text-xs text-slate-500 max-w-sm mt-1 mb-5">
+                  {canUploadFiles && <p className="text-xs text-slate-500 max-w-sm mt-1 mb-5">
                     Сюда можно скидывать всё что есть: видео работы станка, фотографии шильдиков и узлов, PDF паспорта, руководства, электросхемы и чертежи.
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-3">
+                  </p>}
+                  {canUploadFiles && <div className="flex flex-wrap items-center justify-center gap-3">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
@@ -773,7 +782,7 @@ export function MachineFilesModal({
                       <Upload className="w-4 h-4" />
                       {isProcessing ? 'Загрузка...' : 'Выбрать файлы'}
                     </button>
-                  </div>
+                  </div>}
                 </div>
               ) : viewMode === 'grid' ? (
                 /* GRID VIEW */
@@ -899,7 +908,7 @@ export function MachineFilesModal({
                         {/* Action buttons */}
                         <div className="pt-3 mt-2 border-t border-slate-100 flex items-center justify-between gap-1">
                           <div className="flex items-center gap-1">
-                            {item.type === 'image' && !item.isMainImage && !isLegacyPhoto(item) && (
+                            {canEditFiles && item.type === 'image' && !item.isMainImage && !isLegacyPhoto(item) && (
                               <button
                                 onClick={() => handleSetAsMainImage(item)}
                                 className="p-1.5 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded-lg transition-colors"
@@ -928,13 +937,15 @@ export function MachineFilesModal({
                             </button>
                           </div>
 
-                          <button
-                            onClick={() => handleDeleteAttachment(item.id)}
-                            className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
-                            title="Удалить из папки"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {canDeleteItem(item) && (
+                            <button
+                              onClick={() => handleDeleteAttachment(item.id)}
+                              className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                              title="Удалить из папки"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -999,7 +1010,7 @@ export function MachineFilesModal({
                             </td>
                             <td className="py-2.5 px-4 text-right whitespace-nowrap">
                               <div className="flex items-center justify-end gap-1">
-                                {item.type === 'image' && !item.isMainImage && !isLegacyPhoto(item) && (
+                                {canEditFiles && item.type === 'image' && !item.isMainImage && !isLegacyPhoto(item) && (
                                   <button
                                     onClick={() => handleSetAsMainImage(item)}
                                     className="p-1 hover:bg-amber-50 text-slate-400 hover:text-amber-600 rounded"
@@ -1024,13 +1035,15 @@ export function MachineFilesModal({
                                 >
                                   <Download className="w-3.5 h-3.5" />
                                 </button>
-                                <button
-                                  onClick={() => handleDeleteAttachment(item.id)}
-                                  className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded"
-                                  title="Удалить"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                {canDeleteItem(item) && (
+                                  <button
+                                    onClick={() => handleDeleteAttachment(item.id)}
+                                    className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded"
+                                    title="Удалить"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -1070,7 +1083,7 @@ export function MachineFilesModal({
                 <span className="font-bold text-xs sm:text-sm truncate">{previewItem.name}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {previewItem.type === 'image' && !previewItem.isMainImage && !isLegacyPhoto(previewItem) && (
+                {canEditFiles && previewItem.type === 'image' && !previewItem.isMainImage && !isLegacyPhoto(previewItem) && (
                   <button
                     onClick={() => {
                       handleSetAsMainImage(previewItem);
