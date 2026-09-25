@@ -6891,6 +6891,13 @@ function InventoryTab({
   const [partLightbox, setPartLightbox] = useState<{ images: string[]; initialIndex: number; title?: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [branchFilter, setBranchFilter] = useState<string>('all');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!deleteError) return;
+    const timer = setTimeout(() => setDeleteError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [deleteError]);
 
   // Filtered parts
   const filteredParts = safeParts.filter(part => {
@@ -6918,12 +6925,32 @@ function InventoryTab({
       setConfirmDeleteId(null);
       onRefresh();
     } catch (e) {
-      alert('Ошибка при удалении' + (e instanceof Error ? `: ${e.message}` : ''));
+      setConfirmDeleteId(null);
+      setDeleteError(e instanceof Error ? e.message : 'Не удалось удалить запчасть');
     }
   };
 
   return (
     <div className="space-y-4 sm:space-y-6 lg:max-h-[700px] lg:overflow-y-auto lg:pr-2 custom-scrollbar">
+      <AnimatePresence>
+        {deleteError && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-4 right-4 z-50 flex items-center gap-3 max-w-sm px-4 py-3 rounded-2xl shadow-xl border text-xs sm:text-sm font-bold backdrop-blur-md bg-rose-50/95 border-rose-200 text-rose-800 shadow-rose-500/10"
+          >
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span>{deleteError}</span>
+            <button
+              onClick={() => setDeleteError(null)}
+              className="ml-2 text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-black/5 transition-colors cursor-pointer shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Top action bar and filter controls */}
       <div className="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row gap-2 items-stretch lg:items-center justify-between">
         <div className="flex flex-1 flex-wrap items-center gap-2 w-full min-w-0">
