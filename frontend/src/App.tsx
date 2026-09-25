@@ -120,6 +120,7 @@ import { ApiError } from './lib/apiClient';
 import { userService, canAccessTab, canPerformAction } from './services/userService';
 import { Machine, MachineStatus, MaintenanceLog, LogType, LogStatus, Branch, SparePart, MaintenanceSchedule, Transfer, ActivityLog, UnitOfMeasure, ToirTaskType, AppUser, Role } from './types';
 import { TOIR_CATEGORIES, getToirCategory, calculateDeadlineInfo, ToirCategoryConfig } from './toirConstants';
+import { partMatchesTarget, partMachineRank, partBoundMachines } from './utils/spareParts';
 import { UsersTab } from './components/UsersTab';
 import { 
   CreateToirScheduleModal, 
@@ -3788,14 +3789,9 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
     const targetBranchId = currentMachine?.branchId || selectedBranchId;
     if (!formData.machineId && !targetBranchId) return [];
 
-    return parts.filter(p => {
-      const isForMachine = Boolean(p.machineId && formData.machineId && p.machineId === formData.machineId);
-      const isForBranch = Boolean(p.branchId && targetBranchId && p.branchId === targetBranchId && (!p.machineId || p.machineId === formData.machineId));
-      return isForMachine || isForBranch;
-    }).sort((a, b) => {
-      const aIsMachine = a.machineId === formData.machineId ? 1 : 0;
-      const bIsMachine = b.machineId === formData.machineId ? 1 : 0;
-      if (bIsMachine !== aIsMachine) return bIsMachine - aIsMachine;
+    return parts.filter(p => partMatchesTarget(p, formData.machineId, targetBranchId)).sort((a, b) => {
+      const rankDiff = partMachineRank(b, formData.machineId) - partMachineRank(a, formData.machineId);
+      if (rankDiff !== 0) return rankDiff;
       return a.name.localeCompare(b.name, 'ru');
     });
   }, [parts, formData.machineId, selectedBranchId, machines]);
@@ -4107,8 +4103,8 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
               {relevantParts.map(p => {
                 const currentMachine = machines?.find(m => m.id === formData.machineId);
                 const targetBranchId = currentMachine?.branchId || selectedBranchId;
-                const isForMachine = Boolean(formData.machineId && p.machineId === formData.machineId);
-                const isForBranch = Boolean(p.branchId && targetBranchId && p.branchId === targetBranchId && !p.machineId);
+                const isForMachine = Boolean(formData.machineId && (p.machineIds ?? []).includes(formData.machineId));
+                const isForBranch = Boolean(p.branchId && targetBranchId && p.branchId === targetBranchId && !(p.machineIds && p.machineIds.length));
                 const prefix = isForMachine ? '[🎯 Станок] ' : isForBranch ? '[🏢 Филиал] ' : '[📦 Склад] ';
                 return (
                   <option
@@ -4281,14 +4277,9 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
     const targetBranchId = currentMachine?.branchId;
     if (!log.machineId && !targetBranchId) return [];
 
-    return parts.filter(p => {
-      const isForMachine = Boolean(p.machineId && log.machineId && p.machineId === log.machineId);
-      const isForBranch = Boolean(p.branchId && targetBranchId && p.branchId === targetBranchId && (!p.machineId || p.machineId === log.machineId));
-      return isForMachine || isForBranch;
-    }).sort((a, b) => {
-      const aIsMachine = a.machineId === log.machineId ? 1 : 0;
-      const bIsMachine = b.machineId === log.machineId ? 1 : 0;
-      if (bIsMachine !== aIsMachine) return bIsMachine - aIsMachine;
+    return parts.filter(p => partMatchesTarget(p, log.machineId, targetBranchId)).sort((a, b) => {
+      const rankDiff = partMachineRank(b, log.machineId) - partMachineRank(a, log.machineId);
+      if (rankDiff !== 0) return rankDiff;
       return a.name.localeCompare(b.name, 'ru');
     });
   }, [parts, log.machineId, machines]);
@@ -4515,8 +4506,8 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
             {relevantParts.map(p => {
               const currentMachine = machines?.find(m => m.id === log.machineId);
               const targetBranchId = currentMachine?.branchId;
-              const isForMachine = Boolean(log.machineId && p.machineId === log.machineId);
-              const isForBranch = Boolean(targetBranchId && p.branchId === targetBranchId && !p.machineId);
+              const isForMachine = Boolean(log.machineId && (p.machineIds ?? []).includes(log.machineId));
+              const isForBranch = Boolean(targetBranchId && p.branchId === targetBranchId && !(p.machineIds && p.machineIds.length));
               const prefix = isForMachine ? '[🎯 Станок] ' : isForBranch ? '[🏢 Филиал] ' : '[📦 Склад] ';
               const previouslyAllocated = log.partsUsed?.find(u => u.partId === p.id)?.quantity || 0;
               const maxAvailable = Math.round((p.availableQuantity + previouslyAllocated) * 1000) / 1000;
@@ -4968,13 +4959,13 @@ function AddPartForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [branchId, setBranchId] = useState<string>('');
-  const [machineId, setMachineId] = useState<string>('');
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    sku: '', 
-    quantity: 1, 
-    minQuantity: 1, 
-    unitPrice: 0, 
+  const [machineIds, setMachineIds] = useState<string[]>([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    sku: '',
+    quantity: 1,
+    minQuantity: 1,
+    unitPrice: 0,
     unit: 'шт',
     imageUrl: '',
     imageUrls: [] as string[]
@@ -4993,22 +4984,23 @@ function AddPartForm({
 
   const handleBranchChange = (newBranchId: string) => {
     setBranchId(newBranchId);
-    if (machineId) {
-      const currentMachine = machines.find(m => m.id === machineId);
-      if (currentMachine && currentMachine.branchId && currentMachine.branchId !== newBranchId) {
-        setMachineId('');
-      }
+    if (machineIds.length) {
+      setMachineIds(machineIds.filter(id => {
+        const m = machines.find(mach => mach.id === id);
+        return !m || !m.branchId || m.branchId === newBranchId;
+      }));
     }
   };
 
-  const handleMachineChange = (newMachineId: string) => {
-    setMachineId(newMachineId);
-    if (newMachineId) {
-      const selectedM = machines.find(m => m.id === newMachineId);
-      if (selectedM && selectedM.branchId && (!branchId || branchId !== selectedM.branchId)) {
+  const toggleMachine = (toggledId: string) => {
+    setMachineIds(prev => {
+      const next = prev.includes(toggledId) ? prev.filter(id => id !== toggledId) : [...prev, toggledId];
+      const selectedM = machines.find(m => m.id === toggledId);
+      if (!prev.includes(toggledId) && selectedM?.branchId && (!branchId || branchId !== selectedM.branchId)) {
         setBranchId(selectedM.branchId);
       }
-    }
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -5024,7 +5016,7 @@ function AddPartForm({
         unitPrice: Number(formData.unitPrice) || 0,
         unit: formData.unit || 'шт',
         branchId: branchId || undefined,
-        machineId: machineId || undefined,
+        machineIds,
         imageUrl: formData.imageUrl || (formData.imageUrls && formData.imageUrls[0]) || '',
         imageUrls: formData.imageUrls || []
       });
@@ -5100,10 +5092,10 @@ function AddPartForm({
             <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
             Привязка к филиалу и станку (по выбору)
           </span>
-          {(branchId || machineId) && (
+          {(branchId || machineIds.length > 0) && (
             <button
               type="button"
-              onClick={() => { setBranchId(''); setMachineId(''); }}
+              onClick={() => { setBranchId(''); setMachineIds([]); }}
               className="-my-3 py-3 text-[10px] font-bold text-slate-400 hover:text-rose-600 transition-colors whitespace-nowrap shrink-0"
             >
               Сбросить
@@ -5111,52 +5103,57 @@ function AddPartForm({
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
-              Филиал
-            </label>
-            <select
-              value={branchId}
-              onChange={e => handleBranchChange(e.target.value)}
-              className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
-            >
-              <option value="">Для всех филиалов (общая)</option>
-              {branches.map(b => (
-                <option key={b.id} value={b.id}>
-                  🏢 {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
-              Оборудование / Станок
-            </label>
-            <select
-              value={machineId}
-              onChange={e => handleMachineChange(e.target.value)}
-              className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
-            >
-              <option value="">Для любого оборудования (универсальная)</option>
-              {filteredMachines.map(m => (
-                <option key={m.id} value={m.id}>
-                  🎯 {m.name} ({m.model || 'б/м'})
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+            Филиал
+          </label>
+          <select
+            value={branchId}
+            onChange={e => handleBranchChange(e.target.value)}
+            className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
+          >
+            <option value="">Для всех филиалов (общая)</option>
+            {branches.map(b => (
+              <option key={b.id} value={b.id}>
+                🏢 {b.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {(branchId || machineId) && (
-          <p className="text-[10px] text-blue-700 bg-blue-50/70 p-2 rounded-lg border border-blue-100 flex items-center gap-1.5">
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+            Оборудование / Станок (можно выбрать несколько)
+          </label>
+          {filteredMachines.length === 0 ? (
+            <p className="text-xs text-slate-400 italic p-2">Нет доступных станков</p>
+          ) : (
+            <div className="max-h-40 overflow-y-auto rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
+              {filteredMachines.map(m => (
+                <label key={m.id} className="flex items-center gap-2 p-2.5 text-xs font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={machineIds.includes(m.id)}
+                    onChange={() => toggleMachine(m.id)}
+                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                  />
+                  <span>🎯 {m.name} ({m.model || 'б/м'})</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {(branchId || machineIds.length > 0) && (
+          <p className="text-[10px] text-blue-700 bg-blue-50/70 p-2 rounded-lg border border-blue-100 flex items-start gap-1.5">
             <span>ℹ️</span>
             <span>
               Деталь будет доступна только для:
               {branchId && <strong> {branches.find(b => b.id === branchId)?.name}</strong>}
-              {branchId && machineId && ' → '}
-              {machineId && <strong> {machines.find(m => m.id === machineId)?.name}</strong>}
+              {branchId && machineIds.length > 0 && ' → '}
+              {machineIds.length > 0 && (
+                <strong> {machineIds.map(id => machines.find(m => m.id === id)?.name).filter(Boolean).join(', ')}</strong>
+              )}
             </span>
           </p>
         )}
@@ -5276,7 +5273,7 @@ function EditPartForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [branchId, setBranchId] = useState<string>(part.branchId || '');
-  const [machineId, setMachineId] = useState<string>(part.machineId || '');
+  const [machineIds, setMachineIds] = useState<string[]>(part.machineIds || []);
   const [formData, setFormData] = useState({
     name: part.name || '',
     sku: part.sku || '',
@@ -5301,22 +5298,23 @@ function EditPartForm({
 
   const handleBranchChange = (newBranchId: string) => {
     setBranchId(newBranchId);
-    if (machineId) {
-      const currentMachine = machines.find(m => m.id === machineId);
-      if (currentMachine && currentMachine.branchId && currentMachine.branchId !== newBranchId) {
-        setMachineId('');
-      }
+    if (machineIds.length) {
+      setMachineIds(machineIds.filter(id => {
+        const m = machines.find(mach => mach.id === id);
+        return !m || !m.branchId || m.branchId === newBranchId;
+      }));
     }
   };
 
-  const handleMachineChange = (newMachineId: string) => {
-    setMachineId(newMachineId);
-    if (newMachineId) {
-      const selectedM = machines.find(m => m.id === newMachineId);
-      if (selectedM && selectedM.branchId && (!branchId || branchId !== selectedM.branchId)) {
+  const toggleMachine = (toggledId: string) => {
+    setMachineIds(prev => {
+      const next = prev.includes(toggledId) ? prev.filter(id => id !== toggledId) : [...prev, toggledId];
+      const selectedM = machines.find(m => m.id === toggledId);
+      if (!prev.includes(toggledId) && selectedM?.branchId && (!branchId || branchId !== selectedM.branchId)) {
         setBranchId(selectedM.branchId);
       }
-    }
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -5332,7 +5330,7 @@ function EditPartForm({
         unitPrice: Number(formData.unitPrice) || 0,
         unit: formData.unit || 'шт',
         branchId: branchId || undefined,
-        machineId: machineId || undefined,
+        machineIds,
         imageUrl: formData.imageUrl || (formData.imageUrls && formData.imageUrls[0]) || '',
         imageUrls: formData.imageUrls || []
       });
@@ -5406,10 +5404,10 @@ function EditPartForm({
             <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
             Привязка к филиалу и станку (по выбору)
           </span>
-          {(branchId || machineId) && (
+          {(branchId || machineIds.length > 0) && (
             <button
               type="button"
-              onClick={() => { setBranchId(''); setMachineId(''); }}
+              onClick={() => { setBranchId(''); setMachineIds([]); }}
               className="-my-3 py-3 text-[10px] font-bold text-slate-400 hover:text-rose-600 transition-colors whitespace-nowrap shrink-0"
             >
               Сбросить
@@ -5417,52 +5415,57 @@ function EditPartForm({
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
-              Филиал
-            </label>
-            <select
-              value={branchId}
-              onChange={e => handleBranchChange(e.target.value)}
-              className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
-            >
-              <option value="">Для всех филиалов (общая)</option>
-              {branches.map(b => (
-                <option key={b.id} value={b.id}>
-                  🏢 {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
-              Оборудование / Станок
-            </label>
-            <select
-              value={machineId}
-              onChange={e => handleMachineChange(e.target.value)}
-              className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
-            >
-              <option value="">Для любого оборудования (универсальная)</option>
-              {filteredMachines.map(m => (
-                <option key={m.id} value={m.id}>
-                  🎯 {m.name} ({m.model || 'б/м'})
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+            Филиал
+          </label>
+          <select
+            value={branchId}
+            onChange={e => handleBranchChange(e.target.value)}
+            className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer"
+          >
+            <option value="">Для всех филиалов (общая)</option>
+            {branches.map(b => (
+              <option key={b.id} value={b.id}>
+                🏢 {b.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {(branchId || machineId) && (
-          <p className="text-[10px] text-blue-700 bg-blue-50/70 p-2 rounded-lg border border-blue-100 flex items-center gap-1.5">
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+            Оборудование / Станок (можно выбрать несколько)
+          </label>
+          {filteredMachines.length === 0 ? (
+            <p className="text-xs text-slate-400 italic p-2">Нет доступных станков</p>
+          ) : (
+            <div className="max-h-40 overflow-y-auto rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
+              {filteredMachines.map(m => (
+                <label key={m.id} className="flex items-center gap-2 p-2.5 text-xs font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={machineIds.includes(m.id)}
+                    onChange={() => toggleMachine(m.id)}
+                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                  />
+                  <span>🎯 {m.name} ({m.model || 'б/м'})</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {(branchId || machineIds.length > 0) && (
+          <p className="text-[10px] text-blue-700 bg-blue-50/70 p-2 rounded-lg border border-blue-100 flex items-start gap-1.5">
             <span>ℹ️</span>
             <span>
               Деталь привязана к:
               {branchId && <strong> {branches.find(b => b.id === branchId)?.name}</strong>}
-              {branchId && machineId && ' → '}
-              {machineId && <strong> {machines.find(m => m.id === machineId)?.name}</strong>}
+              {branchId && machineIds.length > 0 && ' → '}
+              {machineIds.length > 0 && (
+                <strong> {machineIds.map(id => machines.find(m => m.id === id)?.name).filter(Boolean).join(', ')}</strong>
+              )}
             </span>
           </p>
         )}
@@ -6935,8 +6938,8 @@ function InventoryTab({
     // Filter by branch
     let matchesBranch = true;
     if (branchFilter !== 'all') {
-      const partMachine = part.machineId ? machines.find(m => m.id === part.machineId) : null;
-      matchesBranch = part.branchId === branchFilter || (partMachine?.branchId === branchFilter);
+      const partMachines = partBoundMachines(part, machines);
+      matchesBranch = part.branchId === branchFilter || partMachines.some(m => m.branchId === branchFilter);
     }
 
     return matchesSearch && matchesBranch;
@@ -7106,10 +7109,12 @@ function InventoryTab({
                           <p className="font-bold text-slate-800 break-words">{part.name}</p>
                           <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                             <span className="text-[10px] text-slate-400 font-mono uppercase">ЕИ: {part.unit || 'шт'}</span>
-                            {part.machineId ? (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold" title="Привязана к оборудованию">
-                                🎯 {machines.find(m => m.id === part.machineId)?.name || 'Станок'}
-                              </span>
+                            {(part.machineIds && part.machineIds.length > 0) ? (
+                              partBoundMachines(part, machines).map(m => (
+                                <span key={m.id} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold" title="Привязана к оборудованию">
+                                  🎯 {m.name}
+                                </span>
+                              ))
                             ) : part.branchId ? (
                               <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 text-[9px] font-bold" title="Привязана к филиалу">
                                 🏢 {branches.find(b => b.id === part.branchId)?.name || 'Филиал'}

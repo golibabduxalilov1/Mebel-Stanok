@@ -31,6 +31,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Machine, MaintenanceSchedule, MaintenanceLog, Branch, SparePart, ToirTaskType } from '../types';
 import { TOIR_CATEGORIES, getToirCategory, calculateDeadlineInfo, ToirCategoryConfig } from '../toirConstants';
+import { partMatchesTarget, partMachineRank } from '../utils/spareParts';
 import { machineService } from '../services/machineService';
 import { ApiError } from '../lib/apiClient';
 import { MultiPhotoPicker, LightboxModal } from './PhotoPicker';
@@ -267,14 +268,9 @@ export function CreateToirScheduleModal({
   // Рекомендованные запчасти для станка и филиала
   const recommendedParts = useMemo(() => {
     if (!machineId && !currentBranchId) return [];
-    return parts.filter(p => {
-      const isForMachine = Boolean(p.machineId && machineId && p.machineId === machineId);
-      const isForBranch = Boolean(p.branchId && currentBranchId && p.branchId === currentBranchId && (!p.machineId || p.machineId === machineId));
-      return isForMachine || isForBranch;
-    }).sort((a, b) => {
-      const aIsMachine = a.machineId === machineId ? 1 : 0;
-      const bIsMachine = b.machineId === machineId ? 1 : 0;
-      if (bIsMachine !== aIsMachine) return bIsMachine - aIsMachine;
+    return parts.filter(p => partMatchesTarget(p, machineId, currentBranchId)).sort((a, b) => {
+      const rankDiff = partMachineRank(b, machineId) - partMachineRank(a, machineId);
+      if (rankDiff !== 0) return rankDiff;
       return a.name.localeCompare(b.name, 'ru');
     });
   }, [parts, machineId, currentBranchId]);
@@ -584,8 +580,8 @@ export function CreateToirScheduleModal({
                       : `-- Выбрать рекомендованную деталь (${relevantParts.length} привязано) --`}
                 </option>
                 {relevantParts.map(p => {
-                  const isForMachine = Boolean(machineId && p.machineId === machineId);
-                  const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !p.machineId);
+                  const isForMachine = Boolean(machineId && (p.machineIds ?? []).includes(machineId));
+                  const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !(p.machineIds && p.machineIds.length));
                   const tag = isForMachine
                     ? '[Ст] '
                     : isForBranch
@@ -930,14 +926,9 @@ export function EditToirScheduleModal({
   // Рекомендованные запчасти для станка и филиала
   const recommendedParts = useMemo(() => {
     if (!schedule.machineId && !currentBranchId) return [];
-    return parts.filter(p => {
-      const isForMachine = Boolean(p.machineId && schedule.machineId && p.machineId === schedule.machineId);
-      const isForBranch = Boolean(p.branchId && currentBranchId && p.branchId === currentBranchId && (!p.machineId || p.machineId === schedule.machineId));
-      return isForMachine || isForBranch;
-    }).sort((a, b) => {
-      const aIsMachine = a.machineId === schedule.machineId ? 1 : 0;
-      const bIsMachine = b.machineId === schedule.machineId ? 1 : 0;
-      if (bIsMachine !== aIsMachine) return bIsMachine - aIsMachine;
+    return parts.filter(p => partMatchesTarget(p, schedule.machineId, currentBranchId)).sort((a, b) => {
+      const rankDiff = partMachineRank(b, schedule.machineId) - partMachineRank(a, schedule.machineId);
+      if (rankDiff !== 0) return rankDiff;
       return a.name.localeCompare(b.name, 'ru');
     });
   }, [parts, schedule.machineId, currentBranchId]);
@@ -1217,8 +1208,8 @@ export function EditToirScheduleModal({
                       : `-- Выбрать рекомендованную деталь (${relevantParts.length} привязано) --`}
                 </option>
                 {relevantParts.map(p => {
-                  const isForMachine = Boolean(schedule.machineId && p.machineId === schedule.machineId);
-                  const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !p.machineId);
+                  const isForMachine = Boolean(schedule.machineId && (p.machineIds ?? []).includes(schedule.machineId));
+                  const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !(p.machineIds && p.machineIds.length));
                   const tag = isForMachine
                     ? '[Ст] '
                     : isForBranch

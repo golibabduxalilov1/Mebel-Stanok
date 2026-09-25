@@ -10,7 +10,7 @@ export const createSparePartSchema = z.object({
   imageUrl: z.string().optional(),
   imageUrls: z.array(z.string()).optional(),
   branchId: z.string().uuid().optional(),
-  machineId: z.string().uuid().optional(),
+  machineIds: z.array(z.string().uuid()).optional(),
   isArchived: z.boolean().optional(),
 });
 

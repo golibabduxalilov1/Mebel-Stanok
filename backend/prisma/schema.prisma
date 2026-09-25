@@ -170,8 +170,7 @@ model SparePart {
   imageUrls   String[] @default([]) @map("image_urls")
   branchId    String?  @map("branch_id")
   branch      Branch?  @relation(fields: [branchId], references: [id])
-  machineId   String?  @map("machine_id")
-  machine     Machine? @relation(fields: [machineId], references: [id])
+  machines    Machine[]
   isArchived  Boolean  @default(false) @map("is_archived")
   createdBy   String?  @map("created_by")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz

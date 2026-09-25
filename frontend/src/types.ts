@@ -68,7 +68,7 @@ export interface SparePart {
   imageUrl?: string;
   imageUrls?: string[];
   branchId?: string;
-  machineId?: string;
+  machineIds?: string[];
   isArchived?: boolean;
   createdBy: string;
 }

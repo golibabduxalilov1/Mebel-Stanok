@@ -17,17 +17,17 @@ export function getBranchScope(user?: AccessTokenPayload): BranchScope {
   return branchIds;
 }
 
-/** Spare parts belong to a branch directly, or (when branch_id is empty) through their machine. */
+/** Spare parts belong to a branch directly, or (when branch_id is empty) through one of their machines. */
 export function sparePartScopeWhere(scope: BranchScope): Prisma.SparePartWhereInput {
   if (!scope) return {};
-  return { OR: [{ branchId: { in: scope } }, { branchId: null, machine: { branchId: { in: scope } } }] };
+  return { OR: [{ branchId: { in: scope } }, { branchId: null, machines: { some: { branchId: { in: scope } } } }] };
 }
 
-/** Resolves the branch a spare part effectively belongs to (its own, else its machine's). */
-export async function getSparePartBranchId(part: { branchId: string | null; machineId: string | null }): Promise<string | null> {
+/** Resolves a branch a spare part effectively belongs to (its own, else one of its machines'). */
+export async function getSparePartBranchId(part: { branchId: string | null; machineIds: string[] }): Promise<string | null> {
   if (part.branchId) return part.branchId;
-  if (!part.machineId) return null;
-  const machine = await prisma.machine.findUnique({ where: { id: part.machineId }, select: { branchId: true } });
+  if (!part.machineIds.length) return null;
+  const machine = await prisma.machine.findFirst({ where: { id: { in: part.machineIds } }, select: { branchId: true } });
   return machine?.branchId ?? null;
 }
 

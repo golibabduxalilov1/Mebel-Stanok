@@ -11,6 +11,14 @@ import {
 } from '../../utils/branchScope';
 import type { CreateSparePartInput, UpdateSparePartInput } from './spareParts.schema';
 
+const machinesInclude = { machines: { select: { id: true } } } as const;
+
+/** Flattens the `machines` relation into a plain `machineIds` array for API responses. */
+function serializePart<T extends { machines?: { id: string }[] }>(part: T) {
+  const { machines, ...rest } = part;
+  return { ...rest, machineIds: (machines ?? []).map((m) => m.id) };
+}
+
 function withAvailability<T extends { id: string; quantity: unknown }>(part: T, reserved: number) {
   const reservedQuantity = reserved;
   const availableQuantity = Number(part.quantity) - reservedQuantity;
@@ -23,23 +31,23 @@ interface Actor {
 }
 
 async function findPartInScope(id: string, scope: BranchScope) {
-  const part = await prisma.sparePart.findFirst({ where: { id, ...sparePartScopeWhere(scope) } });
+  const part = await prisma.sparePart.findFirst({ where: { id, ...sparePartScopeWhere(scope) }, include: machinesInclude });
   if (!part) throw Errors.notFound('Spare part');
-  return part;
+  return serializePart(part);
 }
 
 /** A branch-restricted user may only attach parts to their own branch / its machines. */
-async function assertPartTargetInScope(input: { branchId?: string; machineId?: string }, scope: BranchScope) {
+async function assertPartTargetInScope(input: { branchId?: string; machineIds?: string[] }, scope: BranchScope) {
   if (!scope) return;
   if (input.branchId && !scope.includes(input.branchId)) throw Errors.forbidden('Нельзя добавлять запчасти в другой филиал');
-  if (input.machineId) await assertMachineInScope(scope, input.machineId);
+  if (input.machineIds) await Promise.all(input.machineIds.map((machineId) => assertMachineInScope(scope, machineId)));
 }
 
 export const sparePartsService = {
   async list(scope: BranchScope) {
-    const parts = await prisma.sparePart.findMany({ where: sparePartScopeWhere(scope), orderBy: { name: 'asc' } });
+    const parts = await prisma.sparePart.findMany({ where: sparePartScopeWhere(scope), orderBy: { name: 'asc' }, include: machinesInclude });
     const reserved = await getReservedTotals(prisma, parts.map((p) => p.id));
-    return parts.map((p) => withAvailability(p, reserved.get(p.id) ?? 0));
+    return parts.map((p) => withAvailability(serializePart(p), reserved.get(p.id) ?? 0));
   },
 
   async create(input: CreateSparePartInput, actor: Actor, scope: BranchScope) {
@@ -48,8 +56,16 @@ export const sparePartsService = {
       if (scope.length > 1) throw Errors.forbidden('Укажите филиал: вы привязаны к нескольким филиалам');
       input = { ...input, branchId: scope[0] };
     }
+    const { machineIds, ...rest } = input;
     const part = await prisma.$transaction(async (tx) => {
-      const created = await tx.sparePart.create({ data: { ...input, createdBy: actor.userId } });
+      const created = await tx.sparePart.create({
+        data: {
+          ...rest,
+          createdBy: actor.userId,
+          ...(machineIds ? { machines: { connect: machineIds.map((id) => ({ id })) } } : {}),
+        },
+        include: machinesInclude,
+      });
       await writeActivity(tx, {
         actionType: 'create',
         entityType: 'part',
@@ -61,16 +77,25 @@ export const sparePartsService = {
       });
       return created;
     });
-    emitEntity('sparePart', 'created', part, await getSparePartBranchId(part));
-    return part;
+    const serialized = serializePart(part);
+    emitEntity('sparePart', 'created', serialized, await getSparePartBranchId(serialized));
+    return serialized;
   },
 
   async update(id: string, input: UpdateSparePartInput, actor: Actor, scope: BranchScope) {
     await findPartInScope(id, scope);
     await assertPartTargetInScope(input, scope);
 
+    const { machineIds, ...rest } = input;
     const part = await prisma.$transaction(async (tx) => {
-      const updated = await tx.sparePart.update({ where: { id }, data: input });
+      const updated = await tx.sparePart.update({
+        where: { id },
+        data: {
+          ...rest,
+          ...(machineIds !== undefined ? { machines: { set: machineIds.map((mId) => ({ id: mId })) } } : {}),
+        },
+        include: machinesInclude,
+      });
       await writeActivity(tx, {
         actionType: 'update',
         entityType: 'part',
@@ -82,8 +107,9 @@ export const sparePartsService = {
       });
       return updated;
     });
-    emitEntity('sparePart', 'updated', part, await getSparePartBranchId(part));
-    return part;
+    const serialized = serializePart(part);
+    emitEntity('sparePart', 'updated', serialized, await getSparePartBranchId(serialized));
+    return serialized;
   },
 
   async updateQuantity(id: string, quantity: number, actor: Actor, scope: BranchScope) {
@@ -91,7 +117,7 @@ export const sparePartsService = {
 
     const rounded = Math.round(quantity * 1000) / 1000;
     const part = await prisma.$transaction(async (tx) => {
-      const updated = await tx.sparePart.update({ where: { id }, data: { quantity: rounded } });
+      const updated = await tx.sparePart.update({ where: { id }, data: { quantity: rounded }, include: machinesInclude });
       const unitStr = original.unit ? ` ${original.unit}` : ' ед.';
       await writeActivity(tx, {
         actionType: 'update',
@@ -104,8 +130,9 @@ export const sparePartsService = {
       });
       return updated;
     });
-    emitEntity('sparePart', 'changed', part, await getSparePartBranchId(part));
-    return part;
+    const serialized = serializePart(part);
+    emitEntity('sparePart', 'changed', serialized, await getSparePartBranchId(serialized));
+    return serialized;
   },
 
   async archive(id: string, actor: Actor, scope: BranchScope) {
@@ -117,7 +144,7 @@ export const sparePartsService = {
     }
 
     const part = await prisma.$transaction(async (tx) => {
-      const updated = await tx.sparePart.update({ where: { id }, data: { isArchived: true } });
+      const updated = await tx.sparePart.update({ where: { id }, data: { isArchived: true }, include: machinesInclude });
       await writeActivity(tx, {
         actionType: 'update',
         entityType: 'part',
@@ -129,15 +156,16 @@ export const sparePartsService = {
       });
       return updated;
     });
-    emitEntity('sparePart', 'updated', part, await getSparePartBranchId(part));
-    return part;
+    const serialized = serializePart(part);
+    emitEntity('sparePart', 'updated', serialized, await getSparePartBranchId(serialized));
+    return serialized;
   },
 
   async unarchive(id: string, actor: Actor, scope: BranchScope) {
     const original = await findPartInScope(id, scope);
 
     const part = await prisma.$transaction(async (tx) => {
-      const updated = await tx.sparePart.update({ where: { id }, data: { isArchived: false } });
+      const updated = await tx.sparePart.update({ where: { id }, data: { isArchived: false }, include: machinesInclude });
       await writeActivity(tx, {
         actionType: 'update',
         entityType: 'part',
@@ -149,8 +177,9 @@ export const sparePartsService = {
       });
       return updated;
     });
-    emitEntity('sparePart', 'updated', part, await getSparePartBranchId(part));
-    return part;
+    const serialized = serializePart(part);
+    emitEntity('sparePart', 'updated', serialized, await getSparePartBranchId(serialized));
+    return serialized;
   },
 
   async remove(id: string, actor: Actor, scope: BranchScope) {
