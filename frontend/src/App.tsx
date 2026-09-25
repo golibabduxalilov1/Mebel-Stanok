@@ -553,7 +553,7 @@ export default function App() {
 
 
   return (
-    <div className="flex min-h-screen bg-[#f1f5f9] relative overflow-x-hidden">
+    <div className="flex min-h-screen bg-[#f1f5f9] relative overflow-x-clip">
       {/* Toast Notification */}
       <AnimatePresence>
         {sessionToast && (
