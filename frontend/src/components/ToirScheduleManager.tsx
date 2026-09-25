@@ -558,7 +558,7 @@ export function CreateToirScheduleModal({
                 )}
                 {selectedParts.length > 0 && (
                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap">
-                    Итого: {totalPartsCost.toLocaleString()} ₽
+                    Итого: {totalPartsCost.toLocaleString()} $
                   </span>
                 )}
               </div>
@@ -594,7 +594,7 @@ export function CreateToirScheduleModal({
                       disabled={p.availableQuantity <= 0}
                       style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
                     >
-                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • {p.availableQuantity <= 0 ? 'НЕТ' : `${p.availableQuantity} ${p.unit || 'шт'}${p.reservedQuantity > 0 ? ` (рез ${p.reservedQuantity})` : ''}`} {p.unitPrice ? `• ${p.unitPrice}₽` : ''}
+                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • {p.availableQuantity <= 0 ? 'НЕТ' : `${p.availableQuantity} ${p.unit || 'шт'}${p.reservedQuantity > 0 ? ` (рез ${p.reservedQuantity})` : ''}`} {p.unitPrice ? `• ${p.unitPrice}$` : ''}
                     </option>
                   );
                 })}
@@ -682,7 +682,7 @@ export function CreateToirScheduleModal({
                       </span>
                       {p.unitPrice ? (
                         <span className="text-[10px] text-slate-500 font-normal">
-                          ({(p.unitPrice * p.quantity).toLocaleString()} ₽)
+                          ({(p.unitPrice * p.quantity).toLocaleString()} $)
                         </span>
                       ) : null}
                       <button
@@ -804,14 +804,14 @@ export function CreateToirScheduleModal({
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex flex-wrap items-center justify-between gap-x-2">
-                <span>Стоимость работ (₽)</span>
+                <span>Стоимость работ ($)</span>
                 <span className="text-[9px] text-emerald-600 font-bold lowercase">работа/услуга</span>
               </label>
               <input
                 type="number"
                 min="0"
                 step="100"
-                placeholder="0 ₽"
+                placeholder="0 $"
                 value={laborCost}
                 onChange={e => setLaborCost(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
                 className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -840,16 +840,16 @@ export function CreateToirScheduleModal({
             <div className="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
               <div className="flex items-center gap-3 text-[11px] text-emerald-950 font-medium">
                 {Number(laborCost) > 0 && (
-                  <span>Раб: <b>{(Number(laborCost) || 0).toLocaleString()} ₽</b></span>
+                  <span>Раб: <b>{(Number(laborCost) || 0).toLocaleString()} $</b></span>
                 )}
                 {totalPartsCost > 0 && (
-                  <span>Запчасти: <b>{totalPartsCost.toLocaleString()} ₽</b></span>
+                  <span>Запчасти: <b>{totalPartsCost.toLocaleString()} $</b></span>
                 )}
               </div>
               <div className="text-xs font-black text-emerald-800 flex items-center gap-1">
                 <span>Итого расчетная стоимость:</span>
                 <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-xs font-mono font-bold shadow-2xs">
-                  {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} ₽
+                  {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} $
                 </span>
               </div>
             </div>
@@ -1222,7 +1222,7 @@ export function EditToirScheduleModal({
                       disabled={p.availableQuantity <= 0}
                       style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
                     >
-                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • {p.availableQuantity <= 0 ? 'НЕТ' : `${p.availableQuantity} ${p.unit || 'шт'}${p.reservedQuantity > 0 ? ` (рез ${p.reservedQuantity})` : ''}`} {p.unitPrice ? `• ${p.unitPrice}₽` : ''}
+                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • {p.availableQuantity <= 0 ? 'НЕТ' : `${p.availableQuantity} ${p.unit || 'шт'}${p.reservedQuantity > 0 ? ` (рез ${p.reservedQuantity})` : ''}`} {p.unitPrice ? `• ${p.unitPrice}$` : ''}
                     </option>
                   );
                 })}
@@ -1310,7 +1310,7 @@ export function EditToirScheduleModal({
                       </span>
                       {p.unitPrice ? (
                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap">
-                          ({(p.unitPrice * p.quantity).toLocaleString()} ₽)
+                          ({(p.unitPrice * p.quantity).toLocaleString()} $)
                         </span>
                       ) : null}
                       <button
@@ -1394,14 +1394,14 @@ export function EditToirScheduleModal({
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex flex-wrap items-center justify-between gap-x-2">
-                <span>Стоимость работ (₽)</span>
+                <span>Стоимость работ ($)</span>
                 <span className="text-[9px] text-emerald-600 font-bold lowercase">работа/услуга</span>
               </label>
               <input
                 type="number"
                 min="0"
                 step="100"
-                placeholder="0 ₽"
+                placeholder="0 $"
                 value={laborCost}
                 onChange={e => setLaborCost(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
                 className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1430,16 +1430,16 @@ export function EditToirScheduleModal({
             <div className="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
               <div className="flex items-center gap-3 text-[11px] text-emerald-950 font-medium">
                 {Number(laborCost) > 0 && (
-                  <span>Раб: <b>{(Number(laborCost) || 0).toLocaleString()} ₽</b></span>
+                  <span>Раб: <b>{(Number(laborCost) || 0).toLocaleString()} $</b></span>
                 )}
                 {totalPartsCost > 0 && (
-                  <span>Запчасти: <b>{totalPartsCost.toLocaleString()} ₽</b></span>
+                  <span>Запчасти: <b>{totalPartsCost.toLocaleString()} $</b></span>
                 )}
               </div>
               <div className="text-xs font-black text-emerald-800 flex items-center gap-1">
                 <span>Итого расчетная стоимость:</span>
                 <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-xs font-mono font-bold shadow-2xs">
-                  {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} ₽
+                  {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} $
                 </span>
               </div>
             </div>
@@ -1663,9 +1663,9 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
           </div>
 
           <div>
-            <div className="text-[8px] font-bold uppercase text-emerald-600 tracking-wider">Раб. (₽)</div>
+            <div className="text-[8px] font-bold uppercase text-emerald-600 tracking-wider">Раб. ($)</div>
             <div className="font-bold font-mono text-emerald-700 truncate">
-              {schedule.laborCost ? `${schedule.laborCost.toLocaleString()} ₽` : '0 ₽'}
+              {schedule.laborCost ? `${schedule.laborCost.toLocaleString()} $` : '0 $'}
             </div>
           </div>
         </div>
