@@ -169,6 +169,14 @@ export const machineService = {
     await apiClient.patch(`/spare-parts/${id}/quantity`, { quantity: newQuantity });
   },
 
+  async archiveSparePart(id: string) {
+    return apiClient.patch<SparePart>(`/spare-parts/${id}/archive`, {});
+  },
+
+  async unarchiveSparePart(id: string) {
+    return apiClient.patch<SparePart>(`/spare-parts/${id}/unarchive`, {});
+  },
+
   // --- Units of Measure ---
   async getUnitsOfMeasure(): Promise<UnitOfMeasure[]> {
     try {

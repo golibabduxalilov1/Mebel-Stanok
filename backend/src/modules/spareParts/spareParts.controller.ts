@@ -16,6 +16,12 @@ export const sparePartsController = {
   updateQuantity: asyncHandler(async (req: Request, res: Response) => {
     res.json(await sparePartsService.updateQuantity(req.params.id, req.body.quantity, { userId: req.user!.sub }, getBranchScope(req.user)));
   }),
+  archive: asyncHandler(async (req: Request, res: Response) => {
+    res.json(await sparePartsService.archive(req.params.id, { userId: req.user!.sub }, getBranchScope(req.user)));
+  }),
+  unarchive: asyncHandler(async (req: Request, res: Response) => {
+    res.json(await sparePartsService.unarchive(req.params.id, { userId: req.user!.sub }, getBranchScope(req.user)));
+  }),
   remove: asyncHandler(async (req: Request, res: Response) => {
     await sparePartsService.remove(req.params.id, { userId: req.user!.sub }, getBranchScope(req.user));
     res.status(204).send();

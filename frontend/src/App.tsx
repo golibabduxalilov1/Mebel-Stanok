@@ -700,7 +700,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <aside className="w-64 bg-[#1e293b] text-white hidden lg:flex flex-col border-r border-slate-200 shrink-0">
+      <aside className="w-64 bg-[#1e293b] text-white hidden lg:flex flex-col border-r border-slate-200 shrink-0 sticky top-0 h-screen">
         <div className="p-6 flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
             <Settings className="w-5 h-5 text-white" />
@@ -760,9 +760,9 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
+      <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-14 sm:h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 sm:px-6 md:px-8 z-10 shrink-0 gap-2">
+        <header className="h-14 sm:h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 sm:px-6 md:px-8 z-10 shrink-0 gap-2 sticky top-0">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Mobile Hamburger Button */}
             <button
@@ -921,7 +921,7 @@ export default function App() {
         </AnimatePresence>
 
         {/* Content Area */}
-        <div className="flex-1 p-3 sm:p-6 md:p-8 space-y-4 sm:space-y-6 overflow-y-auto custom-scrollbar flex flex-col min-h-0 pb-6 md:pb-8">
+        <div className="flex-1 p-3 sm:p-6 md:p-8 space-y-4 sm:space-y-6 flex flex-col pb-6 md:pb-8">
           {!canAccessTab(currentRole, activeTab === 'all' ? 'machines' : activeTab) ? (
             <div className="flex flex-col items-center justify-center min-h-[420px] p-8 bg-white rounded-2xl border border-slate-200 shadow-sm text-center max-w-xl mx-auto my-12">
               <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4 border border-rose-100 shadow-xs">
@@ -6892,6 +6892,9 @@ function InventoryTab({
   const [searchQuery, setSearchQuery] = useState('');
   const [branchFilter, setBranchFilter] = useState<string>('all');
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [archiveBusyId, setArchiveBusyId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!deleteError) return;
@@ -6900,12 +6903,15 @@ function InventoryTab({
   }, [deleteError]);
 
   // Filtered parts
+  const archivedCount = safeParts.filter(p => p.isArchived).length;
   const filteredParts = safeParts.filter(part => {
+    if (!!part.isArchived !== showArchived) return false;
+
     const q = searchQuery.toLowerCase().trim();
-    const matchesSearch = !q || 
-      part.name.toLowerCase().includes(q) || 
+    const matchesSearch = !q ||
+      part.name.toLowerCase().includes(q) ||
       (part.sku && part.sku.toLowerCase().includes(q));
-    
+
     // Filter by branch
     let matchesBranch = true;
     if (branchFilter !== 'all') {
@@ -6920,6 +6926,8 @@ function InventoryTab({
   const filteredQty = filteredParts.reduce((acc, p) => acc + (p.quantity || 0), 0);
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
+    setDeletingId(id);
     try {
       await machineService.deleteSparePart(id);
       setConfirmDeleteId(null);
@@ -6927,11 +6935,37 @@ function InventoryTab({
     } catch (e) {
       setConfirmDeleteId(null);
       setDeleteError(e instanceof Error ? e.message : 'Не удалось удалить запчасть');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleArchive = async (id: string) => {
+    setArchiveBusyId(id);
+    try {
+      await machineService.archiveSparePart(id);
+      onRefresh();
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Не удалось заархивировать запчасть');
+    } finally {
+      setArchiveBusyId(null);
+    }
+  };
+
+  const handleUnarchive = async (id: string) => {
+    setArchiveBusyId(id);
+    try {
+      await machineService.unarchiveSparePart(id);
+      onRefresh();
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Не удалось восстановить запчасть из архива');
+    } finally {
+      setArchiveBusyId(null);
     }
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 lg:max-h-[700px] lg:overflow-y-auto lg:pr-2 custom-scrollbar">
+    <div className="space-y-4 sm:space-y-6">
       <AnimatePresence>
         {deleteError && (
           <motion.div
@@ -6978,6 +7012,22 @@ function InventoryTab({
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg shrink-0">
+          <button
+            onClick={() => setShowArchived(false)}
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${!showArchived ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Активные
+          </button>
+          <button
+            onClick={() => setShowArchived(true)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${showArchived ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <Archive className="w-3.5 h-3.5" />
+            Архив {archivedCount > 0 && `(${archivedCount})`}
+          </button>
         </div>
       </div>
 
@@ -7088,23 +7138,47 @@ function InventoryTab({
                     <td className="px-6 py-4 text-right">
                       {confirmDeleteId === part.id ? (
                         <div className="flex items-center justify-end gap-1.5">
-                          <button 
+                          <button
                             onClick={() => handleDelete(part.id)}
-                            className="px-2.5 py-1 bg-rose-600 text-white text-[11px] font-bold rounded-lg hover:bg-rose-700 transition-all cursor-pointer"
+                            disabled={deletingId === part.id}
+                            className="px-2.5 py-1 bg-rose-600 text-white text-[11px] font-bold rounded-lg hover:bg-rose-700 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Да, удалить
+                            {deletingId === part.id ? 'Удаление...' : 'Да, удалить'}
                           </button>
-                          <button 
+                          <button
                             onClick={() => setConfirmDeleteId(null)}
-                            className="px-2 py-1 bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg hover:bg-slate-300 transition-all cursor-pointer"
+                            disabled={deletingId === part.id}
+                            className="px-2 py-1 bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg hover:bg-slate-300 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Отмена
                           </button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-1">
+                          {canEditPart && part.isArchived && (
+                            <button
+                              onClick={() => handleUnarchive(part.id)}
+                              disabled={archiveBusyId === part.id}
+                              className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                              title="Восстановить из архива"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              Восстановить
+                            </button>
+                          )}
+                          {canEditPart && !part.isArchived && (part.availableQuantity ?? part.quantity ?? 0) <= 0 && (
+                            <button
+                              onClick={() => handleArchive(part.id)}
+                              disabled={archiveBusyId === part.id}
+                              className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                              title="Остаток 0 — заархивировать запчасть"
+                            >
+                              <Archive className="w-3.5 h-3.5" />
+                              В архив
+                            </button>
+                          )}
                           {canEditPart && (
-                            <button 
+                            <button
                               onClick={() => setEditingPart(part)}
                               className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
                               title="Редактировать запчасть"
@@ -7113,7 +7187,7 @@ function InventoryTab({
                             </button>
                           )}
                           {canDeletePart && (
-                            <button 
+                            <button
                               onClick={() => setConfirmDeleteId(part.id)}
                               className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
                               title="Удалить запчасть"

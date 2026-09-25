@@ -11,6 +11,7 @@ export const createSparePartSchema = z.object({
   imageUrls: z.array(z.string()).optional(),
   branchId: z.string().uuid().optional(),
   machineId: z.string().uuid().optional(),
+  isArchived: z.boolean().optional(),
 });
 
 export const updateSparePartSchema = createSparePartSchema.partial();

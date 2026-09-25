@@ -17,4 +17,6 @@ sparePartsRouter.patch(
   validate(updateQuantitySchema),
   sparePartsController.updateQuantity
 );
+sparePartsRouter.patch('/:id/archive', requirePermission('inventory.parts_catalog', 'edit'), sparePartsController.archive);
+sparePartsRouter.patch('/:id/unarchive', requirePermission('inventory.parts_catalog', 'edit'), sparePartsController.unarchive);
 sparePartsRouter.delete('/:id', requirePermission('inventory.parts_catalog', 'delete'), sparePartsController.remove);

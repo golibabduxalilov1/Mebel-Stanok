@@ -105,6 +105,51 @@ export const sparePartsService = {
     return part;
   },
 
+  async archive(id: string, actor: Actor, scope: BranchScope) {
+    const original = await findPartInScope(id, scope);
+    const reserved = await getReservedTotals(prisma, [id]);
+    const availableQuantity = Number(original.quantity) - (reserved.get(id) ?? 0);
+    if (availableQuantity > 0) {
+      throw Errors.conflict('PART_IN_STOCK', `Нельзя архивировать деталь "${original.name}": на складе ещё есть остаток (${availableQuantity})`);
+    }
+
+    const part = await prisma.$transaction(async (tx) => {
+      const updated = await tx.sparePart.update({ where: { id }, data: { isArchived: true } });
+      await writeActivity(tx, {
+        actionType: 'update',
+        entityType: 'part',
+        entityId: id,
+        entityName: original.name,
+        details: `Деталь "${original.name}" заархивирована (остаток на складе: 0)`,
+        userId: actor.userId,
+        userEmail: actor.userEmail,
+      });
+      return updated;
+    });
+    emitEntity('sparePart', 'updated', part, await getSparePartBranchId(part));
+    return part;
+  },
+
+  async unarchive(id: string, actor: Actor, scope: BranchScope) {
+    const original = await findPartInScope(id, scope);
+
+    const part = await prisma.$transaction(async (tx) => {
+      const updated = await tx.sparePart.update({ where: { id }, data: { isArchived: false } });
+      await writeActivity(tx, {
+        actionType: 'update',
+        entityType: 'part',
+        entityId: id,
+        entityName: original.name,
+        details: `Деталь "${original.name}" восстановлена из архива`,
+        userId: actor.userId,
+        userEmail: actor.userEmail,
+      });
+      return updated;
+    });
+    emitEntity('sparePart', 'updated', part, await getSparePartBranchId(part));
+    return part;
+  },
+
   async remove(id: string, actor: Actor, scope: BranchScope) {
     const original = await findPartInScope(id, scope);
 
