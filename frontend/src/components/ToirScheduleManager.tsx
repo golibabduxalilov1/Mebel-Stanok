@@ -152,116 +152,6 @@ function toDateInputValue(value?: string | null): string {
   return value.split('T')[0];
 }
 
-type SelectedPartEntry = {
-  partId: string;
-  name: string;
-  quantity: number;
-  unit?: string;
-  unitPrice?: number;
-  availableStock: number;
-};
-
-// Checkbox-based multi-select for spare parts: check a part to add it to the task,
-// set its quantity inline, uncheck to remove. Shared by the create and edit modals.
-function SparePartsSelector({
-  relevantParts,
-  selectedParts,
-  setSelectedParts,
-  getMaxQty,
-  tagForPart,
-  emptyLabel
-}: {
-  relevantParts: SparePart[];
-  selectedParts: SelectedPartEntry[];
-  setSelectedParts: React.Dispatch<React.SetStateAction<SelectedPartEntry[]>>;
-  getMaxQty: (part: SparePart) => number;
-  tagForPart: (part: SparePart) => string;
-  emptyLabel: string;
-}) {
-  const selectedMap = useMemo(() => new Map(selectedParts.map(p => [p.partId, p])), [selectedParts]);
-
-  const handleToggle = (part: SparePart, checked: boolean) => {
-    if (checked) {
-      const max = getMaxQty(part);
-      setSelectedParts(prev => [
-        ...prev,
-        {
-          partId: part.id,
-          name: part.name,
-          quantity: max > 0 ? Math.min(1, max) : 0,
-          unit: part.unit || 'шт',
-          unitPrice: part.unitPrice || 0,
-          availableStock: max
-        }
-      ]);
-    } else {
-      setSelectedParts(prev => prev.filter(p => p.partId !== part.id));
-    }
-  };
-
-  const handleQtyChange = (partId: string, raw: string, max: number) => {
-    const parsed = parseFloat(raw.replace(',', '.'));
-    const qty = Math.round((Number.isFinite(parsed) ? parsed : 0) * 1000) / 1000;
-    if (qty > max) {
-      alert(`Недостаточно на складе! Доступно ${max}, а запрошено ${qty}`);
-    }
-    setSelectedParts(prev => prev.map(p => (p.partId === partId ? { ...p, quantity: Math.max(0, Math.min(qty, max)) } : p)));
-  };
-
-  return (
-    <div className="border border-slate-200 rounded-xl bg-white max-h-56 overflow-y-auto divide-y divide-slate-100">
-      {relevantParts.length === 0 ? (
-        <div className="px-3 py-4 text-center text-[11px] text-slate-400">{emptyLabel}</div>
-      ) : (
-        relevantParts.map(part => {
-          const entry = selectedMap.get(part.id);
-          const checked = Boolean(entry);
-          const max = getMaxQty(part);
-          const disabled = max <= 0 && !checked;
-          return (
-            <div key={part.id} className={`flex items-center gap-2.5 px-3 py-2 ${disabled ? 'opacity-50' : 'hover:bg-slate-50'} transition-colors`}>
-              <label className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={disabled}
-                  onChange={e => handleToggle(part, e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
-                />
-                <span className="min-w-0 truncate block">
-                  <span className="font-semibold text-slate-800 text-xs">
-                    {tagForPart(part)}{part.name} {part.sku ? `[${part.sku}]` : ''}
-                  </span>
-                  <span className="block text-[10px] text-slate-500">
-                    {max <= 0 ? 'НЕТ В НАЛИЧИИ' : `${max} ${part.unit || 'шт'} доступно`}
-                    {part.unitPrice ? ` • ${part.unitPrice}$` : ''}
-                  </span>
-                </span>
-              </label>
-              {checked && (
-                <div className="relative flex items-center w-20 shrink-0">
-                  <input
-                    type="number"
-                    step="any"
-                    min="0.001"
-                    max={max}
-                    value={entry?.quantity ?? ''}
-                    onChange={e => handleQtyChange(part.id, e.target.value, max)}
-                    className="min-h-8 w-full p-1.5 pr-6 bg-slate-50 rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                  <span className="absolute right-1.5 text-[9px] font-bold text-slate-400 pointer-events-none select-none">
-                    {part.unit || 'ед.'}
-                  </span>
-                </div>
-              )}
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-}
-
 // -------------------------------------------------------------
 // Add TOIR Schedule Task Modal
 // -------------------------------------------------------------
@@ -284,7 +174,7 @@ export function CreateToirScheduleModal({
 }) {
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState<ToirTaskType>('routine');
-  const [machineIds, setMachineIds] = useState<string[]>(preselectedMachineId ? [preselectedMachineId] : []);
+  const [machineId, setMachineId] = useState<string>(preselectedMachineId || (machines[0]?.id || ''));
   const [branchFilter, setBranchFilter] = useState<string>('');
   const [taskName, setTaskName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
@@ -299,12 +189,26 @@ export function CreateToirScheduleModal({
   const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   // Spare parts state for warehouse write-off
-  const [selectedParts, setSelectedParts] = useState<SelectedPartEntry[]>([]);
+  const [selectedPartId, setSelectedPartId] = useState<string>('');
+  const [partQty, setPartQty] = useState<number | string>(1);
+  const [selectedParts, setSelectedParts] = useState<{
+    partId: string;
+    name: string;
+    quantity: number;
+    unit?: string;
+    unitPrice?: number;
+    availableStock: number;
+  }[]>([]);
+
+  // Selected part object for unit and quick info
+  const selectedPartObj = useMemo(() => {
+    return parts.find(p => p.id === selectedPartId);
+  }, [parts, selectedPartId]);
 
   // Полная очистка всех полей формы
   const resetForm = () => {
     setSelectedType('routine');
-    setMachineIds(preselectedMachineId ? [preselectedMachineId] : []);
+    setMachineId(preselectedMachineId || (machines[0]?.id || ''));
     setBranchFilter('');
     setTaskName('');
     setDescription('');
@@ -316,6 +220,8 @@ export function CreateToirScheduleModal({
     setLaborCost('');
     setPriority('medium');
     setImageUrls([]);
+    setSelectedPartId('');
+    setPartQty(1);
     setSelectedParts([]);
     setShowAllWarehouseParts(false);
   };
@@ -355,29 +261,23 @@ export function CreateToirScheduleModal({
   }, [machines, branchFilter]);
 
   const [showAllWarehouseParts, setShowAllWarehouseParts] = useState(false);
-  const selectedMachines = useMemo(() => machines.filter(m => machineIds.includes(m.id)), [machines, machineIds]);
-  const selectedBranchIds = useMemo(
-    () => new Set(selectedMachines.map(m => m.branchId).filter(Boolean) as string[]),
-    [selectedMachines]
-  );
+  const currentMachine = useMemo(() => machines.find(m => m.id === machineId), [machines, machineId]);
+  const currentBranchId = currentMachine?.branchId || branchFilter;
 
-  // Рекомендованные запчасти для выбранных станков и филиала
+  // Рекомендованные запчасти для станка и филиала
   const recommendedParts = useMemo(() => {
-    if (machineIds.length === 0 && selectedBranchIds.size === 0 && !branchFilter) return [];
+    if (!machineId && !currentBranchId) return [];
     return parts.filter(p => {
-      const isForMachine = Boolean(p.machineId && machineIds.includes(p.machineId));
-      const isForBranch = Boolean(
-        p.branchId && (selectedBranchIds.has(p.branchId) || p.branchId === branchFilter) &&
-        (!p.machineId || machineIds.includes(p.machineId))
-      );
+      const isForMachine = Boolean(p.machineId && machineId && p.machineId === machineId);
+      const isForBranch = Boolean(p.branchId && currentBranchId && p.branchId === currentBranchId && (!p.machineId || p.machineId === machineId));
       return isForMachine || isForBranch;
     }).sort((a, b) => {
-      const aIsMachine = a.machineId && machineIds.includes(a.machineId) ? 1 : 0;
-      const bIsMachine = b.machineId && machineIds.includes(b.machineId) ? 1 : 0;
+      const aIsMachine = a.machineId === machineId ? 1 : 0;
+      const bIsMachine = b.machineId === machineId ? 1 : 0;
       if (bIsMachine !== aIsMachine) return bIsMachine - aIsMachine;
       return a.name.localeCompare(b.name, 'ru');
     });
-  }, [parts, machineIds, selectedBranchIds, branchFilter]);
+  }, [parts, machineId, currentBranchId]);
 
   const relevantParts = useMemo(() => {
     if (showAllWarehouseParts) {
@@ -388,12 +288,59 @@ export function CreateToirScheduleModal({
 
   const activeCategory = TOIR_CATEGORIES[selectedType];
 
-  const getPartMaxQty = (part: SparePart) => part.availableQuantity;
+  const handleAddPart = () => {
+    if (!selectedPartId) return;
+    const part = parts.find(p => p.id === selectedPartId);
+    if (!part) return;
 
-  const tagForPart = (p: SparePart) => {
-    const isForMachine = Boolean(p.machineId && machineIds.includes(p.machineId));
-    const isForBranch = Boolean(p.branchId && (selectedBranchIds.has(p.branchId) || p.branchId === branchFilter) && !p.machineId);
-    return isForMachine ? '[Ст] ' : isForBranch ? '[Фил] ' : '[Скл] ';
+    const parsed = parseFloat(String(partQty).replace(',', '.'));
+    const qtyToAdd = Math.round((Number.isFinite(parsed) ? parsed : 0) * 1000) / 1000;
+    
+    if (qtyToAdd <= 0) {
+      alert('Укажите количество больше 0 (например, 0.3, 0.5, 1)');
+      return;
+    }
+    
+    // Check existing
+    const existingIndex = selectedParts.findIndex(p => p.partId === selectedPartId);
+    const currentQty = existingIndex >= 0 ? selectedParts[existingIndex].quantity : 0;
+    const totalDesired = Math.round((currentQty + qtyToAdd) * 1000) / 1000;
+
+    const available = part.availableQuantity;
+    if (totalDesired > available) {
+      alert(`Недостаточно на складе! Доступно ${available} ${part.unit || 'ед.'} (в наличии ${part.quantity}, в резерве ${part.reservedQuantity}), а запрошено ${totalDesired} ${part.unit || 'ед.'}`);
+      return;
+    }
+
+    if (existingIndex >= 0) {
+      const updated = [...selectedParts];
+      updated[existingIndex].quantity = totalDesired;
+      setSelectedParts(updated);
+    } else {
+      setSelectedParts(prev => [
+        ...prev,
+        {
+          partId: part.id,
+          name: part.name,
+          quantity: qtyToAdd,
+          unit: part.unit || 'шт',
+          unitPrice: part.unitPrice || 0,
+          availableStock: available
+        }
+      ]);
+    }
+
+    // Suggest task name if empty
+    if (!taskName.trim()) {
+      setTaskName(`Замена: ${part.name}`);
+    }
+
+    setSelectedPartId('');
+    setPartQty(1);
+  };
+
+  const handleRemovePart = (index: number) => {
+    setSelectedParts(prev => prev.filter((_, i) => i !== index));
   };
 
   const totalPartsCost = useMemo(() => {
@@ -402,8 +349,8 @@ export function CreateToirScheduleModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (machineIds.length === 0) {
-      alert('Пожалуйста, выберите хотя бы один станок');
+    if (!machineId) {
+      alert('Пожалуйста, выберите станок');
       return;
     }
     if (!taskName.trim()) {
@@ -413,51 +360,32 @@ export function CreateToirScheduleModal({
 
     setLoading(true);
     try {
-      const partsUsedPayload = selectedParts.map(p => ({
-        partId: p.partId,
-        name: p.name,
-        quantity: p.quantity
-      }));
+      // Selected parts are reserved server-side (transactionally, with the schedule itself) -
+      // stock isn't touched until the task is actually executed.
+      await machineService.addSchedule({
+        machineId,
+        taskName: taskName.trim(),
+        taskType: selectedType,
+        description: description.trim(),
+        intervalDays: Number(intervalDays) || 30,
+        lastPerformed: lastPerformed || new Date().toISOString().split('T')[0],
+        nextDue: nextDue || new Date().toISOString().split('T')[0],
+        assignedTechnician: assignedTechnician.trim(),
+        laborCost: laborCost !== '' ? Number(laborCost) : 0,
+        priority,
+        imageUrl: imageUrls[0] || '',
+        imageUrls: imageUrls,
+        partsUsed: selectedParts.map(p => ({
+          partId: p.partId,
+          name: p.name,
+          quantity: p.quantity
+        }))
+      });
 
-      // Each machine gets its own schedule + its own parts reservation (reserved server-side,
-      // transactionally, per schedule) - so N machines with the same part reserve N x the quantity.
-      const failed: string[] = [];
-      let succeededCount = 0;
-      for (const id of machineIds) {
-        try {
-          await machineService.addSchedule({
-            machineId: id,
-            taskName: taskName.trim(),
-            taskType: selectedType,
-            description: description.trim(),
-            intervalDays: Number(intervalDays) || 30,
-            lastPerformed: lastPerformed || new Date().toISOString().split('T')[0],
-            nextDue: nextDue || new Date().toISOString().split('T')[0],
-            assignedTechnician: assignedTechnician.trim(),
-            laborCost: laborCost !== '' ? Number(laborCost) : 0,
-            priority,
-            imageUrl: imageUrls[0] || '',
-            imageUrls: imageUrls,
-            partsUsed: partsUsedPayload
-          });
-          succeededCount++;
-        } catch (err) {
-          console.error(`Error creating schedule for machine ${id}:`, err);
-          failed.push(machines.find(m => m.id === id)?.name || id);
-        }
-      }
-
-      if (failed.length > 0) {
-        alert(`Задача создана для ${succeededCount} из ${machineIds.length} станков.\nНе удалось для: ${failed.join(', ')}`);
-      }
-
-      if (succeededCount > 0) {
-        onCreated();
-      }
+      // Очищаем все поля формы после сохранения
       resetForm();
-      if (failed.length === 0) {
-        onClose();
-      }
+      onCreated();
+      onClose();
     } catch (err) {
       console.error("Error creating schedule:", err);
       alert('Ошибка при создании задачи ТОиР');
@@ -538,16 +466,23 @@ export function CreateToirScheduleModal({
             </div>
           </div>
 
-          {/* Step 2: Select Machine(s) */}
+          {/* Step 2: Select Machine */}
           {!preselectedMachineId && (
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
               <div>
                 <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
                   Филиал / Цех
                 </label>
                 <select
                   value={branchFilter}
-                  onChange={e => setBranchFilter(e.target.value)}
+                  onChange={e => {
+                    const newBranch = e.target.value;
+                    setBranchFilter(newBranch);
+                    const branchMachines = machines.filter(m => !newBranch || m.branchId === newBranch);
+                    if (branchMachines.length > 0 && !branchMachines.some(m => m.id === machineId)) {
+                      setMachineId(branchMachines[0].id);
+                    }
+                  }}
                   className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="">Все филиалы ({machines.length} станков)</option>
@@ -558,52 +493,29 @@ export function CreateToirScheduleModal({
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex items-center justify-between">
-                  <span>Станок / Оборудование *</span>
-                  {machineIds.length > 0 && (
-                    <span className="text-blue-600 normal-case font-bold">Выбрано: {machineIds.length}</span>
-                  )}
+                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                  Станок / Оборудование *
                 </label>
-                <div className="border border-slate-200 rounded-lg bg-white max-h-44 overflow-y-auto divide-y divide-slate-100">
-                  {filteredMachines.length > 1 && (
-                    <label className="flex items-center gap-2.5 px-2.5 py-1.5 cursor-pointer hover:bg-slate-50 transition-colors bg-slate-50/60">
-                      <input
-                        type="checkbox"
-                        checked={filteredMachines.every(m => machineIds.includes(m.id))}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            const filteredIds = filteredMachines.map(m => m.id);
-                            setMachineIds(prev => Array.from(new Set([...prev, ...filteredIds])));
-                          } else {
-                            const filteredIds = new Set(filteredMachines.map(m => m.id));
-                            setMachineIds(prev => prev.filter(id => !filteredIds.has(id)));
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
-                      />
-                      <span className="text-xs font-bold text-slate-700">Выбрать все ({filteredMachines.length})</span>
-                    </label>
-                  )}
+                <select
+                  required
+                  value={machineId}
+                  onChange={e => {
+                    const newMachineId = e.target.value;
+                    setMachineId(newMachineId);
+                    const m = machines.find(x => x.id === newMachineId);
+                    if (m?.branchId && m.branchId !== branchFilter) {
+                      setBranchFilter(m.branchId);
+                    }
+                  }}
+                  className="min-h-10 w-full p-2 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="" disabled>-- Выберите оборудование --</option>
                   {filteredMachines.map(m => (
-                    <label key={m.id} className="flex items-center gap-2.5 px-2.5 py-1.5 cursor-pointer hover:bg-slate-50 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={machineIds.includes(m.id)}
-                        onChange={e => {
-                          setMachineIds(prev => e.target.checked ? [...prev, m.id] : prev.filter(id => id !== m.id));
-                        }}
-                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
-                      />
-                      <span className="text-xs font-semibold text-slate-800 truncate">
-                        {m.name} {m.model ? `(${m.model})` : ''} {m.serialNumber ? `• SN: ${m.serialNumber}` : ''}
-                      </span>
-                    </label>
+                    <option key={m.id} value={m.id}>
+                      {m.name} {m.model ? `(${m.model})` : ''} {m.serialNumber ? `• SN: ${m.serialNumber}` : ''}
+                    </option>
                   ))}
-                  {filteredMachines.length === 0 && (
-                    <div className="px-3 py-3 text-center text-[11px] text-slate-400">Нет станков в выбранном филиале</div>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-400 mt-1">Можно выбрать несколько станков — задача будет создана для каждого</p>
+                </select>
               </div>
             </div>
           )}
@@ -650,24 +562,103 @@ export function CreateToirScheduleModal({
                 )}
                 {selectedParts.length > 0 && (
                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap">
-                    Итого: {totalPartsCost.toLocaleString()} $
+                    Итого: {totalPartsCost.toLocaleString()} ₽
                   </span>
                 )}
               </div>
             </div>
 
-            <SparePartsSelector
-              relevantParts={relevantParts}
-              selectedParts={selectedParts}
-              setSelectedParts={setSelectedParts}
-              getMaxQty={getPartMaxQty}
-              tagForPart={tagForPart}
-              emptyLabel={
-                machineIds.length === 0
-                  ? '-- Сначала выберите станок --'
-                  : '-- Нет рекомендованных деталей для этого станка/филиала --'
-              }
-            />
+            <div className="flex flex-col gap-2">
+              <select
+                value={selectedPartId}
+                onChange={e => setSelectedPartId(e.target.value)}
+                className="min-h-10 flex-1 p-2 bg-white rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none truncate"
+              >
+                <option value="">
+                  {relevantParts.length === 0 
+                    ? (!machineId 
+                        ? '-- Сначала выберите станок --' 
+                        : '-- Нет рекомендованных деталей для этого станка/филиала --')
+                    : showAllWarehouseParts
+                      ? `-- Выбрать деталь со склада (${relevantParts.length} доступно) --`
+                      : `-- Выбрать рекомендованную деталь (${relevantParts.length} привязано) --`}
+                </option>
+                {relevantParts.map(p => {
+                  const isForMachine = Boolean(machineId && p.machineId === machineId);
+                  const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !p.machineId);
+                  const tag = isForMachine
+                    ? '[Ст] '
+                    : isForBranch
+                      ? '[Фил] '
+                      : '[Скл] ';
+                  return (
+                    <option
+                      key={p.id}
+                      value={p.id}
+                      disabled={p.availableQuantity <= 0}
+                      style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
+                    >
+                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • {p.availableQuantity <= 0 ? 'НЕТ' : `${p.availableQuantity} ${p.unit || 'шт'}${p.reservedQuantity > 0 ? ` (рез ${p.reservedQuantity})` : ''}`} {p.unitPrice ? `• ${p.unitPrice}₽` : ''}
+                    </option>
+                  );
+                })}
+              </select>
+
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex items-center w-24">
+                  <input
+                    type="number"
+                    step="any"
+                    min="0.001"
+                    placeholder="Кол-во"
+                    value={partQty}
+                    onChange={e => setPartQty(e.target.value)}
+                    className="min-h-10 w-full p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                    title="Можно вводить дробное количество (например: 0.3, 0.5, 0.7)"
+                  />
+                  <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none select-none">
+                    {selectedPartObj?.unit || 'ед.'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddPart}
+                  disabled={!selectedPartId}
+                  className="min-h-10 px-3 py-2 flex-1 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Добавить</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick fractional quantity buttons if a part is selected */}
+            {selectedPartId && (
+              <div className="flex flex-wrap items-center gap-1.5 p-2 bg-blue-50/80 border border-blue-200/70 rounded-lg text-[11px] text-blue-900">
+                <span className="font-semibold text-blue-800 text-[10px] shrink-0">
+                  Быстрый расход:
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {[0.1, 0.2, 0.25, 0.3, 0.5, 0.7, 1].map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setPartQty(String(preset))}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all ${
+                        Number(partQty) === preset 
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-2xs' 
+                          : 'bg-white border-blue-200 hover:bg-blue-100 text-blue-900'
+                      }`}
+                    >
+                      {preset} {selectedPartObj?.unit || ''}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[10px] text-blue-600 ml-auto font-medium">
+                  Доступно: <b>{selectedPartObj?.availableQuantity || 0} {selectedPartObj?.unit || 'ед.'}</b>
+                </span>
+              </div>
+            )}
 
             {/* Warehouse parts filter status */}
             <div className="flex items-center gap-1 text-[11px] pt-1 px-1 text-slate-500">
@@ -677,11 +668,43 @@ export function CreateToirScheduleModal({
                 : `Показаны только рекомендованные к станку/филиалу (${recommendedParts.length})`}
             </div>
 
+            {/* Selected parts list */}
             {selectedParts.length > 0 ? (
-              <p className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-1">
-                <Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                <span>При нажатии «Запланировать задачу ТОиР» выбранные запчасти автоматически спишутся со склада{machineIds.length > 1 ? ' — для каждого выбранного станка отдельно' : ''}.</span>
-              </p>
+              <div className="space-y-1.5 pt-1">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Будут списаны со склада ({selectedParts.length}):
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedParts.map((p, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-emerald-300 text-emerald-950 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-2xs"
+                    >
+                      <span className="font-bold text-slate-800">{p.name}</span>
+                      <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-mono font-bold text-[11px]">
+                        × {p.quantity} {p.unit}
+                      </span>
+                      {p.unitPrice ? (
+                        <span className="text-[10px] text-slate-500 font-normal">
+                          ({(p.unitPrice * p.quantity).toLocaleString()} ₽)
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePart(idx)}
+                        className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-0.5 rounded transition-colors ml-0.5"
+                        title="Удалить из списка"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-1">
+                  <Check className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <span>При нажатии «Запланировать задачу ТОиР» выбранные запчасти автоматически спишутся со склада.</span>
+                </p>
+              </div>
             ) : (
               <p className="text-[10px] text-slate-400">
                 Если для регламента требуются фильтры, ремни, масла или расходники со склада — выберите их выше.
@@ -785,14 +808,14 @@ export function CreateToirScheduleModal({
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex flex-wrap items-center justify-between gap-x-2">
-                <span>Стоимость работ ($)</span>
+                <span>Стоимость работ (₽)</span>
                 <span className="text-[9px] text-emerald-600 font-bold lowercase">работа/услуга</span>
               </label>
               <input
                 type="number"
                 min="0"
                 step="100"
-                placeholder="0 $"
+                placeholder="0 ₽"
                 value={laborCost}
                 onChange={e => setLaborCost(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
                 className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -821,16 +844,16 @@ export function CreateToirScheduleModal({
             <div className="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
               <div className="flex items-center gap-3 text-[11px] text-emerald-950 font-medium">
                 {Number(laborCost) > 0 && (
-                  <span>Раб: <b>{(Number(laborCost) || 0).toLocaleString()} $</b></span>
+                  <span>Раб: <b>{(Number(laborCost) || 0).toLocaleString()} ₽</b></span>
                 )}
                 {totalPartsCost > 0 && (
-                  <span>Запчасти: <b>{totalPartsCost.toLocaleString()} $</b></span>
+                  <span>Запчасти: <b>{totalPartsCost.toLocaleString()} ₽</b></span>
                 )}
               </div>
               <div className="text-xs font-black text-emerald-800 flex items-center gap-1">
                 <span>Итого расчетная стоимость:</span>
                 <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-xs font-mono font-bold shadow-2xs">
-                  {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} $
+                  {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} ₽
                 </span>
               </div>
             </div>
@@ -927,7 +950,16 @@ export function EditToirScheduleModal({
   }, [showAllWarehouseParts, parts, recommendedParts]);
 
   // Spare parts state
-  const [selectedParts, setSelectedParts] = useState<SelectedPartEntry[]>(() => {
+  const [selectedPartId, setSelectedPartId] = useState<string>('');
+  const [partQty, setPartQty] = useState<number | string>(1);
+  const [selectedParts, setSelectedParts] = useState<{
+    partId: string;
+    name: string;
+    quantity: number;
+    unit?: string;
+    unitPrice?: number;
+    availableStock: number;
+  }[]>(() => {
     if (!schedule.partsUsed || schedule.partsUsed.length === 0) return [];
     return schedule.partsUsed.map(p => {
       const matched = parts.find(sp => sp.id === p.partId);
@@ -942,18 +974,9 @@ export function EditToirScheduleModal({
     });
   });
 
-  // Max allowable = available stock right now + what this schedule already has reserved
-  // (its own reservation shouldn't count against itself)
-  const getPartMaxQty = (part: SparePart) => {
-    const previouslyAllocated = schedule.partsUsed?.find(p => p.partId === part.id)?.quantity || 0;
-    return Math.round((part.availableQuantity + previouslyAllocated) * 1000) / 1000;
-  };
-
-  const tagForPart = (p: SparePart) => {
-    const isForMachine = Boolean(schedule.machineId && p.machineId === schedule.machineId);
-    const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !p.machineId);
-    return isForMachine ? '[Ст] ' : isForBranch ? '[Фил] ' : '[Скл] ';
-  };
+  const selectedPartObj = useMemo(() => {
+    return parts.find(p => p.id === selectedPartId);
+  }, [parts, selectedPartId]);
 
   const handleIntervalChange = (days: number) => {
     setIntervalDays(days);
@@ -969,6 +992,60 @@ export function EditToirScheduleModal({
       const nextDate = new Date(new Date(date).getTime() + intervalDays * 24 * 60 * 60 * 1000);
       setNextDue(nextDate.toISOString().split('T')[0]);
     }
+  };
+
+  const handleAddPart = () => {
+    if (!selectedPartId) return;
+    const part = parts.find(p => p.id === selectedPartId);
+    if (!part) return;
+
+    const parsed = parseFloat(String(partQty).replace(',', '.'));
+    const qtyToAdd = Math.round((Number.isFinite(parsed) ? parsed : 0) * 1000) / 1000;
+    
+    if (qtyToAdd <= 0) {
+      alert('Укажите количество больше 0 (например: 0.3, 0.5, 1)');
+      return;
+    }
+    
+    // Check existing in selected list
+    const existingIndex = selectedParts.findIndex(p => p.partId === selectedPartId);
+    const currentQty = existingIndex >= 0 ? selectedParts[existingIndex].quantity : 0;
+    const totalDesired = Math.round((currentQty + qtyToAdd) * 1000) / 1000;
+
+    // Previously already allocated in this schedule (its own reservation shouldn't count against itself)
+    const previouslyAllocated = schedule.partsUsed?.find(p => p.partId === selectedPartId)?.quantity || 0;
+    // Max allowable = available stock right now + what this schedule already has reserved
+    const maxAvailable = Math.round((part.availableQuantity + previouslyAllocated) * 1000) / 1000;
+
+    if (totalDesired > maxAvailable) {
+      alert(`Недостаточно на складе! Доступно ${maxAvailable} ${part.unit || 'ед.'}, а суммарно запрошено ${totalDesired} ${part.unit || 'ед.'}`);
+      return;
+    }
+
+    if (existingIndex >= 0) {
+      const updated = [...selectedParts];
+      updated[existingIndex].quantity = totalDesired;
+      setSelectedParts(updated);
+    } else {
+      setSelectedParts(prev => [
+        ...prev,
+        {
+          partId: part.id,
+          name: part.name,
+          quantity: qtyToAdd,
+          unit: part.unit || 'шт',
+          unitPrice: part.unitPrice || 0,
+          availableStock: maxAvailable
+        }
+      ]);
+    }
+
+    setSelectedPartId('');
+    setPartQty(1);
+  };
+
+  const handleRemovePart = (index: number) => {
+    setSelectedParts(prev => prev.filter((_, i) => i !== index));
   };
 
   const totalPartsCost = useMemo(() => {
@@ -1124,18 +1201,97 @@ export function EditToirScheduleModal({
               </div>
             </div>
 
-            <SparePartsSelector
-              relevantParts={relevantParts}
-              selectedParts={selectedParts}
-              setSelectedParts={setSelectedParts}
-              getMaxQty={getPartMaxQty}
-              tagForPart={tagForPart}
-              emptyLabel={
-                !schedule.machineId
-                  ? '-- Сначала выберите станок --'
-                  : '-- Нет рекомендованных деталей для этого станка/филиала --'
-              }
-            />
+            <div className="flex flex-col gap-2">
+              <select
+                value={selectedPartId}
+                onChange={e => setSelectedPartId(e.target.value)}
+                className="min-h-10 flex-1 p-2 bg-white rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none truncate"
+              >
+                <option value="">
+                  {relevantParts.length === 0
+                    ? (!schedule.machineId
+                        ? '-- Сначала выберите станок --' 
+                        : '-- Нет рекомендованных деталей для этого станка/филиала --')
+                    : showAllWarehouseParts
+                      ? `-- Выбрать деталь со склада (${relevantParts.length} доступно) --`
+                      : `-- Выбрать рекомендованную деталь (${relevantParts.length} привязано) --`}
+                </option>
+                {relevantParts.map(p => {
+                  const isForMachine = Boolean(schedule.machineId && p.machineId === schedule.machineId);
+                  const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !p.machineId);
+                  const tag = isForMachine
+                    ? '[Ст] '
+                    : isForBranch
+                      ? '[Фил] '
+                      : '[Скл] ';
+                  return (
+                    <option
+                      key={p.id}
+                      value={p.id}
+                      disabled={p.availableQuantity <= 0}
+                      style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
+                    >
+                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • {p.availableQuantity <= 0 ? 'НЕТ' : `${p.availableQuantity} ${p.unit || 'шт'}${p.reservedQuantity > 0 ? ` (рез ${p.reservedQuantity})` : ''}`} {p.unitPrice ? `• ${p.unitPrice}₽` : ''}
+                    </option>
+                  );
+                })}
+              </select>
+
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex items-center w-24">
+                  <input
+                    type="number"
+                    step="any"
+                    min="0.001"
+                    placeholder="Кол-во"
+                    value={partQty}
+                    onChange={e => setPartQty(e.target.value)}
+                    className="min-h-10 w-full p-2 pr-7 bg-white rounded-lg border border-slate-200 text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                    title="Можно вводить дробное количество (например: 0.3, 0.5, 0.7)"
+                  />
+                  <span className="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none select-none">
+                    {selectedPartObj?.unit || 'ед.'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddPart}
+                  disabled={!selectedPartId}
+                  className="min-h-10 px-3 py-2 flex-1 bg-slate-900 hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Добавить</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick fractional quantity buttons if a part is selected */}
+            {selectedPartId && (
+              <div className="flex flex-wrap items-center gap-1.5 p-2 bg-blue-50/80 border border-blue-200/70 rounded-lg text-[11px] text-blue-900">
+                <span className="font-semibold text-blue-800 text-[10px] shrink-0">
+                  Быстрый расход:
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {[0.1, 0.2, 0.25, 0.3, 0.5, 0.7, 1].map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setPartQty(String(preset))}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all ${
+                        Number(partQty) === preset 
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-2xs' 
+                          : 'bg-white border-blue-200 hover:bg-blue-100 text-blue-900'
+                      }`}
+                    >
+                      {preset} {selectedPartObj?.unit || ''}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[10px] text-blue-600 ml-auto font-medium">
+                  Доступно: <b>{selectedPartObj?.availableQuantity || 0} {selectedPartObj?.unit || 'ед.'}</b>
+                </span>
+              </div>
+            )}
 
             {/* Warehouse parts filter status */}
             <div className="flex items-center gap-1 text-[11px] pt-1 px-1 text-slate-500">
@@ -1145,12 +1301,44 @@ export function EditToirScheduleModal({
                 : `Показаны только рекомендованные к станку/филиалу (${recommendedParts.length})`}
             </div>
 
-            {selectedParts.length > 0 && (
-              <p className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-1">
-                <Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                <span>При сохранении складской остаток автоматически скорректируется с учетом изменений.</span>
-              </p>
-            )}
+            {/* Selected parts list */}
+            {selectedParts.length > 0 ? (
+              <div className="space-y-1.5 pt-1">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Прикрепленные запчасти ({selectedParts.length}):
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedParts.map((p, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-emerald-300 text-emerald-950 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-2xs"
+                    >
+                      <span className="font-bold text-slate-800">{p.name}</span>
+                      <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-mono font-bold text-[11px]">
+                        × {p.quantity} {p.unit}
+                      </span>
+                      {p.unitPrice ? (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md whitespace-nowrap">
+                          ({(p.unitPrice * p.quantity).toLocaleString()} ₽)
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePart(idx)}
+                        className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-0.5 rounded transition-colors ml-0.5"
+                        title="Удалить из списка"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-1">
+                  <Check className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <span>При сохранении складской остаток автоматически скорректируется с учетом изменений.</span>
+                </p>
+              </div>
+            ) : null}
           </div>
 
           {/* Photos of performed work */}
@@ -1215,14 +1403,14 @@ export function EditToirScheduleModal({
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex flex-wrap items-center justify-between gap-x-2">
-                <span>Стоимость работ ($)</span>
+                <span>Стоимость работ (₽)</span>
                 <span className="text-[9px] text-emerald-600 font-bold lowercase">работа/услуга</span>
               </label>
               <input
                 type="number"
                 min="0"
                 step="100"
-                placeholder="0 $"
+                placeholder="0 ₽"
                 value={laborCost}
                 onChange={e => setLaborCost(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
                 className="min-h-10 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1251,16 +1439,16 @@ export function EditToirScheduleModal({
             <div className="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
               <div className="flex items-center gap-3 text-[11px] text-emerald-950 font-medium">
                 {Number(laborCost) > 0 && (
-                  <span>Раб: <b>{(Number(laborCost) || 0).toLocaleString()} $</b></span>
+                  <span>Раб: <b>{(Number(laborCost) || 0).toLocaleString()} ₽</b></span>
                 )}
                 {totalPartsCost > 0 && (
-                  <span>Запчасти: <b>{totalPartsCost.toLocaleString()} $</b></span>
+                  <span>Запчасти: <b>{totalPartsCost.toLocaleString()} ₽</b></span>
                 )}
               </div>
               <div className="text-xs font-black text-emerald-800 flex items-center gap-1">
                 <span>Итого расчетная стоимость:</span>
                 <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-xs font-mono font-bold shadow-2xs">
-                  {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} $
+                  {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} ₽
                 </span>
               </div>
             </div>
@@ -1484,9 +1672,9 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
           </div>
 
           <div>
-            <div className="text-[8px] font-bold uppercase text-emerald-600 tracking-wider">Раб. ($)</div>
+            <div className="text-[8px] font-bold uppercase text-emerald-600 tracking-wider">Раб. (₽)</div>
             <div className="font-bold font-mono text-emerald-700 truncate">
-              {schedule.laborCost ? `${schedule.laborCost.toLocaleString()} $` : '0 $'}
+              {schedule.laborCost ? `${schedule.laborCost.toLocaleString()} ₽` : '0 ₽'}
             </div>
           </div>
         </div>
