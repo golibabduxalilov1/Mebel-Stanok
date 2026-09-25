@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  X, 
-  User, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  Key, 
-  Shield, 
-  Building2, 
-  Briefcase, 
-  Mail, 
-  Phone, 
-  Check, 
+import {
+  X,
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  Key,
+  Shield,
+  Building2,
+  Briefcase,
+  Mail,
+  Phone,
+  Check,
+  ChevronDown,
   Sparkles,
   RefreshCw
 } from 'lucide-react';
@@ -44,6 +45,8 @@ export const UserModal: React.FC<UserModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [roleId, setRoleId] = useState('');
   const [branchIds, setBranchIds] = useState<string[]>([]);
+  const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
+  const branchDropdownRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState('');
   const [phone, setPhone] = useState('');
   const [status, setStatus] = useState<'active' | 'blocked'>('active');
@@ -78,6 +81,17 @@ export const UserModal: React.FC<UserModalProps> = ({
     }
     setError(null);
   }, [user, isOpen, roles]);
+
+  useEffect(() => {
+    if (!isBranchDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (branchDropdownRef.current && !branchDropdownRef.current.contains(e.target as Node)) {
+        setIsBranchDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isBranchDropdownOpen]);
 
   function generateStrongPassword() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
@@ -327,39 +341,54 @@ export const UserModal: React.FC<UserModalProps> = ({
                 )}
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
+              <div ref={branchDropdownRef} className="relative">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Привязка к филиалу
                 </label>
-                <div className="border border-slate-200 rounded-xl bg-slate-50 max-h-40 overflow-y-auto divide-y divide-slate-200">
-                  <label className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={branchIds.length === 0}
-                      onChange={() => setBranchIds([])}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
-                    />
-                    <span className="text-sm font-semibold text-slate-800">Все филиалы и цеха</span>
-                  </label>
-                  {branches.map((b) => (
-                    <label key={b.id} className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100 transition-colors">
+                <div className="relative">
+                  <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+                  <button
+                    type="button"
+                    onClick={() => setIsBranchDropdownOpen(v => !v)}
+                    className="min-h-10 w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 text-left truncate focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  >
+                    {branchIds.length === 0
+                      ? 'Все филиалы и цеха'
+                      : branchIds.map(id => branches.find(b => b.id === id)?.name).filter(Boolean).join(', ')}
+                  </button>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none transition-transform ${isBranchDropdownOpen ? 'rotate-180' : ''}`} />
+                </div>
+
+                {isBranchDropdownOpen && (
+                  <div className="absolute z-10 mt-1.5 w-full border border-slate-200 rounded-xl bg-white shadow-lg max-h-48 overflow-y-auto divide-y divide-slate-100">
+                    <label className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50 transition-colors">
                       <input
                         type="checkbox"
-                        checked={branchIds.includes(b.id)}
-                        onChange={(e) => {
-                          setBranchIds(prev =>
-                            e.target.checked ? [...prev, b.id] : prev.filter(id => id !== b.id)
-                          );
-                        }}
+                        checked={branchIds.length === 0}
+                        onChange={() => setBranchIds([])}
                         className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
                       />
-                      <span className="text-sm font-medium text-slate-700 truncate">
-                        {b.name} ({b.location || 'Цех'})
-                      </span>
+                      <span className="text-sm font-semibold text-slate-800">Все филиалы и цеха</span>
                     </label>
-                  ))}
-                </div>
+                    {branches.map((b) => (
+                      <label key={b.id} className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={branchIds.includes(b.id)}
+                          onChange={(e) => {
+                            setBranchIds(prev =>
+                              e.target.checked ? [...prev, b.id] : prev.filter(id => id !== b.id)
+                            );
+                          }}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                        />
+                        <span className="text-sm font-medium text-slate-700 truncate">
+                          {b.name} ({b.location || 'Цех'})
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
                 <p className="text-[10px] text-slate-400 mt-1">Можно выбрать несколько филиалов</p>
               </div>
             </div>

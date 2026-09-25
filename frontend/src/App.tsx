@@ -4942,7 +4942,70 @@ function UnitsManagerModal({
   );
 }
 
-function AddPartForm({ 
+function MachineMultiSelect({
+  machines,
+  selectedIds,
+  onToggle,
+  placeholder = 'Для любого оборудования (универсальная)'
+}: {
+  machines: Machine[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const selectedMachines = machines.filter(m => selectedIds.includes(m.id));
+  const label = selectedMachines.length === 0
+    ? placeholder
+    : selectedMachines.length === 1
+      ? `🎯 ${selectedMachines[0].name}`
+      : `🎯 Выбрано станков: ${selectedMachines.length}`;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full min-h-10 p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer flex items-center justify-between gap-2 text-left"
+      >
+        <span className={`truncate ${selectedMachines.length === 0 ? 'text-slate-400 font-normal' : ''}`}>{label}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute z-20 mt-1 w-full max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg divide-y divide-slate-100">
+          {machines.length === 0 ? (
+            <p className="text-xs text-slate-400 italic p-3">Нет доступных станков</p>
+          ) : (
+            machines.map(m => (
+              <label key={m.id} className="flex items-center gap-2 p-2.5 text-xs font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(m.id)}
+                  onChange={() => onToggle(m.id)}
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                />
+                <span>🎯 {m.name} ({m.model || 'б/м'})</span>
+              </label>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddPartForm({
   units = [], 
   branches = [],
   machines = [],
@@ -5125,23 +5188,7 @@ function AddPartForm({
           <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
             Оборудование / Станок (можно выбрать несколько)
           </label>
-          {filteredMachines.length === 0 ? (
-            <p className="text-xs text-slate-400 italic p-2">Нет доступных станков</p>
-          ) : (
-            <div className="max-h-40 overflow-y-auto rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
-              {filteredMachines.map(m => (
-                <label key={m.id} className="flex items-center gap-2 p-2.5 text-xs font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={machineIds.includes(m.id)}
-                    onChange={() => toggleMachine(m.id)}
-                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
-                  />
-                  <span>🎯 {m.name} ({m.model || 'б/м'})</span>
-                </label>
-              ))}
-            </div>
-          )}
+          <MachineMultiSelect machines={filteredMachines} selectedIds={machineIds} onToggle={toggleMachine} />
         </div>
 
         {(branchId || machineIds.length > 0) && (
@@ -5437,23 +5484,7 @@ function EditPartForm({
           <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
             Оборудование / Станок (можно выбрать несколько)
           </label>
-          {filteredMachines.length === 0 ? (
-            <p className="text-xs text-slate-400 italic p-2">Нет доступных станков</p>
-          ) : (
-            <div className="max-h-40 overflow-y-auto rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
-              {filteredMachines.map(m => (
-                <label key={m.id} className="flex items-center gap-2 p-2.5 text-xs font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={machineIds.includes(m.id)}
-                    onChange={() => toggleMachine(m.id)}
-                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
-                  />
-                  <span>🎯 {m.name} ({m.model || 'б/м'})</span>
-                </label>
-              ))}
-            </div>
-          )}
+          <MachineMultiSelect machines={filteredMachines} selectedIds={machineIds} onToggle={toggleMachine} />
         </div>
 
         {(branchId || machineIds.length > 0) && (
