@@ -20,11 +20,9 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     label: 'Оборудование',
     rows: [
       { id: 'catalog', name: 'Реестр оборудования (Станки)' },
-      { id: 'management', name: 'Управление (колонка и кнопка «Открыть»)' },
       { id: 'cards', name: 'Карточка станка (Паспорт)' },
       { id: 'files', name: 'Папка файлов (видео, фото, документы, схемы)' },
       { id: 'depreciation', name: 'Амортизация и оценка стоимости' },
-      { id: 'photos', name: 'Фотогалерея оборудования' },
       { id: 'transfers', name: 'Перемещение между филиалами' },
       { id: 'decommission', name: 'Списание оборудования (Вывод из эксплуатации)' }
     ]
@@ -34,19 +32,14 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     label: 'Техобслуживание',
     rows: [
       { id: 'schedules', name: 'График регламентных работ (ТОиР)' },
-      { id: 'guide', name: 'Справочник регламентов (ЕТО, ТО-1, ТО-2, КР)' },
-      { id: 'logs', name: 'Журнал выполненных работ (ТОиР)' },
-      { id: 'repairs', name: 'Ремонтный цех и дефекты' },
-      { id: 'parts_usage', name: 'Расход запчастей на ТО' },
-      { id: 'costs', name: 'Калькуляция затрат на обслуживание' }
+      { id: 'logs', name: 'Журнал выполненных работ (ТОиР)' }
     ]
   },
   {
     id: 'branches',
     label: 'Филиалы',
     rows: [
-      { id: 'branch_list', name: 'Справочник филиалов' },
-      { id: 'branch_machines', name: 'Оборудование по филиалам' }
+      { id: 'branch_list', name: 'Справочник филиалов' }
     ]
   },
   {
@@ -54,11 +47,7 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     label: 'Склад запчастей',
     rows: [
       { id: 'parts_catalog', name: 'Каталог запчастей и расходников' },
-      { id: 'balances', name: 'Остатки на складах' },
-      { id: 'receipts', name: 'Оприходование (поступление)' },
-      { id: 'writeoffs', name: 'Списание запчастей' },
-      { id: 'units', name: 'Справочник единиц измерения' },
-      { id: 'min_stock', name: 'Контроль неснижаемого остатка' }
+      { id: 'units', name: 'Справочник единиц измерения' }
     ]
   },
   {
@@ -67,8 +56,7 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     rows: [
       { id: 'user_list', name: 'Сотрудники и учетные записи' },
       { id: 'credentials', name: 'Логины и пароли' },
-      { id: 'roles_matrix', name: 'Роли и матрица прав доступа' },
-      { id: 'branch_access', name: 'Ограничение доступа по филиалам' }
+      { id: 'roles_matrix', name: 'Роли и матрица прав доступа' }
     ]
   },
   {
@@ -85,12 +73,34 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     id: 'history',
     label: 'История',
     rows: [
-      { id: 'activity_log', name: 'Журнал действий пользователей' },
-      { id: 'equipment_history', name: 'История перемещений станков' },
-      { id: 'audit_deletions', name: 'Аудит удалений и списаний' }
+      { id: 'activity_log', name: 'Журнал действий пользователей' }
     ]
   }
 ];
+
+// Row keys accepted by canPerformAction that resolve to a different stored row.
+// Includes rows removed from PERMISSION_TABS, which were folded into these rows
+// (the backend's normalizePermissions does the same fold on stored roles).
+const ROW_KEY_ALIASES: Record<string, string> = {
+  'machines.registry': 'machines.catalog',
+  'machines.management': 'machines.cards',
+  'machines.photos': 'machines.files',
+  'maintenance.journal': 'maintenance.logs',
+  'maintenance.guide': 'maintenance.schedules',
+  'maintenance.repairs': 'maintenance.logs',
+  'maintenance.parts_usage': 'maintenance.logs',
+  'maintenance.costs': 'maintenance.logs',
+  'branches.list': 'branches.branch_list',
+  'branches.branch_machines': 'branches.branch_list',
+  'inventory.stock': 'inventory.parts_catalog',
+  'inventory.balances': 'inventory.parts_catalog',
+  'inventory.receipts': 'inventory.parts_catalog',
+  'inventory.writeoffs': 'inventory.parts_catalog',
+  'inventory.min_stock': 'inventory.parts_catalog',
+  'users.branch_access': 'users.user_list',
+  'history.equipment_history': 'history.activity_log',
+  'history.audit_deletions': 'history.activity_log'
+};
 
 export const PERMISSION_ACTIONS: { id: keyof PermissionMatrixItem; label: string }[] = [
   { id: 'create', label: 'Создавать' },
@@ -139,27 +149,21 @@ export function createFullPermissions(): Record<string, PermissionMatrixItem> {
 export function createTechnologistPermissions(): Record<string, PermissionMatrixItem> {
   const perms = createEmptyPermissions();
 
-  ['catalog', 'management', 'cards', 'depreciation', 'photos', 'transfers'].forEach(id => {
+  ['catalog', 'cards', 'depreciation', 'transfers'].forEach(id => {
     perms[`machines.${id}`] = { menu: true, create: true, view: true, edit: true, delete: false, export: true };
   });
   perms['machines.decommission'] = { menu: false, create: false, view: true, edit: false, delete: false, export: false };
 
-  ['schedules', 'guide', 'logs', 'repairs', 'parts_usage', 'costs'].forEach(id => {
+  ['schedules', 'logs'].forEach(id => {
     perms[`maintenance.${id}`] = { menu: true, create: true, view: true, edit: true, delete: false, export: true };
   });
 
-  ['branch_list', 'branch_machines'].forEach(id => {
-    perms[`branches.${id}`] = { menu: true, create: false, view: true, edit: false, delete: false, export: true };
-  });
+  perms['branches.branch_list'] = { menu: true, create: false, view: true, edit: false, delete: false, export: true };
 
-  ['parts_catalog', 'balances', 'min_stock'].forEach(id => {
-    perms[`inventory.${id}`] = { menu: true, create: true, view: true, edit: true, delete: false, export: true };
-  });
-  ['receipts', 'writeoffs', 'units'].forEach(id => {
-    perms[`inventory.${id}`] = { menu: false, create: false, view: true, edit: false, delete: false, export: false };
-  });
+  perms['inventory.parts_catalog'] = { menu: true, create: true, view: true, edit: true, delete: false, export: true };
+  perms['inventory.units'] = { menu: false, create: false, view: true, edit: false, delete: false, export: false };
 
-  ['user_list', 'credentials', 'roles_matrix', 'branch_access'].forEach(id => {
+  ['user_list', 'credentials', 'roles_matrix'].forEach(id => {
     perms[`users.${id}`] = { menu: false, create: false, view: false, edit: false, delete: false, export: false };
   });
 
@@ -167,10 +171,7 @@ export function createTechnologistPermissions(): Record<string, PermissionMatrix
     perms[`reports.${id}`] = { menu: true, create: false, view: true, edit: false, delete: false, export: true };
   });
 
-  ['activity_log', 'equipment_history'].forEach(id => {
-    perms[`history.${id}`] = { menu: true, create: false, view: true, edit: false, delete: false, export: true };
-  });
-  perms['history.audit_deletions'] = { menu: false, create: false, view: false, edit: false, delete: false, export: false };
+  perms['history.activity_log'] = { menu: true, create: false, view: true, edit: false, delete: false, export: true };
 
   return perms;
 }
@@ -243,29 +244,16 @@ export function canPerformAction(
     return false;
   }
 
-  // Normalize aliases
-  let normalizedKey = rowKey;
-  if (rowKey === 'machines.registry') normalizedKey = 'machines.catalog';
-  if (rowKey === 'branches.list') normalizedKey = 'branches.branch_list';
-  if (rowKey === 'inventory.stock') normalizedKey = 'inventory.parts_catalog';
-  if (rowKey === 'maintenance.journal') normalizedKey = 'maintenance.logs';
+  const normalizedKey = ROW_KEY_ALIASES[rowKey] ?? rowKey;
 
   // 1. Direct match on row key
   const item = permissions[normalizedKey];
   if (item) {
-    if (normalizedKey === 'machines.management') {
-      return Boolean(item.view || item.menu || item.edit || item.create || item.delete || item.export);
-    }
     if (item[action] !== undefined) {
       return Boolean(item[action]);
     }
-  } else if (normalizedKey === 'machines.management') {
-    const fallbackItem = permissions['machines.cards'] || permissions['machines.catalog'];
-    if (fallbackItem) {
-      return Boolean(fallbackItem.view || fallbackItem.menu || fallbackItem.edit);
-    }
   } else if (normalizedKey === 'machines.files') {
-    const fallbackItem = permissions['machines.photos'] || permissions['machines.cards'] || permissions['machines.catalog'];
+    const fallbackItem = permissions['machines.cards'] || permissions['machines.catalog'];
     if (fallbackItem && fallbackItem[action] !== undefined) {
       return Boolean(fallbackItem[action]);
     }

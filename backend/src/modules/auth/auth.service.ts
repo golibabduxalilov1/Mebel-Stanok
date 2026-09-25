@@ -6,7 +6,7 @@ import { env } from '../../env';
 import { Errors } from '../../utils/errors';
 import { sha256Hex } from '../../utils/hash';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, type AccessTokenPayload } from '../../utils/jwt';
-import { ADMIN_ROLE_ID } from '../../config/permissions';
+import { ADMIN_ROLE_ID, normalizePermissions } from '../../config/permissions';
 import { writeActivityStandalone } from '../../utils/activityLog';
 import { mapUserBranches } from '../users/users.service';
 import type { LoginInput } from './auth.schema';
@@ -27,7 +27,7 @@ function buildAccessPayload(user: UserWithRole): AccessTokenPayload {
     roleId: user.roleId,
     roleName: user.role?.name ?? null,
     branchIds: user.userBranches.length ? user.userBranches.map((ub) => ub.branchId) : null,
-    permissions: (user.role?.permissions as Record<string, unknown>) ?? {},
+    permissions: normalizePermissions(user.role?.permissions),
     isAdmin: isAdminRole(user.role),
   };
 }

@@ -301,7 +301,7 @@ export default function App() {
   }, [ALL_TABS, currentRole]);
 
   const canOpenMachineManagement = useMemo(() => {
-    return canPerformAction(currentRole, 'machines.management', 'view');
+    return canPerformAction(currentRole, 'machines.cards', 'view');
   }, [currentRole]);
 
   // If role does not have permission to open management, close machine card if open
@@ -6936,7 +6936,7 @@ function InventoryTab({
   const canCreatePart = canPerformAction(role, 'inventory.parts_catalog', 'create');
   const canEditPart = canPerformAction(role, 'inventory.parts_catalog', 'edit');
   const canDeletePart = canPerformAction(role, 'inventory.parts_catalog', 'delete');
-  const canExportInventory = canPerformAction(role, 'inventory.parts_catalog', 'export') || canPerformAction(role, 'inventory.balances', 'export');
+  const canExportInventory = canPerformAction(role, 'inventory.parts_catalog', 'export');
 
   const safeParts = Array.isArray(parts) ? parts : [];
   const safeUnits = Array.isArray(units) ? units : [];
@@ -7829,9 +7829,9 @@ interface HistoryTabProps {
 
 function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: HistoryTabProps) {
   const canViewActivity = canPerformAction(role, 'history.activity_log', 'view');
-  const canViewTransfers = canPerformAction(role, 'history.equipment_history', 'view');
-  const canViewDeletions = canPerformAction(role, 'history.audit_deletions', 'view');
-  const canExportHistory = canPerformAction(role, 'history.activity_log', 'export') || canPerformAction(role, 'history.audit_deletions', 'export');
+  const canViewTransfers = canPerformAction(role, 'history.activity_log', 'view');
+  const canViewDeletions = canPerformAction(role, 'history.activity_log', 'view');
+  const canExportHistory = canPerformAction(role, 'history.activity_log', 'export');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');

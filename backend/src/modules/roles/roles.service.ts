@@ -2,7 +2,15 @@ import { prisma } from '../../lib/prisma';
 import { emitEntity } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { writeActivity } from '../../utils/activityLog';
+import { normalizePermissions } from '../../config/permissions';
 import type { CreateRoleInput, UpdateRoleInput } from './roles.schema';
+
+type RoleRecord = Awaited<ReturnType<typeof prisma.role.findMany>>[number];
+
+/** Folds legacy permission rows into the current layout for roles not yet re-saved. */
+function withNormalizedPermissions<T extends Pick<RoleRecord, 'permissions'>>(role: T): T {
+  return { ...role, permissions: normalizePermissions(role.permissions) };
+}
 
 interface Actor {
   userId: string;
@@ -11,12 +19,15 @@ interface Actor {
 
 export const rolesService = {
   async list() {
-    return prisma.role.findMany({ orderBy: { name: 'asc' } });
+    const roles = await prisma.role.findMany({ orderBy: { name: 'asc' } });
+    return roles.map(withNormalizedPermissions);
   },
 
   async create(input: CreateRoleInput, actor: Actor) {
     const role = await prisma.$transaction(async (tx) => {
-      const created = await tx.role.create({ data: { ...input, createdBy: actor.userId } });
+      const created = await tx.role.create({
+        data: { ...input, permissions: normalizePermissions(input.permissions), createdBy: actor.userId },
+      });
       await writeActivity(tx, {
         actionType: 'create',
         entityType: 'role',
@@ -37,7 +48,8 @@ export const rolesService = {
     if (!original) throw Errors.notFound('Role');
 
     const role = await prisma.$transaction(async (tx) => {
-      const updated = await tx.role.update({ where: { id }, data: input });
+      const data = input.permissions ? { ...input, permissions: normalizePermissions(input.permissions) } : input;
+      const updated = await tx.role.update({ where: { id }, data });
       await writeActivity(tx, {
         actionType: 'update',
         entityType: 'role',

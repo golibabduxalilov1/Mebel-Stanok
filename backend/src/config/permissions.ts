@@ -7,14 +7,15 @@
 
 export type PermissionAction = 'menu' | 'create' | 'view' | 'edit' | 'delete' | 'export';
 
-export interface PermissionMatrixItem {
+// A type alias (not an interface) so it stays assignable to Prisma's JSON input type.
+export type PermissionMatrixItem = {
   menu: boolean;
   create: boolean;
   view: boolean;
   edit: boolean;
   delete: boolean;
   export: boolean;
-}
+};
 
 export type PermissionTabId =
   | 'machines'
@@ -42,11 +43,9 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     label: 'Оборудование',
     rows: [
       { id: 'catalog', name: 'Реестр оборудования (Станки)' },
-      { id: 'management', name: 'Управление (колонка и кнопка «Открыть»)' },
       { id: 'cards', name: 'Карточка станка (Паспорт)' },
       { id: 'files', name: 'Папка файлов (видео, фото, документы, схемы)' },
       { id: 'depreciation', name: 'Амортизация и оценка стоимости' },
-      { id: 'photos', name: 'Фотогалерея оборудования' },
       { id: 'transfers', name: 'Перемещение между филиалами' },
       { id: 'decommission', name: 'Списание оборудования (Вывод из эксплуатации)' },
     ],
@@ -56,31 +55,20 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     label: 'Техобслуживание',
     rows: [
       { id: 'schedules', name: 'График регламентных работ (ТОиР)' },
-      { id: 'guide', name: 'Справочник регламентов (ЕТО, ТО-1, ТО-2, КР)' },
       { id: 'logs', name: 'Журнал выполненных работ (ТОиР)' },
-      { id: 'repairs', name: 'Ремонтный цех и дефекты' },
-      { id: 'parts_usage', name: 'Расход запчастей на ТО' },
-      { id: 'costs', name: 'Калькуляция затрат на обслуживание' },
     ],
   },
   {
     id: 'branches',
     label: 'Филиалы',
-    rows: [
-      { id: 'branch_list', name: 'Справочник филиалов' },
-      { id: 'branch_machines', name: 'Оборудование по филиалам' },
-    ],
+    rows: [{ id: 'branch_list', name: 'Справочник филиалов' }],
   },
   {
     id: 'inventory',
     label: 'Склад запчастей',
     rows: [
       { id: 'parts_catalog', name: 'Каталог запчастей и расходников' },
-      { id: 'balances', name: 'Остатки на складах' },
-      { id: 'receipts', name: 'Оприходование (поступление)' },
-      { id: 'writeoffs', name: 'Списание запчастей' },
       { id: 'units', name: 'Справочник единиц измерения' },
-      { id: 'min_stock', name: 'Контроль неснижаемого остатка' },
     ],
   },
   {
@@ -90,7 +78,6 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
       { id: 'user_list', name: 'Сотрудники и учетные записи' },
       { id: 'credentials', name: 'Логины и пароли' },
       { id: 'roles_matrix', name: 'Роли и матрица прав доступа' },
-      { id: 'branch_access', name: 'Ограничение доступа по филиалам' },
     ],
   },
   {
@@ -106,13 +93,79 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
   {
     id: 'history',
     label: 'История',
-    rows: [
-      { id: 'activity_log', name: 'Журнал действий пользователей' },
-      { id: 'equipment_history', name: 'История перемещений станков' },
-      { id: 'audit_deletions', name: 'Аудит удалений и списаний' },
-    ],
+    rows: [{ id: 'activity_log', name: 'Журнал действий пользователей' }],
   },
 ];
+
+/**
+ * Rows that were removed from PERMISSION_TABS, and the surviving row each one folds
+ * into. `carry` lists the actions copied over (OR-merged) when a stored role is
+ * normalized: only visibility by default, so a legacy grant never escalates into
+ * create/edit/delete on the broader surviving row. Extra actions are carried only
+ * where the legacy row actually gated that action in the UI.
+ */
+const VISIBILITY: PermissionAction[] = ['menu', 'view'];
+
+const LEGACY_ROWS: Record<string, { to: string; carry: PermissionAction[] }> = {
+  'machines.management': { to: 'machines.cards', carry: VISIBILITY },
+  'machines.photos': { to: 'machines.files', carry: VISIBILITY },
+  'maintenance.guide': { to: 'maintenance.schedules', carry: VISIBILITY },
+  'maintenance.repairs': { to: 'maintenance.logs', carry: VISIBILITY },
+  'maintenance.parts_usage': { to: 'maintenance.logs', carry: VISIBILITY },
+  'maintenance.costs': { to: 'maintenance.logs', carry: VISIBILITY },
+  'branches.branch_machines': { to: 'branches.branch_list', carry: VISIBILITY },
+  'inventory.balances': { to: 'inventory.parts_catalog', carry: [...VISIBILITY, 'export'] },
+  'inventory.receipts': { to: 'inventory.parts_catalog', carry: VISIBILITY },
+  'inventory.writeoffs': { to: 'inventory.parts_catalog', carry: VISIBILITY },
+  'inventory.min_stock': { to: 'inventory.parts_catalog', carry: VISIBILITY },
+  'users.branch_access': { to: 'users.user_list', carry: VISIBILITY },
+  'history.equipment_history': { to: 'history.activity_log', carry: VISIBILITY },
+  'history.audit_deletions': { to: 'history.activity_log', carry: VISIBILITY },
+};
+
+/** Row keys accepted by canPerformAction that resolve to a different stored row. */
+const ROW_KEY_ALIASES: Record<string, string> = {
+  'machines.registry': 'machines.catalog',
+  'branches.list': 'branches.branch_list',
+  'inventory.stock': 'inventory.parts_catalog',
+  'maintenance.journal': 'maintenance.logs',
+  ...Object.fromEntries(Object.entries(LEGACY_ROWS).map(([from, { to }]) => [from, to])),
+};
+
+const KNOWN_ROW_KEYS = new Set(PERMISSION_TABS.flatMap((tab) => tab.rows.map((row) => `${tab.id}.${row.id}`)));
+
+/**
+ * Brings a stored `permissions` object onto the current PERMISSION_TABS layout:
+ * legacy rows are folded into their surviving row (see LEGACY_ROWS) and any key
+ * not in PERMISSION_TABS is dropped. Idempotent.
+ */
+export function normalizePermissions(stored: unknown): Record<string, PermissionMatrixItem> {
+  const result: Record<string, PermissionMatrixItem> = {};
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return result;
+  const permissions = stored as Record<string, PermissionMatrixItem | null | undefined>;
+
+  for (const [key, item] of Object.entries(permissions)) {
+    if (KNOWN_ROW_KEYS.has(key) && item) result[key] = { ...item };
+  }
+
+  for (const [key, item] of Object.entries(permissions)) {
+    const legacy = LEGACY_ROWS[key];
+    if (!legacy || !item) continue;
+    const target = (result[legacy.to] ??= {
+      menu: false,
+      create: false,
+      view: false,
+      edit: false,
+      delete: false,
+      export: false,
+    });
+    for (const action of legacy.carry) {
+      if (item[action]) target[action] = true;
+    }
+  }
+
+  return result;
+}
 
 export function createEmptyPermissions(): Record<string, PermissionMatrixItem> {
   const perms: Record<string, PermissionMatrixItem> = {};
@@ -190,27 +243,15 @@ export function canPerformAction(
   const permissions = role.permissions;
   if (!permissions) return false;
 
-  let normalizedKey = rowKey;
-  if (rowKey === 'machines.registry') normalizedKey = 'machines.catalog';
-  if (rowKey === 'branches.list') normalizedKey = 'branches.branch_list';
-  if (rowKey === 'inventory.stock') normalizedKey = 'inventory.parts_catalog';
-  if (rowKey === 'maintenance.journal') normalizedKey = 'maintenance.logs';
+  const normalizedKey = ROW_KEY_ALIASES[rowKey] ?? rowKey;
 
   const item = permissions[normalizedKey];
   if (item) {
-    if (normalizedKey === 'machines.management') {
-      return Boolean(item.view || item.menu || item.edit || item.create || item.delete || item.export);
-    }
     if (item[action] !== undefined) {
       return Boolean(item[action]);
     }
-  } else if (normalizedKey === 'machines.management') {
-    const fallbackItem = permissions['machines.cards'] || permissions['machines.catalog'];
-    if (fallbackItem) {
-      return Boolean(fallbackItem.view || fallbackItem.menu || fallbackItem.edit);
-    }
   } else if (normalizedKey === 'machines.files') {
-    const fallbackItem = permissions['machines.photos'] || permissions['machines.cards'] || permissions['machines.catalog'];
+    const fallbackItem = permissions['machines.cards'] || permissions['machines.catalog'];
     if (fallbackItem && fallbackItem[action] !== undefined) {
       return Boolean(fallbackItem[action]);
     }
