@@ -93,12 +93,10 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
 ];
 
 export const PERMISSION_ACTIONS: { id: keyof PermissionMatrixItem; label: string }[] = [
-  { id: 'menu', label: 'Доступно в меню' },
   { id: 'create', label: 'Создавать' },
   { id: 'view', label: 'Смотреть' },
   { id: 'edit', label: 'Редактировать' },
-  { id: 'delete', label: 'Удалять' },
-  { id: 'export', label: 'Экспортировать' }
+  { id: 'delete', label: 'Удалять' }
 ];
 
 // Helper to create all-false permissions
