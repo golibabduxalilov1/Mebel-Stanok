@@ -32,7 +32,11 @@ export function initSocket(httpServer: HttpServer): Server {
 
   io.on('connection', (socket) => {
     const scope = getBranchScope(socket.data.user);
-    socket.join(scope ? branchRoom(scope) : ALL_BRANCHES_ROOM);
+    if (scope) {
+      scope.forEach((branchId) => socket.join(branchRoom(branchId)));
+    } else {
+      socket.join(ALL_BRANCHES_ROOM);
+    }
   });
 
   return io;

@@ -48,6 +48,7 @@ const FIELD_LABELS: Record<string, string> = {
   lastMaintenanceDate: 'Дата последнего обслуживания',
   nextMaintenanceDate: 'Дата следующего обслуживания',
   usefulLifeYears: 'Срок службы (лет)',
+  amperage: 'Ампер (А)',
   description: 'Описание',
   location: 'Адрес',
   contactPerson: 'Контакты',
@@ -87,7 +88,7 @@ function translateValue(key: string, val: unknown): string {
   if (key === 'status') return STATUS_LABELS[String(val)] || String(val);
   if (key === 'type') return LOG_TYPE_LABELS[String(val)] || String(val);
   if (key === 'purchasePrice' || key === 'unitPrice' || key === 'cost') {
-    return `${Number(val).toLocaleString('ru-RU')} ₽`;
+    return `${Number(val).toLocaleString('en-US')} $`;
   }
   return String(val);
 }

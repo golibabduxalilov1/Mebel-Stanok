@@ -24,7 +24,7 @@ const safeSelect = {
   email: true,
   roleId: true,
   role: { select: { id: true, name: true, color: true } },
-  branchId: true,
+  userBranches: { select: { branchId: true } },
   position: true,
   phone: true,
   status: true,
@@ -34,13 +34,22 @@ const safeSelect = {
   createdBy: true,
 } as const;
 
+/** Flattens the user_branches join rows into a plain branchIds array for the API response. */
+export function mapUserBranches<T extends { userBranches: { branchId: string }[] }>(
+  user: T
+): Omit<T, 'userBranches'> & { branchIds: string[] } {
+  const { userBranches, ...rest } = user;
+  return { ...rest, branchIds: userBranches.map((ub) => ub.branchId) };
+}
+
 export const usersService = {
   async list() {
-    return prisma.user.findMany({ select: safeSelect, orderBy: { fullName: 'asc' } });
+    const users = await prisma.user.findMany({ select: safeSelect, orderBy: { fullName: 'asc' } });
+    return users.map(mapUserBranches);
   },
 
   async create(input: CreateUserInput, actor: Actor) {
-    const { password, ...rest } = input;
+    const { password, branchIds, ...rest } = input;
     const passwordHash = await bcrypt.hash(password, 12);
 
     const user = await prisma.$transaction(async (tx) => {
@@ -48,6 +57,9 @@ export const usersService = {
         data: { ...rest, passwordHash, createdBy: actor.userId },
         select: safeSelect,
       });
+      if (branchIds?.length) {
+        await tx.userBranch.createMany({ data: branchIds.map((branchId) => ({ userId: created.id, branchId })) });
+      }
       await writeActivity(tx, {
         actionType: 'create',
         entityType: 'user',
@@ -57,11 +69,14 @@ export const usersService = {
         userId: actor.userId,
         userEmail: actor.userEmail,
       });
-      return created;
+      return branchIds?.length
+        ? await tx.user.findUniqueOrThrow({ where: { id: created.id }, select: safeSelect })
+        : created;
     });
 
-    emitEntity('user', 'created', user);
-    return user;
+    const apiUser = mapUserBranches(user);
+    emitEntity('user', 'created', apiUser);
+    return apiUser;
   },
 
   async update(id: string, input: UpdateUserInput, actor: Actor) {
@@ -72,8 +87,16 @@ export const usersService = {
       throw Errors.forbidden('Only the superadmin can edit its own account');
     }
 
+    const { branchIds, ...rest } = input;
+
     const user = await prisma.$transaction(async (tx) => {
-      const updated = await tx.user.update({ where: { id }, data: input, select: safeSelect });
+      const updated = await tx.user.update({ where: { id }, data: rest, select: safeSelect });
+      if (branchIds !== undefined) {
+        await tx.userBranch.deleteMany({ where: { userId: id } });
+        if (branchIds.length) {
+          await tx.userBranch.createMany({ data: branchIds.map((branchId) => ({ userId: id, branchId })) });
+        }
+      }
       await writeActivity(tx, {
         actionType: 'update',
         entityType: 'user',
@@ -83,11 +106,14 @@ export const usersService = {
         userId: actor.userId,
         userEmail: actor.userEmail,
       });
-      return updated;
+      return branchIds !== undefined
+        ? await tx.user.findUniqueOrThrow({ where: { id }, select: safeSelect })
+        : updated;
     });
 
-    emitEntity('user', 'updated', user);
-    return user;
+    const apiUser = mapUserBranches(user);
+    emitEntity('user', 'updated', apiUser);
+    return apiUser;
   },
 
   async updatePassword(id: string, newPassword: string, actor: Actor) {

@@ -81,7 +81,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
       (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesRole = selectedRoleFilter === 'all' || u.roleId === selectedRoleFilter;
-    const matchesBranch = selectedBranchFilter === 'all' || u.branchId === selectedBranchFilter;
+    const matchesBranch = selectedBranchFilter === 'all' || !u.branchIds?.length || u.branchIds.includes(selectedBranchFilter);
     const matchesStatus = selectedStatusFilter === 'all' || u.status === selectedStatusFilter;
 
     return matchesSearch && matchesRole && matchesBranch && matchesStatus;
@@ -343,6 +343,9 @@ export const UsersTab: React.FC<UsersTabProps> = ({
               {filteredUsers.map((u) => {
                 const userRole = roles.find(r => r.id === u.roleId);
                 const isCurrentActive = activeAppUser?.id === u.id;
+                const userBranchLabel = u.branchIds?.length
+                  ? u.branchIds.map(id => branches.find(b => b.id === id)?.name).filter(Boolean).join(', ')
+                  : 'Все филиалы';
 
                 return (
                   <div
@@ -424,9 +427,9 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                           {userRole?.name || u.roleName || 'Пользователь'}
                         </span>
 
-                        <span className="text-[11px] px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 flex items-center gap-1">
-                          <Building2 className="w-3 h-3 text-slate-400" />
-                          {u.branchName || 'Все филиалы'}
+                        <span className="text-[11px] px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 flex items-center gap-1 max-w-full">
+                          <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{userBranchLabel}</span>
                         </span>
                       </div>
 

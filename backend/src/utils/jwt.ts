@@ -6,7 +6,7 @@ export interface AccessTokenPayload {
   username: string;
   roleId: string | null;
   roleName: string | null;
-  branchId: string | null;
+  branchIds: string[] | null;
   permissions: Record<string, unknown>;
   isAdmin: boolean;
 }

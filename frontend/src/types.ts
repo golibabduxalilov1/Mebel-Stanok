@@ -30,6 +30,7 @@ export interface Machine {
   lastMaintenanceDate: string;
   nextMaintenanceDate: string;
   usefulLifeYears: number;
+  amperage?: number;
   description: string;
   imageUrl?: string;
   imageUrls?: string[];
@@ -176,8 +177,7 @@ export interface AppUser {
   roleId: string; // ID назначенной роли
   roleName?: string; // Название роли
   roleColor?: string; // Цвет роли (для аватара), из Role.color
-  branchId?: string; // ID филиала или 'all'
-  branchName?: string;
+  branchIds?: string[]; // ID филиалов; пусто/не задано = все филиалы
   position?: string; // Должность (например: Ведущий технолог ЧПУ)
   phone?: string;
   status: 'active' | 'blocked';

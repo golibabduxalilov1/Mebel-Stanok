@@ -22,10 +22,10 @@ async function assertSerialNumberFree(serialNumber: string, excludeId?: string) 
 
 export const machinesService = {
   async list(filter: { branchId?: string; status?: string }, scope: BranchScope) {
-    if (scope && filter.branchId && filter.branchId !== scope) return [];
+    if (scope && filter.branchId && !scope.includes(filter.branchId)) return [];
     return prisma.machine.findMany({
       where: {
-        branchId: scope ?? filter.branchId,
+        branchId: scope ? { in: scope } : filter.branchId,
         status: filter.status as any,
       },
       orderBy: { updatedAt: 'desc' },
@@ -38,14 +38,17 @@ export const machinesService = {
       where: { id },
       include: { attachments: true, branch: true },
     });
-    if (!machine || (scope && machine.branchId !== scope)) throw Errors.notFound('Machine');
+    if (!machine || (scope && (!machine.branchId || !scope.includes(machine.branchId)))) throw Errors.notFound('Machine');
     return machine;
   },
 
   async create(input: CreateMachineInput, actor: Actor, scope: BranchScope) {
     if (scope) {
-      if (input.branchId && input.branchId !== scope) throw Errors.forbidden('Нельзя добавлять оборудование в другой филиал');
-      input = { ...input, branchId: scope };
+      if (input.branchId && !scope.includes(input.branchId)) throw Errors.forbidden('Нельзя добавлять оборудование в другой филиал');
+      if (!input.branchId) {
+        if (scope.length > 1) throw Errors.forbidden('Укажите филиал: вы привязаны к нескольким филиалам');
+        input = { ...input, branchId: scope[0] };
+      }
     }
     await assertSerialNumberFree(input.serialNumber);
 
@@ -71,8 +74,8 @@ export const machinesService = {
 
   async update(id: string, input: UpdateMachineInput, actor: Actor, scope: BranchScope) {
     const original = await prisma.machine.findUnique({ where: { id } });
-    if (!original || (scope && original.branchId !== scope)) throw Errors.notFound('Machine');
-    if (scope && input.branchId && input.branchId !== scope) {
+    if (!original || (scope && (!original.branchId || !scope.includes(original.branchId)))) throw Errors.notFound('Machine');
+    if (scope && input.branchId && !scope.includes(input.branchId)) {
       throw Errors.forbidden('Нельзя переносить оборудование в другой филиал');
     }
 
@@ -104,7 +107,7 @@ export const machinesService = {
 
   async remove(id: string, actor: Actor, scope: BranchScope) {
     const original = await prisma.machine.findUnique({ where: { id } });
-    if (!original || (scope && original.branchId !== scope)) throw Errors.notFound('Machine');
+    if (!original || (scope && (!original.branchId || !scope.includes(original.branchId)))) throw Errors.notFound('Machine');
 
     await prisma.$transaction(async (tx) => {
       await tx.machine.delete({ where: { id } });

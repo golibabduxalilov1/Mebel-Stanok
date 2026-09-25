@@ -47,7 +47,7 @@ export const logsService = {
   },
 
   async listAll(scope: BranchScope) {
-    const rows = await prisma.maintenanceLog.findMany({ where: scope ? { machine: { branchId: scope } } : undefined, orderBy: { date: 'desc' }, include: { parts: true } });
+    const rows = await prisma.maintenanceLog.findMany({ where: scope ? { machine: { branchId: { in: scope } } } : undefined, orderBy: { date: 'desc' }, include: { parts: true } });
     return rows.map(toApi);
   },
 

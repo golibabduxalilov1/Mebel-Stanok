@@ -640,9 +640,9 @@ export default function App() {
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-600/40 text-blue-200">
                         {activeAppUser?.roleName || 'Администратор'}
                       </span>
-                      {activeAppUser?.branchName && (
+                      {Boolean(activeAppUser?.branchIds?.length) && (
                         <span className="text-[10px] text-slate-400 truncate">
-                          {activeAppUser.branchName}
+                          {activeAppUser!.branchIds!.map(id => branches.find(b => b.id === id)?.name).filter(Boolean).join(', ')}
                         </span>
                       )}
                     </div>
@@ -1354,22 +1354,6 @@ export default function App() {
           ) : null}
 
         </div>
-
-        {/* Desktop Status Bar Footer */}
-        <footer className="hidden lg:flex h-8 whitespace-nowrap overflow-hidden gap-4 bg-[#007acc] text-white items-center px-4 text-[11px] font-medium shrink-0">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span>БАЗА ДАННЫХ: ПОДКЛЮЧЕНО (POSTGRESQL)</span>
-            </div>
-            <div className="h-4 w-px bg-white/20"></div>
-            <span>ПОСЛЕДНЯЯ СИНХРОНИЗАЦИЯ: {new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-          <div className="ml-auto flex gap-4 shrink-0">
-            <span>v1.2.4-stable</span>
-            <span className="uppercase tracking-tighter italic opacity-80">Cloud-Native Runtime</span>
-          </div>
-        </footer>
       </main>
 
       {/* Detail Panel / Modal Context */}
@@ -1491,9 +1475,9 @@ export default function App() {
                        Амортизация (текущая цена)
                     </p>
                     <p className="text-lg sm:text-xl font-bold text-slate-900 wrap-anywhere">
-                      {machineService.calculateCurrentValue(selectedMachine).toLocaleString()} ₽
+                      {machineService.calculateCurrentValue(selectedMachine).toLocaleString()} $
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-1 uppercase">Закупка: {(selectedMachine.purchasePrice || 0).toLocaleString()} ₽</p>
+                    <p className="text-[10px] text-slate-400 mt-1 uppercase">Закупка: {(selectedMachine.purchasePrice || 0).toLocaleString()} $</p>
                   </div>
                   <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50 border border-indigo-100">
                     <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
@@ -1540,12 +1524,13 @@ export default function App() {
                       { label: 'Серийный номер', value: selectedMachine.serialNumber },
                       { label: 'Расположение', value: branches.find(b => b.id === selectedMachine.branchId)?.name || 'Не указан' },
                       { label: 'Дата закупки', value: selectedMachine.purchaseDate ? new Date(selectedMachine.purchaseDate).toLocaleDateString('ru-RU') : 'Не указана' },
-                      { label: 'Годовая амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateYearlyDepreciation(selectedMachine).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽/год` : 'Не указана' },
+                      { label: 'Годовая амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateYearlyDepreciation(selectedMachine).toLocaleString('en-US', { maximumFractionDigits: 2 })} $/год` : 'Не указана' },
                       { label: 'Дата установки', value: selectedMachine.installationDate ? new Date(selectedMachine.installationDate).toLocaleDateString('ru-RU') : 'Не указана' },
-                      { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽/день` : 'Не указана' },
-                      { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет`, fullWidth: true },
+                      { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('en-US', { maximumFractionDigits: 2 })} $/день` : 'Не указана' },
+                      { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
+                      { label: 'Ампер', value: selectedMachine.amperage ? `${selectedMachine.amperage} А` : 'Не указан' },
                     ].map((item, idx) => (
-                      <div key={idx} className={`min-w-0 ${item.fullWidth ? 'col-span-2' : ''}`}>
+                      <div key={idx} className="min-w-0">
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>
                         <p className="font-semibold text-slate-900 break-words">{item.value}</p>
                       </div>
@@ -2512,7 +2497,7 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
                   </div>
                 )}
 
-                {log.cost > 0 && <p className="mt-2 text-xs font-bold text-slate-900">Стоимость: {(log.cost || 0).toLocaleString()} ₽</p>}
+                {log.cost > 0 && <p className="mt-2 text-xs font-bold text-slate-900">Стоимость: {(log.cost || 0).toLocaleString()} $</p>}
                 
                 {log.partsUsed && log.partsUsed.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
@@ -2619,7 +2604,7 @@ function DepreciationChart({ machine }: { machine: Machine }) {
           />
           <Tooltip 
             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-            formatter={(val: number) => [`${val.toLocaleString()} ₽`, 'Стоимость']}
+            formatter={(val: number) => [`${val.toLocaleString()} $`, 'Стоимость']}
             labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
           />
           <Area
@@ -2679,7 +2664,7 @@ function TotalDepreciationChart({ machines }: { machines: Machine[] }) {
           />
           <Tooltip 
             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-            formatter={(val: number) => [`${val.toLocaleString()} ₽`, 'Общая стоимость']}
+            formatter={(val: number) => [`${val.toLocaleString()} $`, 'Общая стоимость']}
             labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
           />
           <Area
@@ -3407,6 +3392,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
     purchasePrice: machine.purchasePrice || 0,
     purchaseDate: toDateInputValue(machine.purchaseDate),
     usefulLifeYears: machine.usefulLifeYears || 10,
+    amperage: machine.amperage || 0,
     status: machine.status,
     installationDate: toDateInputValue(machine.installationDate),
     lastMaintenanceDate: machine.lastMaintenanceDate || new Date().toISOString().split('T')[0],
@@ -3510,7 +3496,7 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
           />
         </div>
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Цена закупки (₽)</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Цена закупки ($)</label>
           <input 
             type="number" 
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
@@ -3536,6 +3522,27 @@ function EditMachineForm({ machine, branches, onComplete }: { machine: Machine, 
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.installationDate}
             onChange={e => setFormData({...formData, installationDate: e.target.value})}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Срок службы (лет)</label>
+          <input
+            type="number"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            value={formData.usefulLifeYears}
+            onChange={e => setFormData({...formData, usefulLifeYears: Number(e.target.value)})}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Ампер (А)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            placeholder="Например: 16"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            value={formData.amperage}
+            onChange={e => setFormData({...formData, amperage: Number(e.target.value)})}
           />
         </div>
         <div className="sm:col-span-2">
@@ -3580,6 +3587,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
     purchasePrice: 0,
     purchaseDate: new Date().toISOString().split('T')[0],
     usefulLifeYears: 10,
+    amperage: 0,
     status: 'active' as MachineStatus,
     installationDate: new Date().toISOString().split('T')[0],
     lastMaintenanceDate: new Date().toISOString().split('T')[0],
@@ -3670,7 +3678,7 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
           />
         </div>
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Цена закупки (₽)</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Цена закупки ($)</label>
           <input 
             type="number" 
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
@@ -3690,8 +3698,8 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
         </div>
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Срок службы (лет)</label>
-          <input 
-            type="number" 
+          <input
+            type="number"
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.usefulLifeYears}
             onChange={e => setFormData({...formData, usefulLifeYears: Number(e.target.value)})}
@@ -3705,6 +3713,18 @@ function AddMachineForm({ branches, onComplete }: { branches: Branch[], onComple
             className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
             value={formData.installationDate}
             onChange={e => setFormData({...formData, installationDate: e.target.value})}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 block">Ампер (А)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            placeholder="Например: 16"
+            className="min-h-10 w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+            value={formData.amperage}
+            onChange={e => setFormData({...formData, amperage: Number(e.target.value)})}
           />
         </div>
         <div className="sm:col-span-2">
@@ -4182,7 +4202,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
                 </div>
               ))}
               <div className="ml-auto text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5">
-                Итого: {partsCostSum.toLocaleString()} ₽
+                Итого: {partsCostSum.toLocaleString()} $
               </div>
             </div>
           )}
@@ -4195,8 +4215,8 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
           <input required type="text" className="min-h-10 w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="ФИО исполнителя" value={formData.technicianName} onChange={e => setFormData({...formData, technicianName: e.target.value})} />
         </div>
         <div className="col-span-1">
-          <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость работ (₽)</label>
-          <input type="number" className="min-h-10 w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 ₽" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
+          <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость работ ($)</label>
+          <input type="number" className="min-h-10 w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 $" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
         </div>
       </div>
 
@@ -4470,8 +4490,8 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
           <input required type="date" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость (₽)</label>
-          <input type="number" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 ₽" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
+          <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость ($)</label>
+          <input type="number" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 $" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
         </div>
       </div>
 
@@ -4554,7 +4574,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
               </div>
             ))}
             <div className="ml-auto text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5">
-              Итого: {partsCostSum.toLocaleString()} ₽
+              Итого: {partsCostSum.toLocaleString()} $
             </div>
           </div>
         )}
@@ -5175,7 +5195,7 @@ function AddPartForm({
 
       <div>
         <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
-          Цена за 1 {formData.unit || 'ед.'} (₽)
+          Цена за 1 {formData.unit || 'ед.'} ($)
         </label>
         <input 
           required 
@@ -5210,13 +5230,13 @@ function AddPartForm({
             <div className="min-w-0">
               <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-700">Итого сумма оприходования</p>
               <p className="text-sm text-slate-500 font-mono mt-0.5 font-semibold">
-                {formData.quantity || 0} {formData.unit || 'шт'} × {(Number(formData.unitPrice) || 0).toLocaleString('ru-RU')} ₽
+                {formData.quantity || 0} {formData.unit || 'шт'} × {(Number(formData.unitPrice) || 0).toLocaleString('en-US')} $
               </p>
             </div>
           </div>
           <div className="ml-auto text-right min-w-0">
             <div className="text-2xl sm:text-3xl md:text-4xl wrap-anywhere font-black font-mono text-blue-900 tracking-tight">
-              {totalSum.toLocaleString('ru-RU')} ₽
+              {totalSum.toLocaleString('en-US')} $
             </div>
             <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mt-1">
               Сумма партии
@@ -5231,7 +5251,7 @@ function AddPartForm({
         className={`w-full py-4 sm:py-4.5 text-white rounded-xl font-bold text-base transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98]'}`}
       >
         <Plus className="w-5 h-5" />
-        {loading ? 'Сохранение...' : `Оприходовать запчасть • ${totalSum.toLocaleString('ru-RU')} ₽`}
+        {loading ? 'Сохранение...' : `Оприходовать запчасть • ${totalSum.toLocaleString('en-US')} $`}
       </button>
     </form>
   );
@@ -5488,7 +5508,7 @@ function EditPartForm({
 
       <div>
         <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 sm:mb-2 block break-words">
-          Цена за 1 {formData.unit || 'ед.'} (₽)
+          Цена за 1 {formData.unit || 'ед.'} ($)
         </label>
         <input 
           required 
@@ -5522,13 +5542,13 @@ function EditPartForm({
             <div className="min-w-0">
               <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-700">Итого стоимость остатка</p>
               <p className="text-sm text-slate-500 font-mono mt-0.5 font-semibold">
-                {formData.quantity || 0} {formData.unit || 'шт'} × {(Number(formData.unitPrice) || 0).toLocaleString('ru-RU')} ₽
+                {formData.quantity || 0} {formData.unit || 'шт'} × {(Number(formData.unitPrice) || 0).toLocaleString('en-US')} $
               </p>
             </div>
           </div>
           <div className="ml-auto text-right min-w-0">
             <div className="text-2xl sm:text-3xl md:text-4xl wrap-anywhere font-black font-mono text-blue-900 tracking-tight">
-              {totalSum.toLocaleString('ru-RU')} ₽
+              {totalSum.toLocaleString('en-US')} $
             </div>
             <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mt-1">
               Стоимость на складе
@@ -5543,7 +5563,7 @@ function EditPartForm({
         className={`w-full py-4 sm:py-4.5 text-white rounded-xl font-bold text-base transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98]'}`}
       >
         <Check className="w-5 h-5" />
-        {loading ? 'Сохранение...' : `Сохранить изменения • ${totalSum.toLocaleString('ru-RU')} ₽`}
+        {loading ? 'Сохранение...' : `Сохранить изменения • ${totalSum.toLocaleString('en-US')} $`}
       </button>
     </form>
   );
@@ -6042,11 +6062,11 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
                          </div>
                          <div className="flex items-center gap-2">
                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                               Запчасти: <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 ml-0.5">{cardPartsCostSum.toLocaleString()} ₽</span>
+                               Запчасти: <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 ml-0.5">{cardPartsCostSum.toLocaleString()} $</span>
                             </div>
                             {log.cost !== undefined && log.cost !== null && log.cost !== cardPartsCostSum && log.cost > 0 && (
                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                  Всего: <span className="text-slate-800 font-bold">{(log.cost || 0).toLocaleString()} ₽</span>
+                                  Всего: <span className="text-slate-800 font-bold">{(log.cost || 0).toLocaleString()} $</span>
                                 </div>
                             )}
                          </div>
@@ -7042,7 +7062,7 @@ function InventoryTab({
                 <th className="px-4 py-4">Всего / Резерв / Доступно</th>
                 <th className="px-4 py-4">Мин. запас</th>
                 <th className="px-4 py-4">Цена / ЕД</th>
-                <th className="px-5 py-4 bg-blue-50/60 text-blue-900">Итого сумма (₽)</th>
+                <th className="px-5 py-4 bg-blue-50/60 text-blue-900">Итого сумма ($)</th>
                 <th className="px-4 py-4">Филиал</th>
                 <th className="px-6 py-4 text-right">Управление</th>
               </tr>
@@ -7120,11 +7140,11 @@ function InventoryTab({
                       {part.minQuantity} {part.unit || 'шт'}
                     </td>
                     <td className="px-4 py-4 text-slate-600 text-xs font-mono font-medium whitespace-nowrap">
-                      {(part.unitPrice || 0).toLocaleString('ru-RU')} ₽
+                      {(part.unitPrice || 0).toLocaleString('en-US')} $
                     </td>
                     {/* Итого сумма по позиции */}
                     <td className="px-5 py-4 bg-blue-50/30 font-mono font-black text-sm text-blue-900 whitespace-nowrap">
-                      {rowTotalSum.toLocaleString('ru-RU')} ₽
+                      {rowTotalSum.toLocaleString('en-US')} $
                     </td>
                     <td className="px-4 py-4">
                       {part.branchId ? (
@@ -7229,11 +7249,11 @@ function InventoryTab({
                   </td>
                   <td className="px-4 py-4 text-slate-400">—</td>
                   <td className="px-4 py-4 text-slate-500 font-mono text-[11px]">
-                    Ср. {Math.round(filteredQty > 0 ? filteredSum / filteredQty : 0).toLocaleString('ru-RU')} ₽
+                    Ср. {Math.round(filteredQty > 0 ? filteredSum / filteredQty : 0).toLocaleString('en-US')} $
                   </td>
                   {/* Главная общая итоговая сумма */}
                   <td className="px-5 py-4 bg-blue-100/80 font-mono font-black text-base text-blue-950 border-l border-r border-blue-200">
-                    {filteredSum.toLocaleString('ru-RU')} ₽
+                    {filteredSum.toLocaleString('en-US')} $
                   </td>
                   <td className="px-4 py-4 text-slate-400">—</td>
                   <td className="px-6 py-4 text-right text-[11px] text-slate-400 uppercase tracking-widest">
@@ -7431,14 +7451,14 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
         {canEquipment && (
           <div className="bg-slate-900 text-white p-4 sm:p-6 rounded-2xl border border-slate-800 shadow-xl min-w-0">
             <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Стоимость активов</p>
-            <p className="text-xl sm:text-2xl font-mono font-black wrap-anywhere">{totalValue.toLocaleString()} ₽</p>
+            <p className="text-xl sm:text-2xl font-mono font-black wrap-anywhere">{totalValue.toLocaleString()} $</p>
             <p className="text-[10px] text-slate-500 mt-2">На основе текущих фильтров</p>
           </div>
         )}
         {canToir && (
           <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm min-w-0">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Затраты на ТО / Ремонт</p>
-            <p className="text-xl sm:text-2xl font-mono font-black text-rose-600 wrap-anywhere">{totalMaintenanceCost.toLocaleString()} ₽</p>
+            <p className="text-xl sm:text-2xl font-mono font-black text-rose-600 wrap-anywhere">{totalMaintenanceCost.toLocaleString()} $</p>
             <p className="text-[10px] text-slate-400 mt-2 uppercase">{relevantLogs.length} операций проведено</p>
           </div>
         )}
@@ -7447,14 +7467,14 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
             <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Баланс склада (Общий)</p>
               <p className="text-xl sm:text-2xl font-mono font-black text-blue-600 wrap-anywhere">
-                {parts.reduce((acc, p) => acc + (p.quantity * (p.unitPrice || 0)), 0).toLocaleString()} ₽
+                {parts.reduce((acc, p) => acc + (p.quantity * (p.unitPrice || 0)), 0).toLocaleString()} $
               </p>
               <p className="text-[10px] text-slate-400 mt-2 uppercase">{parts.length} наименований</p>
             </div>
             <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm min-w-0">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Расход запчастей</p>
               <p className="text-xl sm:text-2xl font-mono font-black text-amber-600 wrap-anywhere">
-                {totalPartsUsedCost.toLocaleString('ru-RU')} ₽
+                {totalPartsUsedCost.toLocaleString('en-US')} $
               </p>
               <p className="text-[10px] text-slate-400 mt-2 uppercase">Использовано {totalPartsUsedQty} ед. запчастей</p>
             </div>
@@ -7530,7 +7550,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
                               <span className="text-[10px] font-mono font-bold">{uptime.toFixed(0)}%</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">{branchSpending.toLocaleString()} ₽</td>
+                          <td className="px-6 py-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">{branchSpending.toLocaleString()} $</td>
                         </tr>
                       );
                     })}
@@ -7588,7 +7608,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
                                )) || '—'}
                              </div>
                           </td>
-                          <td className="px-6 py-4 text-right font-black text-slate-900 whitespace-nowrap">{(log.cost || 0).toLocaleString()} ₽</td>
+                          <td className="px-6 py-4 text-right font-black text-slate-900 whitespace-nowrap">{(log.cost || 0).toLocaleString()} $</td>
                         </tr>
                       );
                     })}
@@ -7647,7 +7667,7 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
                           <p className="text-xs font-bold text-slate-800 truncate">{data.name}</p>
                           {data.model && <p className="text-[10px] text-slate-400 font-mono truncate">{data.model}</p>}
                         </div>
-                        <p className="text-xs font-mono font-black text-rose-600 shrink-0">{data.cost.toLocaleString()} ₽</p>
+                        <p className="text-xs font-mono font-black text-rose-600 shrink-0">{data.cost.toLocaleString()} $</p>
                       </div>
                       <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
                         <div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min(100, data.cost / 100000 * 100)}%` }} />
@@ -7727,14 +7747,14 @@ function ReportsTab({ machines, branches, logs, parts, role }: { machines: Machi
                               {data.unitPrice > 0 && (
                                 <>
                                   <span>•</span>
-                                  <span>Цена: <strong className="text-slate-700">{data.unitPrice.toLocaleString('ru-RU')} ₽/{data.unit}</strong></span>
+                                  <span>Цена: <strong className="text-slate-700">{data.unitPrice.toLocaleString('en-US')} $/{data.unit}</strong></span>
                                 </>
                               )}
                             </div>
                           </div>
                           <div className="text-right shrink-0">
                             <p className="text-xs font-mono font-black text-blue-600">
-                              {data.totalCost > 0 ? `${data.totalCost.toLocaleString('ru-RU')} ₽` : '—'}
+                              {data.totalCost > 0 ? `${data.totalCost.toLocaleString('en-US')} $` : '—'}
                             </p>
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
                               Сумма
@@ -7945,7 +7965,7 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 font-medium">
                         {p.sku && <span>📦 SKU: <strong className="text-slate-700">{p.sku}</strong></span>}
                         <span>• На складе: <strong className="text-slate-700">{p.quantity} шт.</strong></span>
-                        {p.unitPrice !== undefined && <span>• Цена: <strong className="text-slate-700">{p.unitPrice.toLocaleString('ru-RU')} ₽</strong></span>}
+                        {p.unitPrice !== undefined && <span>• Цена: <strong className="text-slate-700">{p.unitPrice.toLocaleString('en-US')} $</strong></span>}
                       </div>
                     );
                   }
@@ -7964,7 +7984,7 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
                           {br && <span>• Филиал: <strong className="text-slate-700">{br.name}</strong></span>}
                           {ml.technicianName && <span>• Мастер: <strong className="text-slate-700">{ml.technicianName}</strong></span>}
                           {ml.cost !== undefined && (
-                            <span>• Затраты: <strong className="text-emerald-700 font-bold">{ml.cost.toLocaleString('ru-RU')} ₽</strong></span>
+                            <span>• Затраты: <strong className="text-emerald-700 font-bold">{ml.cost.toLocaleString('en-US')} $</strong></span>
                           )}
                         </div>
                         {partsStr && (

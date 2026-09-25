@@ -8,9 +8,10 @@ import { sha256Hex } from '../../utils/hash';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, type AccessTokenPayload } from '../../utils/jwt';
 import { ADMIN_ROLE_ID } from '../../config/permissions';
 import { writeActivityStandalone } from '../../utils/activityLog';
+import { mapUserBranches } from '../users/users.service';
 import type { LoginInput } from './auth.schema';
 
-const userWithRole = { role: true } as const;
+const userWithRole = { role: true, userBranches: { select: { branchId: true } } } as const;
 
 type UserWithRole = Prisma.UserGetPayload<{ include: typeof userWithRole }>;
 
@@ -25,7 +26,7 @@ function buildAccessPayload(user: UserWithRole): AccessTokenPayload {
     username: user.username,
     roleId: user.roleId,
     roleName: user.role?.name ?? null,
-    branchId: user.branchId,
+    branchIds: user.userBranches.length ? user.userBranches.map((ub) => ub.branchId) : null,
     permissions: (user.role?.permissions as Record<string, unknown>) ?? {},
     isAdmin: isAdminRole(user.role),
   };
@@ -84,7 +85,7 @@ export const authService = {
     });
 
     const { passwordHash: _omit, ...safeUser } = user;
-    return { accessToken, refreshToken, user: safeUser };
+    return { accessToken, refreshToken, user: mapUserBranches(safeUser) };
   },
 
   async refresh(refreshTokenRaw: string | undefined) {
@@ -133,6 +134,6 @@ export const authService = {
     });
     if (!user) throw Errors.notFound('User');
     const { passwordHash: _omit, ...safeUser } = user;
-    return safeUser;
+    return mapUserBranches(safeUser);
   },
 };

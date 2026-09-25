@@ -93,6 +93,7 @@ model Branch {
   spareParts    SparePart[]
   transfersFrom Transfer[] @relation("TransferFrom")
   transfersTo   Transfer[] @relation("TransferTo")
+  userBranches  UserBranch[]
 
   @@map("branches")
 }
@@ -123,6 +124,7 @@ model Machine {
   lastMaintenanceDate DateTime?     @map("last_maintenance_date") @db.Timestamptz
   nextMaintenanceDate DateTime?     @map("next_maintenance_date") @db.Timestamptz
   usefulLifeYears     Int?          @map("useful_life_years")
+  amperage            Decimal?      @map("amperage") @db.Decimal(10, 2)
   description         String?
   imageUrl            String?       @map("image_url")
   imageUrls           String[]      @default([]) @map("image_urls")
@@ -320,7 +322,6 @@ model User {
   passwordHash String     @map("password_hash")
   roleId       String?    @map("role_id")
   role         Role?      @relation(fields: [roleId], references: [id])
-  branchId     String?    @map("branch_id")
   position     String?
   phone        String?
   status       UserStatus @default(active)
@@ -330,8 +331,19 @@ model User {
   createdBy    String?    @map("created_by")
 
   refreshTokens RefreshToken[]
+  userBranches  UserBranch[]
 
   @@map("users")
+}
+
+model UserBranch {
+  userId   String @map("user_id")
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branchId String @map("branch_id")
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([userId, branchId])
+  @@map("user_branches")
 }
 
 model RefreshToken {

@@ -6,7 +6,7 @@ export const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   roleId: z.string().uuid().optional(),
-  branchId: z.string().optional(),
+  branchIds: z.array(z.string().uuid()).optional(),
   position: z.string().optional(),
   phone: z.string().optional(),
   status: z.enum(['active', 'blocked']).default('active'),

@@ -43,7 +43,7 @@ export const UserModal: React.FC<UserModalProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [roleId, setRoleId] = useState('');
-  const [branchId, setBranchId] = useState('all');
+  const [branchIds, setBranchIds] = useState<string[]>([]);
   const [position, setPosition] = useState('');
   const [phone, setPhone] = useState('');
   const [status, setStatus] = useState<'active' | 'blocked'>('active');
@@ -59,7 +59,7 @@ export const UserModal: React.FC<UserModalProps> = ({
       setEmail(user.email || '');
       setPassword('');
       setRoleId(user.roleId || (roles[0]?.id ?? ''));
-      setBranchId(user.branchId || 'all');
+      setBranchIds(user.branchIds || []);
       setPosition(user.position || '');
       setPhone(user.phone || '');
       setStatus(user.status || 'active');
@@ -70,7 +70,7 @@ export const UserModal: React.FC<UserModalProps> = ({
       setEmail('');
       setPassword(generateStrongPassword());
       setRoleId(roles[1]?.id || roles[0]?.id || '');
-      setBranchId('all');
+      setBranchIds([]);
       setPosition('');
       setPhone('');
       setStatus('active');
@@ -112,7 +112,6 @@ export const UserModal: React.FC<UserModalProps> = ({
     }
 
     const selectedRole = roles.find(r => r.id === roleId);
-    const selectedBranch = branches.find(b => b.id === branchId);
 
     try {
       setSaving(true);
@@ -124,8 +123,7 @@ export const UserModal: React.FC<UserModalProps> = ({
         password: password.trim(),
         roleId: roleId || (roles[0]?.id ?? 'role-tech'),
         roleName: selectedRole?.name || 'Пользователь',
-        branchId: branchId || 'all',
-        branchName: branchId === 'all' ? 'Все филиалы' : (selectedBranch?.name || 'Основной цех'),
+        branchIds,
         position: position.trim(),
         phone: phone.trim(),
         status,
@@ -330,24 +328,39 @@ export const UserModal: React.FC<UserModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
                   Привязка к филиалу
                 </label>
-                <div className="relative">
-                  <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <select
-                    value={branchId}
-                    onChange={(e) => setBranchId(e.target.value)}
-                    className="min-h-10 w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">Все филиалы и цеха</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
+                <div className="border border-slate-200 rounded-xl bg-slate-50 max-h-40 overflow-y-auto divide-y divide-slate-200">
+                  <label className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={branchIds.length === 0}
+                      onChange={() => setBranchIds([])}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                    />
+                    <span className="text-sm font-semibold text-slate-800">Все филиалы и цеха</span>
+                  </label>
+                  {branches.map((b) => (
+                    <label key={b.id} className="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={branchIds.includes(b.id)}
+                        onChange={(e) => {
+                          setBranchIds(prev =>
+                            e.target.checked ? [...prev, b.id] : prev.filter(id => id !== b.id)
+                          );
+                        }}
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                      />
+                      <span className="text-sm font-medium text-slate-700 truncate">
                         {b.name} ({b.location || 'Цех'})
-                      </option>
-                    ))}
-                  </select>
+                      </span>
+                    </label>
+                  ))}
                 </div>
+                <p className="text-[10px] text-slate-400 mt-1">Можно выбрать несколько филиалов</p>
               </div>
             </div>
 

@@ -31,7 +31,7 @@ async function findPartInScope(id: string, scope: BranchScope) {
 /** A branch-restricted user may only attach parts to their own branch / its machines. */
 async function assertPartTargetInScope(input: { branchId?: string; machineId?: string }, scope: BranchScope) {
   if (!scope) return;
-  if (input.branchId && input.branchId !== scope) throw Errors.forbidden('Нельзя добавлять запчасти в другой филиал');
+  if (input.branchId && !scope.includes(input.branchId)) throw Errors.forbidden('Нельзя добавлять запчасти в другой филиал');
   if (input.machineId) await assertMachineInScope(scope, input.machineId);
 }
 
@@ -44,7 +44,10 @@ export const sparePartsService = {
 
   async create(input: CreateSparePartInput, actor: Actor, scope: BranchScope) {
     await assertPartTargetInScope(input, scope);
-    if (scope && !input.branchId) input = { ...input, branchId: scope };
+    if (scope && !input.branchId) {
+      if (scope.length > 1) throw Errors.forbidden('Укажите филиал: вы привязаны к нескольким филиалам');
+      input = { ...input, branchId: scope[0] };
+    }
     const part = await prisma.$transaction(async (tx) => {
       const created = await tx.sparePart.create({ data: { ...input, createdBy: actor.userId } });
       await writeActivity(tx, {
@@ -73,7 +76,7 @@ export const sparePartsService = {
         entityType: 'part',
         entityId: id,
         entityName: updated.name,
-        details: `Обновлена запчасть "${updated.name}": остаток ${updated.quantity}, цена ${updated.unitPrice ?? '—'} ₽`,
+        details: `Обновлена запчасть "${updated.name}": остаток ${updated.quantity}, цена ${updated.unitPrice ?? '—'} $`,
         userId: actor.userId,
         userEmail: actor.userEmail,
       });

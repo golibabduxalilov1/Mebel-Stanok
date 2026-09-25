@@ -19,7 +19,7 @@ export const transfersService = {
   async create(input: CreateTransferInput, actor: Actor, scope: BranchScope) {
     const { transfer, machine } = await prisma.$transaction(async (tx) => {
       const machineRow = await tx.machine.findUnique({ where: { id: input.machineId } });
-      if (!machineRow || (scope && machineRow.branchId !== scope)) throw Errors.notFound('Machine');
+      if (!machineRow || (scope && (!machineRow.branchId || !scope.includes(machineRow.branchId)))) throw Errors.notFound('Machine');
 
       const toBranch = await tx.branch.findUnique({ where: { id: input.toBranchId } });
       if (!toBranch) throw Errors.notFound('Destination branch');

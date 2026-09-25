@@ -34,7 +34,7 @@ export const schedulesService = {
   },
 
   async listAll(scope: BranchScope) {
-    const rows = await prisma.maintenanceSchedule.findMany({ where: scope ? { machine: { branchId: scope } } : undefined, include: { parts: true } });
+    const rows = await prisma.maintenanceSchedule.findMany({ where: scope ? { machine: { branchId: { in: scope } } } : undefined, include: { parts: true } });
     return rows.map(toApi);
   },
 

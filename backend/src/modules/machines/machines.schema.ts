@@ -16,6 +16,7 @@ export const createMachineSchema = z.object({
   lastMaintenanceDate: nullableDate,
   nextMaintenanceDate: nullableDate,
   usefulLifeYears: z.coerce.number().int().positive().optional(),
+  amperage: z.coerce.number().min(0).optional(),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
   imageUrls: z.array(z.string()).optional(),

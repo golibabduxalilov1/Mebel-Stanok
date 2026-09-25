@@ -12,7 +12,7 @@ interface Actor {
 
 export const branchesService = {
   async list(scope: BranchScope) {
-    return prisma.branch.findMany({ where: scope ? { id: scope } : undefined, orderBy: { name: 'asc' } });
+    return prisma.branch.findMany({ where: scope ? { id: { in: scope } } : undefined, orderBy: { name: 'asc' } });
   },
 
   async create(input: CreateBranchInput, actor: Actor) {

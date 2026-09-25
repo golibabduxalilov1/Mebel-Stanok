@@ -5,22 +5,22 @@ import { Errors } from './errors';
 import type { AccessTokenPayload } from './jwt';
 
 /**
- * The branch a user is restricted to, or null when they may see every branch
- * (administrators, and users whose branch is unset / "all").
+ * The branches a user is restricted to, or null when they may see every branch
+ * (administrators, and users with no branch assignments).
  */
-export type BranchScope = string | null;
+export type BranchScope = string[] | null;
 
 export function getBranchScope(user?: AccessTokenPayload): BranchScope {
   if (!user || user.isAdmin) return null;
-  const branchId = user.branchId;
-  if (!branchId || branchId === 'all') return null;
-  return branchId;
+  const branchIds = user.branchIds;
+  if (!branchIds || branchIds.length === 0) return null;
+  return branchIds;
 }
 
 /** Spare parts belong to a branch directly, or (when branch_id is empty) through their machine. */
 export function sparePartScopeWhere(scope: BranchScope): Prisma.SparePartWhereInput {
   if (!scope) return {};
-  return { OR: [{ branchId: scope }, { branchId: null, machine: { branchId: scope } }] };
+  return { OR: [{ branchId: { in: scope } }, { branchId: null, machine: { branchId: { in: scope } } }] };
 }
 
 /** Resolves the branch a spare part effectively belongs to (its own, else its machine's). */
@@ -40,7 +40,7 @@ export async function getMachineBranchId(machineId: string): Promise<string | nu
 export async function assertMachineInScope(scope: BranchScope, machineId: string): Promise<void> {
   if (!scope) return;
   const machine = await prisma.machine.findUnique({ where: { id: machineId }, select: { branchId: true } });
-  if (!machine || machine.branchId !== scope) throw Errors.notFound('Machine');
+  if (!machine || !machine.branchId || !scope.includes(machine.branchId)) throw Errors.notFound('Machine');
 }
 
 export async function assertSparePartsInScope(scope: BranchScope, partIds: string[]): Promise<void> {
@@ -69,7 +69,9 @@ export async function requireAttachmentInScope(req: Request, _res: Response, nex
         where: { id: req.params.id },
         select: { machine: { select: { branchId: true } } },
       });
-      if (!attachment || attachment.machine.branchId !== scope) throw Errors.notFound('Attachment');
+      if (!attachment || !attachment.machine.branchId || !scope.includes(attachment.machine.branchId)) {
+        throw Errors.notFound('Attachment');
+      }
     }
     next();
   } catch (err) {
