@@ -586,11 +586,11 @@ export function CreateToirScheduleModal({
                 {relevantParts.map(p => {
                   const isForMachine = Boolean(machineId && p.machineId === machineId);
                   const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !p.machineId);
-                  const tag = isForMachine 
-                    ? '[🎯 Для станка] ' 
-                    : isForBranch 
-                      ? '[🏢 Филиал] ' 
-                      : '[📦 Склад] ';
+                  const tag = isForMachine
+                    ? '[Ст] '
+                    : isForBranch
+                      ? '[Фил] '
+                      : '[Скл] ';
                   return (
                     <option
                       key={p.id}
@@ -598,7 +598,7 @@ export function CreateToirScheduleModal({
                       disabled={p.availableQuantity <= 0}
                       style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
                     >
-                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • Доступно: {p.availableQuantity} {p.unit || 'шт'}{p.reservedQuantity > 0 ? ` (резерв: ${p.reservedQuantity})` : ''} {p.availableQuantity <= 0 ? '(НЕТ НА СКЛАДЕ)' : ''} {p.unitPrice ? `• ${p.unitPrice} ₽` : ''}
+                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • {p.availableQuantity <= 0 ? 'НЕТ' : `${p.availableQuantity} ${p.unit || 'шт'}${p.reservedQuantity > 0 ? ` (рез ${p.reservedQuantity})` : ''}`} {p.unitPrice ? `• ${p.unitPrice}₽` : ''}
                     </option>
                   );
                 })}
@@ -1219,11 +1219,11 @@ export function EditToirScheduleModal({
                 {relevantParts.map(p => {
                   const isForMachine = Boolean(schedule.machineId && p.machineId === schedule.machineId);
                   const isForBranch = Boolean(currentBranchId && p.branchId === currentBranchId && !p.machineId);
-                  const tag = isForMachine 
-                    ? '[🎯 Для станка] ' 
-                    : isForBranch 
-                      ? '[🏢 Филиал] ' 
-                      : '[📦 Склад] ';
+                  const tag = isForMachine
+                    ? '[Ст] '
+                    : isForBranch
+                      ? '[Фил] '
+                      : '[Скл] ';
                   return (
                     <option
                       key={p.id}
@@ -1231,7 +1231,7 @@ export function EditToirScheduleModal({
                       disabled={p.availableQuantity <= 0}
                       style={p.reservedQuantity > 0 ? { color: '#b45309' } : undefined}
                     >
-                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • Доступно: {p.availableQuantity} {p.unit || 'шт'}{p.reservedQuantity > 0 ? ` (резерв: ${p.reservedQuantity})` : ''} {p.availableQuantity <= 0 ? '(НЕТ НА СКЛАДЕ)' : ''} {p.unitPrice ? `• ${p.unitPrice} ₽` : ''}
+                      {tag}{p.name} {p.sku ? `[${p.sku}]` : ''} • {p.availableQuantity <= 0 ? 'НЕТ' : `${p.availableQuantity} ${p.unit || 'шт'}${p.reservedQuantity > 0 ? ` (рез ${p.reservedQuantity})` : ''}`} {p.unitPrice ? `• ${p.unitPrice}₽` : ''}
                     </option>
                   );
                 })}
