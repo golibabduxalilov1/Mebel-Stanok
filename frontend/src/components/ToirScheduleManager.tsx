@@ -804,7 +804,7 @@ export function CreateToirScheduleModal({
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex flex-wrap items-center justify-between gap-x-2">
-                <span>Стоимость работ ($)</span>
+                <span>Амортизация работ ($)</span>
                 <span className="text-[9px] text-emerald-600 font-bold lowercase">работа/услуга</span>
               </label>
               <input
@@ -847,7 +847,7 @@ export function CreateToirScheduleModal({
                 )}
               </div>
               <div className="text-xs font-black text-emerald-800 flex items-center gap-1">
-                <span>Итого расчетная стоимость:</span>
+                <span>Итого расчетная амортизация:</span>
                 <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-xs font-mono font-bold shadow-2xs">
                   {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} $
                 </span>
@@ -1394,7 +1394,7 @@ export function EditToirScheduleModal({
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1 flex flex-wrap items-center justify-between gap-x-2">
-                <span>Стоимость работ ($)</span>
+                <span>Амортизация работ ($)</span>
                 <span className="text-[9px] text-emerald-600 font-bold lowercase">работа/услуга</span>
               </label>
               <input
@@ -1437,7 +1437,7 @@ export function EditToirScheduleModal({
                 )}
               </div>
               <div className="text-xs font-black text-emerald-800 flex items-center gap-1">
-                <span>Итого расчетная стоимость:</span>
+                <span>Итого расчетная амортизация:</span>
                 <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-xs font-mono font-bold shadow-2xs">
                   {((Number(laborCost) || 0) + totalPartsCost).toLocaleString()} $
                 </span>

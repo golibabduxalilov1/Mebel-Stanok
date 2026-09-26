@@ -32,7 +32,7 @@ const SORT = {
 };
 
 const CSV_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Списано', 'Ток всего, А', 'Ток в работе, А',
-  'Остаточная стоимость, $', 'Затраты за период, $', 'Аварий', 'Просрочено ТО', 'Склад, $', 'Пользователей'];
+  'Остаточная амортизация, $', 'Ремонт за период, $', 'Аварий', 'Просрочено ТО', 'Склад, $', 'Пользователей'];
 const csvRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
   r.byStatus.retired, r.totalAmps, r.activeAmps, r.residual, r.cost, r.emergencies, r.overdue, r.stockValue, r.users];
 
@@ -61,7 +61,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
         <CsvButton filename="sravnenie_filialov" disabled={!sorted.length} headers={CSV_HEADERS}
           rows={() => [...sorted.map(csvRow), csvRow(comparison.total)]} />
       )}
-      footer="Нажмите на филиал, чтобы открыть его паспорт. Затраты и аварии — выполненные работы за период; пользователь, привязанный к нескольким филиалам, в «Итого» учтён один раз."
+      footer="Нажмите на филиал, чтобы открыть его паспорт. Ремонт и аварии — выполненные работы за период; пользователь, привязанный к нескольким филиалам, в «Итого» учтён один раз."
     >
       {sorted.length === 0 ? (
         <EmptyState text="Нет филиалов по выбранным фильтрам" />
@@ -78,8 +78,8 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                 {th('Списано', 'retired')}
                 {th('Ток', 'amps')}
                 {th('Ток в работе', 'activeAmps')}
-                {th('Ост. стоимость', 'residual')}
-                {th('Затраты', 'cost')}
+                {th('Ост. амортизация', 'residual')}
+                {th('Ремонт', 'cost')}
                 {th('Аварий', 'emergencies')}
                 {th('Просрочено ТО', 'overdue')}
                 {th('Склад', 'stock')}
@@ -173,8 +173,8 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
           hint={`В работе ${row.byStatus.active} · ТО ${row.byStatus.maintenance} · ремонт ${row.byStatus.repair} · списано ${row.byStatus.retired}`} />
         <KpiCard label="В работе" value={formatPercent(inService ? (row.byStatus.active / inService) * 100 : 0)} hint="Активные / не списанные" />
         <KpiCard label="Суммарный ток" value={formatAmps(row.totalAmps)} hint={`В работе ${formatAmps(row.activeAmps)}`} />
-        <KpiCard label="Остаточная стоимость" value={formatMoney(row.residual)} />
-        <KpiCard label="Затраты за период" value={formatMoney(row.cost)} />
+        <KpiCard label="Остаточная амортизация" value={formatMoney(row.residual)} />
+        <KpiCard label="Ремонт за период" value={formatMoney(row.cost)} />
         <KpiCard label="Аварий" value={row.emergencies} tone={row.emergencies ? 'danger' : 'default'} />
         <KpiCard label="Просрочено ТО" value={row.overdue} tone={row.overdue ? 'danger' : 'default'} />
         <KpiCard label="Склад / пользователи" value={formatMoney(row.stockValue)} hint={`Пользователей филиала: ${row.users}`} />
@@ -187,7 +187,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
           bodyClass=""
           actions={canExport && (
             <CsvButton filename="oborudovanie_filiala" disabled={!details.machines.length}
-              headers={['Станок', 'Модель', 'Статус', 'Ток, А', 'Остаточная стоимость, $', 'Затраты за период, $']}
+              headers={['Станок', 'Модель', 'Статус', 'Ток, А', 'Остаточная амортизация, $', 'Ремонт за период, $']}
               rows={() => details.machines.map(r => [r.machine.name, r.machine.model, MACHINE_STATUS_LABELS[r.machine.status], Number(r.machine.amperage) || null, r.residual, r.cost])} />
           )}
         >
@@ -199,8 +199,8 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
                     <th className="px-4 sm:px-6 py-3">Станок</th>
                     <th className="px-4 py-3">Статус</th>
                     <th className="px-4 py-3 text-right">Ток</th>
-                    <th className="px-4 py-3 text-right">Ост. стоимость</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Затраты</th>
+                    <th className="px-4 py-3 text-right">Ост. амортизация</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Ремонт</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">

@@ -106,11 +106,11 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-3 sm:gap-4 content-start">
-          <KpiCard label="Стоимость покупки" value={formatMoney(stats.assets.purchaseTotal)} hint={`Учтено станков: ${stats.assets.counted} (без списанных)`} />
-          <KpiCard label="Остаточная стоимость" value={formatMoney(stats.assets.total)} tone="dark"
+          <KpiCard label="Амортизация покупки" value={formatMoney(stats.assets.purchaseTotal)} hint={`Учтено станков: ${stats.assets.counted} (без списанных)`} />
+          <KpiCard label="Остаточная амортизация" value={formatMoney(stats.assets.total)} tone="dark"
             hint={stats.assets.missing > 0 ? <span className="text-amber-400 font-bold">Без данных: {stats.assets.missing}</span> : 'Линейная амортизация, полные месяцы'} />
           <KpiCard label="Накопленная амортизация" value={formatMoney(stats.assets.depreciation)}
-            hint={stats.assets.purchaseTotal ? `${formatPercent((stats.assets.depreciation / stats.assets.purchaseTotal) * 100)} от стоимости покупки` : undefined} />
+            hint={stats.assets.purchaseTotal ? `${formatPercent((stats.assets.depreciation / stats.assets.purchaseTotal) * 100)} от амортизации покупки` : undefined} />
         </div>
         <div className="xl:col-span-2 min-w-0">
           <Panel title={selectedMachine ? `Амортизация: ${selectedMachine.name}` : 'Сводный прогноз амортизации'} icon={TrendingDown} iconClass="text-indigo-600">
@@ -133,15 +133,15 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
               <CsvButton
                 filename="reiting_stankov"
                 disabled={!sorted.length}
-                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная стоимость, $', 'Затраты на ТО за период, $',
-                  'Затраты / стоимость, %', 'Аварий', 'MTBF, дней', 'Последнее ТО']}
+                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Ремонт на ТО за период, $',
+                  'Ремонт / амортизация, %', 'Аварий', 'MTBF, дней', 'Последнее ТО']}
                 rows={() => sorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status], r.ageYears, r.residual, r.cost,
                   r.ratio === Infinity ? '>100' : r.ratio, r.emergencies, r.mtbfDays, r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
               />
             )}
           </>
         }
-        footer="Выше 50% — повышенные затраты, выше 80% — рекомендуется рассмотреть замену. Нажмите на станок, чтобы открыть его карточку."
+        footer="Выше 50% — повышенный ремонт, выше 80% — рекомендуется рассмотреть замену. Нажмите на станок, чтобы открыть его карточку."
       >
         {sorted.length === 0 ? (
           <EmptyState text={search ? 'Ничего не найдено' : 'Нет оборудования по выбранным фильтрам'} />
@@ -154,9 +154,9 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                   {th('Филиал', 'branch', 'left')}
                   {th('Статус', 'status', 'left')}
                   {th('Возраст', 'age')}
-                  {th('Ост. стоимость', 'residual')}
-                  {th('Затраты', 'cost')}
-                  {th('Затраты / стоим.', 'ratio')}
+                  {th('Ост. амортизация', 'residual')}
+                  {th('Ремонт', 'cost')}
+                  {th('Ремонт / стоим.', 'ratio')}
                   {th('Аварий', 'emergencies')}
                   {th('MTBF', 'mtbf')}
                   {th('Посл. ТО', 'last')}
@@ -257,14 +257,14 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <KpiCard label="Возраст" value={card.age === null ? '—' : `${formatNumber(card.age, 1)} г.`} hint={machine.purchaseDate ? `Куплен ${formatDateKey(toLocalDateKey(machine.purchaseDate))}` : 'Дата покупки не указана'} />
-        <KpiCard label="Остаточная стоимость" value={card.residual === null ? '—' : formatMoney(card.residual)} hint={machine.purchasePrice ? `Покупка ${formatMoney(machine.purchasePrice)}` : 'Цена не указана'} />
+        <KpiCard label="Остаточная амортизация" value={card.residual === null ? '—' : formatMoney(card.residual)} hint={machine.purchasePrice ? `Покупка ${formatMoney(machine.purchasePrice)}` : 'Цена не указана'} />
         <KpiCard label="Ток" value={Number(machine.amperage) > 0 ? formatAmps(Number(machine.amperage)) : '—'} tone={Number(machine.amperage) > 0 ? 'default' : 'warning'}
           hint={Number(machine.amperage) > 0 ? undefined : 'Ампераж не указан'} />
-        <KpiCard label="Затраты за период" value={formatMoney(card.cost)} hint={`${card.logs.filter(isCompleted).length} выполненных работ`} />
+        <KpiCard label="Ремонт за период" value={formatMoney(card.cost)} hint={`${card.logs.filter(isCompleted).length} выполненных работ`} />
       </div>
 
       <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
-        <Panel title="Динамика затрат" icon={TrendingDown}>
+        <Panel title="Динамика ремонта" icon={TrendingDown}>
           {hasMonthly ? (
             <StackedBarChart data={card.monthly} categoryKey="label" height={220} valueFormatter={formatMoney}
               series={[{ key: 'planned', label: 'Плановые', color: SERIES_COLORS.planned }, { key: 'emergency', label: 'Аварийные', color: SERIES_COLORS.emergency }]} />
@@ -296,14 +296,14 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
         bodyClass=""
         actions={canExport && (
           <CsvButton filename={`istoriya_rabot_${machine.name}`} disabled={!card.logs.length}
-            headers={['Дата', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Стоимость, $']}
+            headers={['Дата', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Амортизация, $']}
             rows={() => card.logs.map(l => [formatDateKey(toLocalDateKey(l.date)), LOG_TYPE_LABELS[l.type], isCompleted(l) ? 'Выполнено' : 'Запланировано', l.technicianName, l.notes, l.cost || 0])} />
         )}
       >
         {card.logs.length === 0 ? <EmptyState compact /> : (
           <div className={SCROLL_BOX}>
             <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Дата</th><th className="px-4 py-3">Вид работ</th><th className="px-4 py-3">Исполнитель</th><th className="px-4 sm:px-6 py-3 text-right">Стоимость</th></tr></thead>
+              <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Дата</th><th className="px-4 py-3">Вид работ</th><th className="px-4 py-3">Исполнитель</th><th className="px-4 sm:px-6 py-3 text-right">Амортизация</th></tr></thead>
               <tbody className="divide-y divide-slate-50">
                 {card.logs.map(l => (
                   <tr key={l.id}>

@@ -2568,7 +2568,7 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
                   </div>
                 )}
 
-                {log.cost > 0 && <p className="mt-2 text-xs font-bold text-slate-900">Стоимость: {(log.cost || 0).toLocaleString()} $</p>}
+                {log.cost > 0 && <p className="mt-2 text-xs font-bold text-slate-900">Амортизация: {(log.cost || 0).toLocaleString()} $</p>}
                 
                 {log.partsUsed && log.partsUsed.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
@@ -2675,7 +2675,7 @@ function DepreciationChart({ machine }: { machine: Machine }) {
           />
           <Tooltip 
             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-            formatter={(val: number) => [`${val.toLocaleString()} $`, 'Стоимость']}
+            formatter={(val: number) => [`${val.toLocaleString()} $`, 'Амортизация']}
             labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
           />
           <Area
@@ -4223,7 +4223,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
           <input required type="text" className="min-h-10 w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="ФИО исполнителя" value={formData.technicianName} onChange={e => setFormData({...formData, technicianName: e.target.value})} />
         </div>
         <div className="col-span-1">
-          <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость работ ($)</label>
+          <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Амортизация работ ($)</label>
           <input type="number" className="min-h-10 w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 $" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
         </div>
       </div>
@@ -4496,7 +4496,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
           <input required type="date" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость работ ($)</label>
+          <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Амортизация работ ($)</label>
           <input type="number" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 $" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
         </div>
       </div>
@@ -5596,7 +5596,7 @@ function EditPartForm({
         />
       </div>
 
-      {/* Итоговая стоимость складского остатка */}
+      {/* Итоговая амортизация складского остатка */}
       <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50/70 border-2 border-blue-200 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
@@ -5604,7 +5604,7 @@ function EditPartForm({
               <Receipt className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-700">Итого стоимость остатка</p>
+              <p className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-700">Итого амортизация остатка</p>
               <p className="text-sm text-slate-500 font-mono mt-0.5 font-semibold">
                 {formData.quantity || 0} {formData.unit || 'шт'} × {(Number(formData.unitPrice) || 0).toLocaleString('en-US')} $
               </p>
@@ -5615,7 +5615,7 @@ function EditPartForm({
               {totalSum.toLocaleString('en-US')} $
             </div>
             <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mt-1">
-              Стоимость на складе
+              Амортизация на складе
             </div>
           </div>
         </div>
@@ -7568,7 +7568,7 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
                           {br && <span>• Филиал: <strong className="text-slate-700">{br.name}</strong></span>}
                           {ml.technicianName && <span>• Мастер: <strong className="text-slate-700">{ml.technicianName}</strong></span>}
                           {ml.cost !== undefined && (
-                            <span>• Затраты: <strong className="text-emerald-700 font-bold">{ml.cost.toLocaleString('en-US')} $</strong></span>
+                            <span>• Ремонт: <strong className="text-emerald-700 font-bold">{ml.cost.toLocaleString('en-US')} $</strong></span>
                           )}
                         </div>
                         {partsStr && (

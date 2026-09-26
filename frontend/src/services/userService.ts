@@ -22,7 +22,7 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
       { id: 'catalog', name: 'Список станков' },
       { id: 'cards', name: 'Карточка станка' },
       { id: 'files', name: 'Файлы станка (фото, видео, документы)' },
-      { id: 'depreciation', name: 'Амортизация и стоимость станка' },
+      { id: 'depreciation', name: 'Амортизация станка' },
       { id: 'transfers', name: 'Перемещение станка в другой филиал' },
       { id: 'decommission', name: 'Списание станка' }
     ]
@@ -64,7 +64,7 @@ export const PERMISSION_TABS: PermissionTabDef[] = [
     label: 'Отчеты',
     rows: [
       { id: 'equipment_report', name: 'Отчёт по станкам' },
-      { id: 'toir_report', name: 'Отчёт по ТО и затратам' },
+      { id: 'toir_report', name: 'Отчёт по ТО и ремонту' },
       { id: 'inventory_report', name: 'Отчёт по остаткам запчастей' },
       { id: 'summary_report', name: 'Сводная панель (общие показатели)' }
     ]

@@ -84,7 +84,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
         <KpiCard label="Выполнено работ" value={formatNumber(ratio.planned.count + ratio.emergency.count)} tone="dark"
           hint={`На сумму ${formatMoney(ratio.planned.cost + ratio.emergency.cost)}`} />
         <KpiCard label="Запланировано" value={formatNumber(stats.planned.count)} tone={stats.planned.count > 0 ? 'warning' : 'default'}
-          hint={`Ожидаемые затраты ${formatMoney(stats.planned.cost)}`} />
+          hint={`Ожидаемый ремонт ${formatMoney(stats.planned.cost)}`} />
         <KpiCard label="Задач в графике" value={formatNumber(schedule.total)}
           hint={schedule.withoutDate ? `Без даты: ${schedule.withoutDate}` : 'Только не списанные станки'} />
         <KpiCard label="Просрочено" value={formatNumber(schedule.overdue.length)} tone={schedule.overdue.length > 0 ? 'danger' : 'default'}
@@ -101,7 +101,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
             {hasRatio ? (
               <div className="space-y-6">
                 <RatioBar label="По количеству" planned={ratio.planned.count} emergency={ratio.emergency.count} format={n => formatNumber(n)} />
-                <RatioBar label="По затратам" planned={ratio.planned.cost} emergency={ratio.emergency.cost} format={formatMoney} />
+                <RatioBar label="По ремонту" planned={ratio.planned.cost} emergency={ratio.emergency.cost} format={formatMoney} />
               </div>
             ) : <EmptyState compact />}
           </Panel>
@@ -153,7 +153,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
               </div>
               {canExport && (
                 <CsvButton filename={`zadachi_${upcomingWindow}_dney`} disabled={!upcoming.length}
-                  headers={['Станок', 'Задача', 'Срок', 'Через, дней', 'Приоритет', 'Ответственный', 'Часы', 'Стоимость работ, $']}
+                  headers={['Станок', 'Задача', 'Срок', 'Через, дней', 'Приоритет', 'Ответственный', 'Часы', 'Амортизация работ, $']}
                   rows={() => upcoming.map(t => [t.machineName, t.taskName, formatDateKey(t.nextDue), t.inDays, t.priority ? PRIORITY_LABELS[t.priority] : '', t.assignedTechnician, t.estimatedHours, t.laborCost])} />
               )}
             </>
@@ -167,7 +167,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     <th className="px-4 sm:px-6 py-3">Задача</th>
                     <th className="px-4 py-3">Срок</th>
                     <th className="px-4 py-3">Приоритет</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Часы / стоимость</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Часы / амортизация</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -241,7 +241,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
         bodyClass=""
         actions={canExport && (
           <CsvButton filename="ispolniteli" disabled={!tech.sorted.length}
-            headers={['Исполнитель', 'Выполнено работ', 'Из них аварийных', 'Затраты, $', 'Средние затраты, $', 'Назначено задач', 'Просрочено задач']}
+            headers={['Исполнитель', 'Выполнено работ', 'Из них аварийных', 'Ремонт, $', 'Средний ремонт, $', 'Назначено задач', 'Просрочено задач']}
             rows={() => tech.sorted.map(t => [t.name, t.count, t.emergencies, t.cost, t.avgCost, t.assignedTasks, t.overdueTasks])} />
         )}
         footer="Работы — по полю «исполнитель» выполненных записей журнала за период; задачи — по ответственному в графике ТО."
@@ -254,7 +254,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                   <SortTh label="Исполнитель" sortKey="name" sort={tech.sort} onSort={tech.toggle} className="sm:pl-6" />
                   <SortTh label="Работ" sortKey="count" sort={tech.sort} onSort={tech.toggle} align="right" />
                   <SortTh label="Аварийных" sortKey="emergencies" sort={tech.sort} onSort={tech.toggle} align="right" />
-                  <SortTh label="Затраты" sortKey="cost" sort={tech.sort} onSort={tech.toggle} align="right" />
+                  <SortTh label="Ремонт" sortKey="cost" sort={tech.sort} onSort={tech.toggle} align="right" />
                   <SortTh label="Средние" sortKey="avg" sort={tech.sort} onSort={tech.toggle} align="right" />
                   <SortTh label="Задач в графике" sortKey="assigned" sort={tech.sort} onSort={tech.toggle} align="right" />
                   <SortTh label="Просрочено" sortKey="overdue" sort={tech.sort} onSort={tech.toggle} align="right" className="sm:pr-6" />
@@ -294,7 +294,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
               <CsvButton
                 filename="zhurnal_obsluzhivaniya"
                 disabled={!journal.length}
-                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость, $']}
+                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Амортизация, $']}
                 rows={() => journal.map(log => {
                   const machine = data.machineMap.get(log.machineId);
                   return [formatDateKey(toLocalDateKey(log.date)), machine?.name, machine?.model, LOG_TYPE_LABELS[log.type] || log.type,
@@ -317,7 +317,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     <th className="px-4 py-3">Статус</th>
                     <th className="px-4 py-3">Исполнитель</th>
                     <th className="px-4 py-3">Запчасти</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Амортизация</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">

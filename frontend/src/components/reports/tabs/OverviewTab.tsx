@@ -56,7 +56,7 @@ const RANKING_SORT = {
 };
 
 const CSV_BRANCH_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Списано', 'Ток всего, А',
-  'Остаточная стоимость, $', 'Затраты за период, $', 'Аварий', 'Просрочено ТО', 'Склад, $', 'Пользователей'];
+  'Остаточная амортизация, $', 'Ремонт за период, $', 'Аварий', 'Просрочено ТО', 'Склад, $', 'Пользователей'];
 const csvBranchRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
   r.byStatus.retired, r.totalAmps, r.residual, r.cost, r.emergencies, r.overdue, r.stockValue, r.users];
 
@@ -158,19 +158,19 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           hint={`${formatNumber(stock.items)} ta pozitsiya`}
         />
         <KpiCard
-          label="Umumiy Затраты"
+          label="Umumiy Ремонт"
           value={formatMoney(stats.cost)}
           hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Davr uchun xarajatlar'}
         />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <KpiCard
-          label="Стоимость покупки"
+          label="Амортизация покупки"
           value={formatMoney(assets.purchaseTotal)}
           hint={`Учтено станков: ${assets.counted} (без списанных)`}
         />
         <KpiCard
-          label="Остаточная стоимость"
+          label="Остаточная амортизация"
           value={formatMoney(assets.total)}
           tone="dark"
           hint={assets.missing > 0 ? <span className="text-amber-400 font-bold">Без данных: {assets.missing}</span> : 'Линейная амортизация, полные месяцы'}
@@ -178,7 +178,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         <KpiCard
           label="Накопленная амортизация"
           value={formatMoney(assets.depreciation)}
-          hint={assets.purchaseTotal ? `${formatPercent((assets.depreciation / assets.purchaseTotal) * 100)} от стоимости покупки` : undefined}
+          hint={assets.purchaseTotal ? `${formatPercent((assets.depreciation / assets.purchaseTotal) * 100)} от амортизации покупки` : undefined}
         />
       </div>
 
@@ -196,7 +196,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           <CsvButton filename="sravnenie_filialov" disabled={!branchSorted.length} headers={CSV_BRANCH_HEADERS}
             rows={() => [...branchSorted.map(csvBranchRow), csvBranchRow(comparison.total)]} />
         )}
-        footer="Нажмите на филиал, чтобы перейти в его паспорт. Затраты и аварии — выполненные работы за период."
+        footer="Нажмите на филиал, чтобы перейти в его паспорт. Ремонт и аварии — выполненные работы за период."
       >
         {branchSorted.length === 0 ? (
           <EmptyState text="Нет филиалов по выбранным фильтрам" />
@@ -212,8 +212,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {bth('Ремонт', 'repair')}
                   {bth('Списано', 'retired')}
                   {bth('Ток', 'amps')}
-                  {bth('Ост. стоимость', 'residual')}
-                  {bth('Затраты', 'cost')}
+                  {bth('Ост. амортизация', 'residual')}
+                  {bth('Ремонт', 'cost')}
                   {bth('Аварий', 'emergencies')}
                   {bth('Просрочено ТО', 'overdue')}
                   {bth('Склад', 'stock')}
@@ -273,8 +273,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               <CsvButton
                 filename="reiting_stankov"
                 disabled={!machineSorted.length}
-                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная стоимость, $',
-                  'Затраты на ТО за период, $', 'Затраты / стоимость, %', 'Аварий', 'MTBF, дней', 'Последнее ТО']}
+                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $',
+                  'Ремонт на ТО за период, $', 'Ремонт / амортизация, %', 'Аварий', 'MTBF, дней', 'Последнее ТО']}
                 rows={() => machineSorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status],
                   r.ageYears, r.residual, r.cost, r.ratio === Infinity ? '>100' : r.ratio, r.emergencies, r.mtbfDays,
                   r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
@@ -282,7 +282,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
             )}
           </>
         }
-        footer="Выше 50% — повышенные затраты, выше 80% — рекомендуется рассмотреть замену. Нажмите на станок, чтобы открыть его карточку."
+        footer="Выше 50% — повышенный ремонт, выше 80% — рекомендуется рассмотреть замену. Нажмите на станок, чтобы открыть его карточку."
       >
         {machineSorted.length === 0 ? (
           <EmptyState text={search ? 'Ничего не найдено' : 'Нет оборудования по выбранным фильтрам'} />
@@ -295,9 +295,9 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {mth('Филиал', 'branch', 'left')}
                   {mth('Статус', 'status', 'left')}
                   {mth('Возраст', 'age')}
-                  {mth('Ост. стоимость', 'residual')}
-                  {mth('Затраты', 'cost')}
-                  {mth('Затраты / стоим.', 'ratio')}
+                  {mth('Ост. амортизация', 'residual')}
+                  {mth('Ремонт', 'cost')}
+                  {mth('Ремонт / стоим.', 'ratio')}
                   {mth('Аварий', 'emergencies')}
                   {mth('MTBF', 'mtbf')}
                   {mth('Посл. ТО', 'last')}
@@ -355,7 +355,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               <CsvButton
                 filename="zhurnal_obsluzhivaniya"
                 disabled={!journal.length}
-                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость, $']}
+                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Амортизация, $']}
                 rows={() => journal.map(log => {
                   const machine = data.machineMap.get(log.machineId);
                   return [formatDateKey(toLocalDateKey(log.date)), machine?.name, machine?.model, LOG_TYPE_LABELS[log.type] || log.type,
@@ -378,7 +378,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                     <th className="px-4 py-3">Статус</th>
                     <th className="px-4 py-3">Исполнитель</th>
                     <th className="px-4 py-3">Запчасти</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Амортизация</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
