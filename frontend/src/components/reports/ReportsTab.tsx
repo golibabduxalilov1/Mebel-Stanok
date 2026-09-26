@@ -315,7 +315,8 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
       </div>
 
       {currentTab === 'overview' && (
-        <OverviewTab data={data} canExport={exportSummary} canEquipment={canEquipment} canToir={canToir} canInventory={false} onNavigate={navigate} />
+        <OverviewTab data={data} canExport={exportSummary} canEquipment={canEquipment} canToir={canToir} canInventory={false} onNavigate={navigate}
+          onSelectBranch={id => { update({ branchId: id, machineId: 'all' }); setActiveTab('branches'); }} />
       )}
       {currentTab === 'branches' && (
         <BranchesTab data={data} canExport={exportSummary} onSelectBranch={id => update({ branchId: id, machineId: 'all' })} onOpenMachine={openMachine} />
