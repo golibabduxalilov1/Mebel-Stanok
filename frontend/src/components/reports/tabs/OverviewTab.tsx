@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { AlertTriangle, BarChart3, ChevronRight, Cog, Package, TrendingDown } from 'lucide-react';
 import {
-  AttentionTab, ReportData, attentionGroups, formatAmps, formatMoney, formatNumber, formatPercent, isCompleted, isEmergencyType,
+  AttentionTab, ReportData, assetSummary, attentionGroups, formatAmps, formatMoney, formatNumber, formatPercent, isCompleted, isEmergencyType,
   isRetired, monthlyCost, overdueSchedules, percentChange, plannedSummary, pluralRu, powerSummary, stockSummary, sumCompletedCost,
   uptimePercent, WORKS_FORMS,
 } from '../reportUtils';
@@ -59,6 +59,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
   const branchLabel = data.filters.branchId === 'all' ? 'все филиалы' : data.branchMap.get(data.filters.branchId)?.name || 'филиал';
 
   const stock = useMemo(() => stockSummary(data.parts), [data.parts]);
+  const assets = useMemo(() => assetSummary(data.machines, data.now), [data.machines, data.now]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -77,6 +78,24 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           label="Umumiy Затраты"
           value={formatMoney(stats.cost)}
           hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Davr uchun xarajatlar'}
+        />
+      </div>
+      <div className={KPI_GRID}>
+        <KpiCard
+          label="Стоимость покупки"
+          value={formatMoney(assets.purchaseTotal)}
+          hint={`Учтено станков: ${assets.counted} (без списанных)`}
+        />
+        <KpiCard
+          label="Остаточная стоимость"
+          value={formatMoney(assets.total)}
+          tone="dark"
+          hint={assets.missing > 0 ? <span className="text-amber-400 font-bold">Без данных: {assets.missing}</span> : 'Линейная амортизация, полные месяцы'}
+        />
+        <KpiCard
+          label="Накопленная амортизация"
+          value={formatMoney(assets.depreciation)}
+          hint={assets.purchaseTotal ? `${formatPercent((assets.depreciation / assets.purchaseTotal) * 100)} от стоимости покупки` : undefined}
         />
       </div>
     </div>
