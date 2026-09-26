@@ -727,7 +727,7 @@ export default function App() {
               <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center shrink-0">
                 <Settings className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-base tracking-tight flex-1 min-w-0 truncate">Silknode Machine Pro</span>
+              <span className="font-bold text-sm tracking-tight flex-1 min-w-0 leading-tight">Silknode Machine Pro</span>
             </button>
           )}
           <button
