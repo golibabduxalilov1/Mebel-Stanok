@@ -1,62 +1,53 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  BarChart3, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert,
+  BarChart3, Printer, RotateCcw, ShieldAlert,
 } from 'lucide-react';
-import type { Branch, Machine, MachineStatus, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
+import type { Branch, Machine, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
 import { canPerformAction } from '../../services/userService';
 import {
-  AttentionTab, buildReportData, defaultDateRange, detectPreset, formatDateTime, formatPeriod, LOG_TYPES, LOG_TYPE_LABELS, MACHINE_STATUS_LABELS,
-  MACHINE_STATUSES, manufacturerKey, manufacturerOptions, PERIOD_PRESETS, presetRange, ReportFilters, StatusFilter,
+  buildReportData, defaultDateRange, detectPreset, formatDateTime, formatPeriod, PERIOD_PRESETS, presetRange, ReportFilters,
 } from './reportUtils';
 import { OverviewTab } from './tabs/OverviewTab';
-import { EquipmentTab } from './tabs/EquipmentTab';
-type ReportTabId = 'overview' | 'equipment';
 
 const STORAGE_KEY = 'mebel-stanok.reports.v2';
-const STATUS_VALUES: StatusFilter[] = ['all', 'completed', 'planned'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const defaultFilters = (): ReportFilters => ({
   branchId: 'all', machineId: 'all', manufacturer: 'all', machineStatus: 'all', type: 'all', status: 'all', ...defaultDateRange(),
 });
 
-function readStorage(): { tab?: ReportTabId; filters: ReportFilters } {
+function readStorage(): ReportFilters {
   const fallback = defaultFilters();
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { filters: fallback };
+    if (!raw) return fallback;
     const saved = JSON.parse(raw) ?? {};
     const f = saved.filters ?? {};
     const str = (v: unknown) => (typeof v === 'string' && v ? v : 'all');
     const date = (v: unknown, def: string) => (typeof v === 'string' && (v === '' || DATE_RE.test(v)) ? v : def);
     return {
-      tab: typeof saved.tab === 'string' ? saved.tab : undefined,
-      filters: {
-        branchId: str(f.branchId),
-        machineId: str(f.machineId),
-        manufacturer: str(f.manufacturer),
-        machineStatus: MACHINE_STATUSES.includes(f.machineStatus) ? f.machineStatus : 'all',
-        type: LOG_TYPES.includes(f.type) ? f.type : 'all',
-        status: STATUS_VALUES.includes(f.status) ? f.status : 'all',
-        start: date(f.start, fallback.start),
-        end: date(f.end, fallback.end),
-      },
+      branchId: str(f.branchId),
+      machineId: str(f.machineId),
+      manufacturer: str(f.manufacturer),
+      machineStatus: str(f.machineStatus) as ReportFilters['machineStatus'],
+      type: str(f.type) as ReportFilters['type'],
+      status: str(f.status) as ReportFilters['status'],
+      start: date(f.start, fallback.start),
+      end: date(f.end, fallback.end),
     };
   } catch {
-    return { filters: fallback };
+    return fallback;
   }
 }
 
-function writeStorage(value: { tab: ReportTabId; filters: ReportFilters }) {
+function writeStorage(filters: ReportFilters) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ filters }));
   } catch {
-    // storage unavailable (private mode, quota) - the report works without it
+    // storage unavailable
   }
 }
 
-// Prints only the report: everything that neither is, contains nor sits inside the report area is hidden,
-// and its ancestors lose the height/overflow limits of the app shell so long tables are not clipped.
 const PRINT_CSS = `
 @media print {
   @page { size: A4 landscape; margin: 10mm; }
@@ -82,56 +73,27 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
   role: Role | null;
   onOpenMachine?: (machine: Machine) => void;
 }) {
-  const [saved] = useState(readStorage);
-  const [filters, setFilters] = useState<ReportFilters>(saved.filters);
-  const [activeTab, setActiveTab] = useState<ReportTabId>(saved.tab ?? 'overview');
+  const [filters, setFilters] = useState<ReportFilters>(readStorage);
 
   const can = (key: string, action: 'view' | 'export' = 'view') => canPerformAction(role, key, action);
-  const canEquipment = can('reports.equipment_report');
   const canSummary = can('reports.summary_report');
   const exportSummary = can('reports.summary_report', 'export');
-  const exportEquipment = can('reports.equipment_report', 'export');
-  const canPrint = exportSummary || exportEquipment;
 
-  const tabs = [
-    { id: 'overview' as const, label: 'Обзор', icon: LayoutDashboard, allowed: canSummary },
-    { id: 'equipment' as const, label: 'Оборудование', icon: Cog, allowed: canEquipment },
-  ].filter(t => t.allowed);
-  const currentTab = tabs.some(t => t.id === activeTab) ? activeTab : tabs[0]?.id;
-  const currentTabLabel = tabs.find(t => t.id === currentTab)?.label ?? '';
-
-  // Drop a saved branch/machine/manufacturer that no longer exists (only once the lists have loaded).
   useEffect(() => {
     setFilters(prev => {
       let next = prev;
       if (next.branchId !== 'all' && branches.length > 0 && !branches.some(b => b.id === next.branchId)) {
         next = { ...next, branchId: 'all', machineId: 'all' };
       }
-      if (machines.length > 0) {
-        if (next.machineId !== 'all') {
-          const machine = machines.find(m => m.id === next.machineId);
-          if (!machine || (next.branchId !== 'all' && machine.branchId !== next.branchId)) next = { ...next, machineId: 'all' };
-        }
-        if (next.manufacturer !== 'all' && !machines.some(m => manufacturerKey(m) === next.manufacturer)) next = { ...next, manufacturer: 'all' };
-      }
       return next;
     });
-  }, [branches, machines]);
+  }, [branches]);
 
-  useEffect(() => writeStorage({ tab: activeTab, filters }), [activeTab, filters]);
+  useEffect(() => writeStorage(filters), [filters]);
 
   const data = useMemo(
     () => buildReportData({ machines, branches, logs, parts, schedules, users, roles, units }, filters),
     [machines, branches, logs, parts, schedules, users, roles, units, filters],
-  );
-
-  const branchMachines = useMemo(() => machines.filter(m => filters.branchId === 'all' || m.branchId === filters.branchId), [machines, filters.branchId]);
-  const manufacturers = useMemo(() => manufacturerOptions(branchMachines), [branchMachines]);
-  const machineOptions = useMemo(
-    () => branchMachines
-      .filter(m => (filters.manufacturer === 'all' || manufacturerKey(m) === filters.manufacturer) && (filters.machineStatus === 'all' || m.status === filters.machineStatus))
-      .sort((a, b) => a.name.localeCompare(b.name, 'ru')),
-    [branchMachines, filters.manufacturer, filters.machineStatus],
   );
 
   const update = (patch: Partial<ReportFilters>) => setFilters(prev => ({ ...prev, ...patch }));
@@ -141,9 +103,8 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
     const machine = data.machineMap.get(id);
     if (machine) onOpenMachine(machine);
   } : undefined;
-  const navigate = (tab: AttentionTab) => setActiveTab(tabs.some(t => t.id === tab) ? tab : currentTab!);
 
-  if (!currentTab) {
+  if (!canSummary) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[420px] p-8 bg-white rounded-2xl border border-slate-200 shadow-sm text-center max-w-xl mx-auto my-12">
         <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4 border border-rose-100 shadow-xs">
@@ -161,7 +122,6 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
   }
 
   const branchName = filters.branchId === 'all' ? 'Все филиалы' : data.branchMap.get(filters.branchId)?.name || '—';
-  const selectedMachine = filters.machineId !== 'all' ? data.machineMap.get(filters.machineId)?.name : undefined;
 
   return (
     <div className="report-print-area space-y-4 sm:space-y-6 overflow-auto pb-20 px-1 custom-scrollbar">
@@ -169,9 +129,9 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
 
       <div className="hidden print:block border-b-2 border-slate-800 pb-3">
         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">StankoBase · Аналитический отчёт</p>
-        <h1 className="text-xl font-black text-slate-900">{currentTabLabel}</h1>
+        <h1 className="text-xl font-black text-slate-900">Обзор</h1>
         <p className="text-xs text-slate-700 mt-1">
-          Филиал: <strong>{branchName}</strong>{selectedMachine ? <> · Станок: <strong>{selectedMachine}</strong></> : null} · Период: <strong>{formatPeriod(filters)}</strong>
+          Филиал: <strong>{branchName}</strong> · Период: <strong>{formatPeriod(filters)}</strong>
         </p>
         <p className="text-[10px] text-slate-500">Сформирован: {formatDateTime(new Date().toISOString())}</p>
       </div>
@@ -190,7 +150,7 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
               <RotateCcw className="w-4 h-4" />
               Сбросить фильтры
             </button>
-            {canPrint && (
+            {exportSummary && (
               <button
                 onClick={() => window.print()}
                 className="flex items-center gap-2 min-h-10 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0"
@@ -210,52 +170,6 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
               {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>
-          {currentTab !== 'overview' && (
-            <div>
-              <label className={LABEL_CLASS}>Производитель</label>
-              <select className={SELECT_CLASS} value={filters.manufacturer} onChange={e => update({ manufacturer: e.target.value, machineId: 'all' })}>
-                <option value="all">Все производители</option>
-                {manufacturers.map(m => <option key={m.key} value={m.key}>{m.label} ({m.count})</option>)}
-              </select>
-            </div>
-          )}
-          {currentTab !== 'overview' && (
-            <div>
-              <label className={LABEL_CLASS}>Статус станка</label>
-              <select className={SELECT_CLASS} value={filters.machineStatus} onChange={e => update({ machineStatus: e.target.value as 'all' | MachineStatus, machineId: 'all' })}>
-                <option value="all">Любой статус</option>
-                {MACHINE_STATUSES.map(s => <option key={s} value={s}>{MACHINE_STATUS_LABELS[s]}</option>)}
-              </select>
-            </div>
-          )}
-          {currentTab !== 'overview' && (
-            <div className="lg:col-span-2">
-              <label className={LABEL_CLASS}>Станок</label>
-              <select className={SELECT_CLASS} value={filters.machineId} onChange={e => update({ machineId: e.target.value })}>
-                <option value="all">Все оборудование ({machineOptions.length})</option>
-                {machineOptions.map(m => <option key={m.id} value={m.id}>{m.name}{m.model ? ` — ${m.model}` : ''}</option>)}
-              </select>
-            </div>
-          )}
-          {currentTab !== 'overview' && (
-            <div>
-              <label className={LABEL_CLASS}>Тип работ</label>
-              <select className={SELECT_CLASS} value={filters.type} onChange={e => update({ type: e.target.value as ReportFilters['type'] })}>
-                <option value="all">Любые работы</option>
-                {LOG_TYPES.map(t => <option key={t} value={t}>{LOG_TYPE_LABELS[t]}</option>)}
-              </select>
-            </div>
-          )}
-          {currentTab !== 'overview' && (
-            <div>
-              <label className={LABEL_CLASS}>Статус работы</label>
-              <select className={SELECT_CLASS} value={filters.status} onChange={e => update({ status: e.target.value as StatusFilter })}>
-                <option value="all">Все</option>
-                <option value="completed">Выполнено</option>
-                <option value="planned">Запланировано</option>
-              </select>
-            </div>
-          )}
           <div>
             <label className={LABEL_CLASS}>Начало периода</label>
             <input type="date" className={SELECT_CLASS} value={filters.start} max={filters.end || undefined} onChange={e => update({ start: e.target.value })} />
@@ -264,7 +178,7 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
             <label className={LABEL_CLASS}>Конец периода</label>
             <input type="date" className={SELECT_CLASS} value={filters.end} min={filters.start || undefined} onChange={e => update({ end: e.target.value })} />
           </div>
-          <div className="sm:col-span-2 lg:col-span-2">
+          <div>
             <span className={LABEL_CLASS}>Период</span>
             <div className="flex flex-wrap gap-1.5">
               {PERIOD_PRESETS.map(p => (
@@ -286,36 +200,7 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
         {invalidRange && <p className="text-xs font-bold text-rose-600">Начало периода позже его конца — выборка будет пустой.</p>}
       </div>
 
-      <div className="print:hidden -mx-1 px-1 overflow-x-auto custom-scrollbar">
-        <div className="flex gap-2 min-w-max" role="tablist">
-          {tabs.map(tab => {
-            const active = tab.id === currentTab;
-            return (
-              <button
-                key={tab.id}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 min-h-10 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border whitespace-nowrap ${
-                  active ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {currentTab === 'overview' && (
-        <OverviewTab data={data} canExport={exportSummary} canEquipment={canEquipment} canToir={false} canInventory={false} onNavigate={navigate}
-          onSelectBranch={id => { update({ branchId: id, machineId: 'all' }); setActiveTab('branches'); }}
-          onSelectMachine={id => { update({ machineId: id }); setActiveTab('equipment'); }} />
-      )}
-      {currentTab === 'equipment' && (
-        <EquipmentTab data={data} canExport={exportEquipment} onSelectMachine={id => update({ machineId: id })} onOpenMachine={openMachine} />
-      )}
+      <OverviewTab data={data} canExport={exportSummary} canEquipment={false} canToir={false} canInventory={false} onNavigate={() => {}} />
     </div>
   );
 }

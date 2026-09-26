@@ -34,7 +34,6 @@ const BRANCH_SORT = {
   repair: (r: BranchComparisonRow) => r.byStatus.repair,
   retired: (r: BranchComparisonRow) => r.byStatus.retired,
   amps: (r: BranchComparisonRow) => r.totalAmps,
-  activeAmps: (r: BranchComparisonRow) => r.activeAmps,
   residual: (r: BranchComparisonRow) => r.residual,
   cost: (r: BranchComparisonRow) => r.cost,
   emergencies: (r: BranchComparisonRow) => r.emergencies,
@@ -56,10 +55,10 @@ const RANKING_SORT = {
   last: (r: MachineRankingRow) => r.lastMaintenance || null,
 };
 
-const CSV_BRANCH_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Списано', 'Ток всего, А', 'Ток в работе, А',
+const CSV_BRANCH_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Списано', 'Ток всего, А',
   'Остаточная стоимость, $', 'Затраты за период, $', 'Аварий', 'Просрочено ТО', 'Склад, $', 'Пользователей'];
 const csvBranchRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
-  r.byStatus.retired, r.totalAmps, r.activeAmps, r.residual, r.cost, r.emergencies, r.overdue, r.stockValue, r.users];
+  r.byStatus.retired, r.totalAmps, r.residual, r.cost, r.emergencies, r.overdue, r.stockValue, r.users];
 
 function ChangeBadge({ change, invert = false }: { change: number | null | undefined; invert?: boolean }) {
   if (change === undefined) return <span>Нет периода для сравнения</span>;
@@ -213,7 +212,6 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {bth('Ремонт', 'repair')}
                   {bth('Списано', 'retired')}
                   {bth('Ток', 'amps')}
-                  {bth('Ток в работе', 'activeAmps')}
                   {bth('Ост. стоимость', 'residual')}
                   {bth('Затраты', 'cost')}
                   {bth('Аварий', 'emergencies')}
@@ -238,7 +236,6 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={`${TD} text-right font-mono ${r.byStatus.repair ? 'text-rose-700 font-bold' : 'text-slate-300'}`}>{r.byStatus.repair}</td>
                       <td className={`${TD} text-right font-mono text-slate-400`}>{r.byStatus.retired}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatAmps(r.totalAmps)}</td>
-                      <td className={`${TD} text-right font-mono whitespace-nowrap text-slate-600`}>{formatAmps(r.activeAmps)}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                       <td className={`${TD} text-right font-mono ${r.emergencies ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{r.emergencies}</td>
@@ -254,7 +251,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   <td className={`${TD_FIRST} text-[11px] uppercase tracking-widest`}>Итого</td>
                   {csvBranchRow(comparison.total).slice(1).map((v, i) => (
                     <td key={i} className={`${TD} text-right font-mono whitespace-nowrap`}>
-                      {[5, 6].includes(i) ? formatAmps(Number(v)) : [7, 8, 11].includes(i) ? formatMoney(Number(v)) : v}
+                      {i === 5 ? formatAmps(Number(v)) : [6, 7, 10].includes(i) ? formatMoney(Number(v)) : v}
                     </td>
                   ))}
                 </tr>
