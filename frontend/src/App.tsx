@@ -496,7 +496,7 @@ export default function App() {
               <Settings className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-slate-900 mb-1 tracking-tight">Silknode Machine Pro</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-center text-slate-900 mb-1 tracking-tight">Silknode Machine</h1>
           <p className="text-slate-500 text-center mb-6 text-xs sm:text-sm font-medium">Система учета промышленного оборудования</p>
 
           {/* Credentials Login Form */}
@@ -626,7 +626,7 @@ export default function App() {
                     <Settings className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <span className="font-bold text-base tracking-tight block">Silknode Machine Pro</span>
+                    <span className="font-bold text-base tracking-tight block">Silknode Machine</span>
                     <span className="text-[10px] text-slate-400 font-mono">Мобильная версия</span>
                   </div>
                 </button>
@@ -729,7 +729,7 @@ export default function App() {
               <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center shrink-0">
                 <Settings className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-sm tracking-tight flex-1 min-w-0 leading-tight">Silknode Machine Pro</span>
+              <span className="font-bold text-sm tracking-tight flex-1 min-w-0 leading-tight">Silknode Machine</span>
             </button>
           )}
           <button

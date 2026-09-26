@@ -1,4 +1,4 @@
-// REST client for the Silknode Machine Pro backend (see ../../backend). Replaces the direct
+// REST client for the Silknode Machine backend (see ../../backend). Replaces the direct
 // Firestore SDK calls that used to live in machineService.ts / userService.ts.
 
 export const API_BASE_URL: string =
