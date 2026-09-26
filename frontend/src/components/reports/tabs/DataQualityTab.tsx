@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ClipboardCheck, ClipboardList, ExternalLink, FolderOpen } from 'lucide-react';
 import { machineService } from '../../../services/machineService';
 import { CompletenessField, IncompleteRecord, ReportData, dataQuality, formatBytes, formatNumber, formatPercent, searchMatches } from '../reportUtils';
-import { AsyncContent, BarList, CsvButton, EmptyState, KpiCard, Pagination, Panel, ProgressBar, SearchInput, TD, TD_FIRST, THEAD_ROW, usePaged } from '../ReportUi';
+import { AsyncContent, BarList, XlsxButton, EmptyState, KpiCard, Pagination, Panel, ProgressBar, SearchInput, TD, TD_FIRST, THEAD_ROW, usePaged } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
 
 const KIND_LABELS: Record<IncompleteRecord['kind'], string> = { machine: 'Станок', part: 'Запчасть', schedule: 'Задача ТО' };
@@ -138,7 +138,7 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
             </div>
             <SearchInput value={search} onChange={v => { setSearch(v); paged.setPage(0); }} placeholder="Название, филиал, поле…" />
             {canExport && (
-              <CsvButton filename="nezapolnennye_zapisi" disabled={!records.length}
+              <XlsxButton filename="nezapolnennye_zapisi" disabled={!records.length}
                 headers={['Тип', 'Название', 'Филиал', 'Не заполнено']}
                 rows={() => records.map(r => [KIND_LABELS[r.kind], r.name, r.branchName, r.missing.join(', ')])} />
             )}

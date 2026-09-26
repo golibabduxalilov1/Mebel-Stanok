@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { AlertCircle, ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, FileSpreadsheet, RefreshCw, Search, ServerCrash } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { CsvCell, formatNumber, formatPercent, todayKey, toCsv } from './reportUtils';
 
 export function Panel({ title, icon: Icon, iconClass = 'text-blue-500', actions, children, bodyClass = 'p-4 sm:p-6', footer }: {
@@ -166,6 +167,41 @@ export function CsvButton({ filename, headers, rows, disabled }: { filename: str
     >
       <FileSpreadsheet className="w-3.5 h-3.5" />
       Экспорт CSV
+    </button>
+  );
+}
+
+export function downloadXlsx(filename: string, headers: string[], rows: CsvCell[][]) {
+  const data = [headers, ...rows.map(row => row.map(cell => cell ?? ''))];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  // Bold header row
+  const headerRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+    const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+    if (ws[cellRef]) ws[cellRef].s = { font: { bold: true } };
+  }
+  // Auto column width
+  const colWidths = headers.map((h, ci) => {
+    const maxLen = Math.max(h.length, ...rows.map(r => String(r[ci] ?? '').length));
+    return { wch: Math.min(50, Math.max(10, maxLen + 2)) };
+  });
+  ws['!cols'] = colWidths;
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Данные');
+  XLSX.writeFile(wb, `${filename}_${todayKey()}.xlsx`);
+}
+
+export function XlsxButton({ filename, headers, rows, disabled }: { filename: string; headers: string[]; rows: () => CsvCell[][]; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => downloadXlsx(filename, headers, rows())}
+      className="print:hidden flex items-center gap-1.5 min-h-8 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      title="Скачать таблицу в Excel (.xlsx)"
+    >
+      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+      Excel
     </button>
   );
 }

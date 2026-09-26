@@ -5,7 +5,7 @@ import {
   NO_BRANCH_ID, ReportData, deadStock, formatDateKey, formatMoney, formatNumber, lowStockRows, monthlyPartsCost, partHomeBranch, partsUsage,
   partValue, pluralRu, stockByBranch, stockByUnit, stockSummary, sumPartsUsage, toLocalDateKey, usageByMachine,
 } from '../reportUtils';
-import { AsyncContent, CsvButton, EmptyState, KpiCard, Panel, ProgressBar, SCROLL_BOX, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW } from '../ReportUi';
+import { AsyncContent, XlsxButton, EmptyState, KpiCard, Panel, ProgressBar, SCROLL_BOX, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
@@ -69,7 +69,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
           icon={Building2}
           bodyClass=""
           actions={canExport && (
-            <CsvButton filename="sklad_po_filialam" disabled={!stats.byBranch.length}
+            <XlsxButton filename="sklad_po_filialam" disabled={!stats.byBranch.length}
               headers={['Филиал', 'Наименований', 'Стоимость, $', 'В архиве, $']}
               rows={() => [...stats.byBranch.map(r => [r.branchName, r.items, r.value, stats.archivedByBranch.get(r.branchId) || 0]),
                 ['Итого', stats.stock.items, stats.stock.value, archivedTotal]]} />
@@ -124,7 +124,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         iconClass="text-amber-500"
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename="malo_na_sklade" disabled={!stats.low.length}
+          <XlsxButton filename="malo_na_sklade" disabled={!stats.low.length}
             headers={['Наименование', 'Артикул', 'Доступно', 'В брони', 'Минимум', 'Дефицит', 'Ед.']}
             rows={() => stats.low.map(r => [r.part.name, r.part.sku, r.available, r.reserved, r.min, r.deficit, r.part.unit || 'шт'])} />
         )}
@@ -167,7 +167,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         iconClass="text-indigo-500"
         bodyClass=""
         actions={canExport && reservations.data && (
-          <CsvButton filename="bron_zapchastey" disabled={!reservations.data.length}
+          <XlsxButton filename="bron_zapchastey" disabled={!reservations.data.length}
             headers={['Запчасть', 'Артикул', 'Количество', 'Ед.', 'Стоимость, $', 'Источник', 'Задача / работа', 'Станок', 'Срок / дата', 'Забронировано']}
             rows={() => reservations.data!.map(r => [r.partName, r.sku, r.quantity, r.unit || 'шт', r.value,
               r.sourceType === 'toir_schedule' ? 'График ТО' : 'Журнал работ', r.isForeign ? 'Другой филиал' : r.sourceName, r.machineName,
@@ -228,7 +228,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                 ))}
               </div>
               {canExport && (
-                <CsvButton filename="rashod_zapchastey" disabled={!stats.usage.length}
+                <XlsxButton filename="rashod_zapchastey" disabled={!stats.usage.length}
                   headers={['Наименование', 'Артикул', 'Расход', 'Ед.', 'Цена, $', 'Сумма, $']}
                   rows={() => stats.usage.map(u => [u.name, u.sku, u.qty, u.unit, u.unitPrice, u.totalCost])} />
               )}
@@ -261,7 +261,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
           icon={Cog}
           bodyClass=""
           actions={canExport && (
-            <CsvButton filename="rashod_po_stankam" disabled={!stats.byMachine.length}
+            <XlsxButton filename="rashod_po_stankam" disabled={!stats.byMachine.length}
               headers={['Станок', 'Работ с запчастями', 'Количество', 'Сумма, $']}
               rows={() => stats.byMachine.map(r => [r.name, r.works, r.qty, r.cost])} />
           )}
@@ -300,7 +300,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
           iconClass="text-slate-500"
           bodyClass=""
           actions={canExport && (
-            <CsvButton filename="nelikvid" disabled={!stats.dead.length}
+            <XlsxButton filename="nelikvid" disabled={!stats.dead.length}
               headers={['Наименование', 'Артикул', 'Количество', 'Ед.', 'Стоимость, $']}
               rows={() => stats.dead.map(p => [p.name, p.sku, p.quantity, p.unit || 'шт', partValue(p)])} />
           )}
@@ -338,7 +338,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
           icon={Ruler}
           bodyClass=""
           actions={canExport && (
-            <CsvButton filename="sklad_po_edinicam" disabled={!stats.units.length}
+            <XlsxButton filename="sklad_po_edinicam" disabled={!stats.units.length}
               headers={['Код', 'Единица', 'Позиций', 'Количество', 'Стоимость, $']}
               rows={() => stats.units.map(u => [u.code, u.name, u.items, u.qty, u.value])} />
           )}

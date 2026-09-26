@@ -8,7 +8,7 @@ import {
   sumCompletedCost, toLocalDateKey, uptimePercent, WORKS_FORMS,
 } from '../reportUtils';
 import {
-  CsvButton, EmptyState, KpiCard, KPI_GRID, Pagination, Panel, ProgressBar, SCROLL_BOX, SearchInput, SortTh, StatusBadge,
+  XlsxButton, EmptyState, KpiCard, KPI_GRID, Pagination, Panel, ProgressBar, SCROLL_BOX, SearchInput, SortTh, StatusBadge,
   TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, usePaged, useSorted,
 } from '../ReportUi';
 import type { MaintenanceLog } from '../../../types';
@@ -193,7 +193,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         icon={Building2}
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename="sravnenie_filialov" disabled={!branchSorted.length} headers={CSV_BRANCH_HEADERS}
+          <XlsxButton filename="sravnenie_filialov" disabled={!branchSorted.length} headers={CSV_BRANCH_HEADERS}
             rows={() => [...branchSorted.map(csvBranchRow), csvBranchRow(comparison.total)]} />
         )}
         footer="Нажмите на филиал, чтобы перейти в его паспорт. Ремонт и аварии — выполненные работы за период."
@@ -262,7 +262,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           <>
             <SearchInput value={search} onChange={setSearch} placeholder="Станок, модель, филиал…" />
             {canExport && canEquipment && (
-              <CsvButton
+              <XlsxButton
                 filename="reiting_stankov"
                 disabled={!machineSorted.length}
                 headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $',
@@ -342,15 +342,15 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               {journalDir === 'desc' ? 'Сначала новые' : 'Сначала старые'}
             </button>
             {canExport && canToir && (
-              <CsvButton
+              <XlsxButton
                 filename="zhurnal_obsluzhivaniya"
                 disabled={!journal.length}
-                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Амортизация, $']}
+                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость работ, $', 'Стоимость деталей, $']}
                 rows={() => journal.map(log => {
                   const machine = data.machineMap.get(log.machineId);
                   return [formatDateKey(toLocalDateKey(log.date)), machine?.name, machine?.model, LOG_TYPE_LABELS[log.type] || log.type,
                     isCompleted(log) ? 'Выполнено' : 'Запланировано', log.technicianName, log.notes,
-                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.cost || 0];
+                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.laborCost || 0, log.partsCost || 0];
                 })}
               />
             )}
@@ -368,7 +368,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                     <th className="px-4 py-3">Статус</th>
                     <th className="px-4 py-3">Исполнитель</th>
                     <th className="px-4 py-3">Запчасти</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Амортизация</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -395,7 +396,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                             )) : <span className="text-slate-300">—</span>}
                           </div>
                         </td>
-                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.cost || 0)}</td>
+                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
+                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.partsCost || 0)}</td>
                       </tr>
                     );
                   })}

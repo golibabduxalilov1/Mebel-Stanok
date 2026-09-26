@@ -6,7 +6,7 @@ import {
   ACTION_TYPE_LABELS, ENTITY_TYPE_LABELS, ReportData, fillDaily, formatDateTime, formatNumber, formatPeriod, inactiveUsers, pluralRu,
   inDateRange, rangeToInstants, toLocalDateKey, userStats,
 } from '../reportUtils';
-import { AsyncContent, BarList, CsvButton, EmptyState, ErrorState, KpiCard, Panel, SCROLL_BOX, Skeleton, StatusBadge, TD, TD_FIRST, THEAD_ROW } from '../ReportUi';
+import { AsyncContent, BarList, XlsxButton, EmptyState, ErrorState, KpiCard, Panel, SCROLL_BOX, Skeleton, StatusBadge, TD, TD_FIRST, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
@@ -66,7 +66,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
         title="Активность по дням"
         icon={BarChart3}
         actions={canExport && (
-          <CsvButton filename="aktivnost_po_dnyam" disabled={!stats.daily.length}
+          <XlsxButton filename="aktivnost_po_dnyam" disabled={!stats.daily.length}
             headers={['Дата', 'Действий']} rows={() => stats.daily.map(d => [d.date, d.count])} />
         )}
       >
@@ -98,7 +98,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
         iconClass="text-amber-500"
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename="aktivnye_polzovateli" disabled={!stats.top.length}
+          <XlsxButton filename="aktivnye_polzovateli" disabled={!stats.top.length}
             headers={['Пользователь', 'Логин', 'Роль', ...ACTION_KEYS.map(k => ACTION_TYPE_LABELS[k]), 'Всего', 'Последний вход']}
             rows={() => stats.top.map(u => [u.fullName, u.username, u.roleName, ...ACTION_KEYS.map(k => u.actions[k]), u.total, formatDateTime(u.lastLogin)])} />
         )}
@@ -157,7 +157,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
         iconClass="text-amber-500"
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename="neaktivnye_polzovateli" disabled={!stats.inactive.length}
+          <XlsxButton filename="neaktivnye_polzovateli" disabled={!stats.inactive.length}
             headers={['Пользователь', 'Логин', 'Роль', 'Должность', 'Последний вход', 'Дней без входа']}
             rows={() => stats.inactive.map(u => [u.fullName, u.username, u.roleName, u.position, formatDateTime(u.lastLogin), u.daysSince ?? 'никогда'])} />
         )}

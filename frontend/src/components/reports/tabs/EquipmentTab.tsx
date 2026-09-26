@@ -9,7 +9,7 @@ import {
   sumCompletedCost, toLocalDateKey,
 } from '../reportUtils';
 import {
-  AsyncContent, BarList, CsvButton, EmptyState, KpiCard, Panel, SCROLL_BOX, SearchInput, SortTh, StatusBadge, TD, TD_FIRST, THEAD_ROW, useSorted,
+  AsyncContent, BarList, XlsxButton, EmptyState, KpiCard, Panel, SCROLL_BOX, SearchInput, SortTh, StatusBadge, TD, TD_FIRST, THEAD_ROW, useSorted,
 } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
 import { SERIES_COLORS, STATUS_COLORS } from '../charts/ChartFrame';
@@ -130,7 +130,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
           <>
             <SearchInput value={search} onChange={setSearch} placeholder="Станок, модель, филиал…" />
             {canExport && (
-              <CsvButton
+              <XlsxButton
                 filename="reiting_stankov"
                 disabled={!sorted.length}
                 headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Ремонт на ТО за период, $',
@@ -293,7 +293,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
         icon={HistoryIcon}
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename={`istoriya_rabot_${machine.name}`} disabled={!card.logs.length}
+          <XlsxButton filename={`istoriya_rabot_${machine.name}`} disabled={!card.logs.length}
             headers={['Дата', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Амортизация, $']}
             rows={() => card.logs.map(l => [formatDateKey(toLocalDateKey(l.date)), LOG_TYPE_LABELS[l.type], isCompleted(l) ? 'Выполнено' : 'Запланировано', l.technicianName, l.notes, l.cost || 0])} />
         )}

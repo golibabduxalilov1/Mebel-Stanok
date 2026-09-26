@@ -4,7 +4,7 @@ import {
   ReportData, ampsByStatus, formatAmps, formatNumber, formatPercent, MACHINE_STATUS_LABELS, missingAmperageMachines, pluralRu,
   powerByBranch, powerSummary, topConsumers,
 } from '../reportUtils';
-import { CsvButton, EmptyState, KpiCard, Panel, ProgressBar, SCROLL_BOX, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW } from '../ReportUi';
+import { XlsxButton, EmptyState, KpiCard, Panel, ProgressBar, SCROLL_BOX, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW } from '../ReportUi';
 import { STATUS_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
@@ -64,7 +64,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
           icon={Building2}
           bodyClass=""
           actions={canExport && (
-            <CsvButton
+            <XlsxButton
               filename="elektricheskaya_nagruzka"
               disabled={!stats.byBranch.rows.length}
               headers={['Филиал', 'Станков (без списанных)', 'Всего, А', 'В работе, А', 'Отключено, А', 'Не указан ампераж', 'Доля, %']}
@@ -143,7 +143,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
           icon={Zap}
           iconClass="text-amber-500"
           actions={canExport && (
-            <CsvButton filename="top_potrebiteley_toka" disabled={!stats.top.length}
+            <XlsxButton filename="top_potrebiteley_toka" disabled={!stats.top.length}
               headers={['Станок', 'Модель', 'Статус', 'Ток, А', 'Доля, %']}
               rows={() => stats.top.map(t => [t.name, t.model, MACHINE_STATUS_LABELS[t.status], t.amps, t.share])} />
           )}
@@ -179,7 +179,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
         iconClass="text-amber-500"
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename="bez_amperazha" disabled={!stats.missing.length}
+          <XlsxButton filename="bez_amperazha" disabled={!stats.missing.length}
             headers={['Станок', 'Модель', 'Филиал', 'Статус']}
             rows={() => stats.missing.map(m => [m.name, m.model, m.branchName, MACHINE_STATUS_LABELS[m.status]])} />
         )}

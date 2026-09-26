@@ -6,7 +6,7 @@ import {
   searchLogs, sortLogsByDate, technicianStats, toLocalDateKey, workTypeRatio,
 } from '../reportUtils';
 import {
-  CsvButton, EmptyState, KpiCard, Pagination, Panel, SCROLL_BOX, SearchInput, SortTh, StatusBadge, TD, TD_FIRST, THEAD_ROW, usePaged, useSorted,
+  XlsxButton, EmptyState, KpiCard, Pagination, Panel, SCROLL_BOX, SearchInput, SortTh, StatusBadge, TD, TD_FIRST, THEAD_ROW, usePaged, useSorted,
 } from '../ReportUi';
 import type { MaintenanceLog } from '../../../types';
 import { SERIES_COLORS } from '../charts/ChartFrame';
@@ -152,7 +152,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                 ))}
               </div>
               {canExport && (
-                <CsvButton filename={`zadachi_${upcomingWindow}_dney`} disabled={!upcoming.length}
+                <XlsxButton filename={`zadachi_${upcomingWindow}_dney`} disabled={!upcoming.length}
                   headers={['Станок', 'Задача', 'Срок', 'Через, дней', 'Приоритет', 'Ответственный', 'Часы', 'Амортизация работ, $']}
                   rows={() => upcoming.map(t => [t.machineName, t.taskName, formatDateKey(t.nextDue), t.inDays, t.priority ? PRIORITY_LABELS[t.priority] : '', t.assignedTechnician, t.estimatedHours, t.laborCost])} />
               )}
@@ -200,7 +200,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
         iconClass="text-rose-500"
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename="prosrochennye_zadachi" disabled={!schedule.overdue.length}
+          <XlsxButton filename="prosrochennye_zadachi" disabled={!schedule.overdue.length}
             headers={['Станок', 'Задача', 'Срок', 'Просрочено, дней', 'Приоритет', 'Ответственный']}
             rows={() => schedule.overdue.map(t => [t.machineName, t.taskName, formatDateKey(t.nextDue), t.daysLate, t.priority ? PRIORITY_LABELS[t.priority] : '', t.assignedTechnician])} />
         )}
@@ -240,7 +240,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
         icon={Users}
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename="ispolniteli" disabled={!tech.sorted.length}
+          <XlsxButton filename="ispolniteli" disabled={!tech.sorted.length}
             headers={['Исполнитель', 'Выполнено работ', 'Из них аварийных', 'Ремонт, $', 'Средний ремонт, $', 'Назначено задач', 'Просрочено задач']}
             rows={() => tech.sorted.map(t => [t.name, t.count, t.emergencies, t.cost, t.avgCost, t.assignedTasks, t.overdueTasks])} />
         )}
@@ -291,15 +291,15 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
               {journalDir === 'desc' ? 'Сначала новые' : 'Сначала старые'}
             </button>
             {canExport && (
-              <CsvButton
+              <XlsxButton
                 filename="zhurnal_obsluzhivaniya"
                 disabled={!journal.length}
-                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Амортизация, $']}
+                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость работ, $', 'Стоимость деталей, $']}
                 rows={() => journal.map(log => {
                   const machine = data.machineMap.get(log.machineId);
                   return [formatDateKey(toLocalDateKey(log.date)), machine?.name, machine?.model, LOG_TYPE_LABELS[log.type] || log.type,
                     isCompleted(log) ? 'Выполнено' : 'Запланировано', log.technicianName, log.notes,
-                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.cost || 0];
+                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.laborCost || 0, log.partsCost || 0];
                 })}
               />
             )}
@@ -317,7 +317,8 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     <th className="px-4 py-3">Статус</th>
                     <th className="px-4 py-3">Исполнитель</th>
                     <th className="px-4 py-3">Запчасти</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Амортизация</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -344,7 +345,8 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                             )) : <span className="text-slate-300">—</span>}
                           </div>
                         </td>
-                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.cost || 0)}</td>
+                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
+                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.partsCost || 0)}</td>
                       </tr>
                     );
                   })}

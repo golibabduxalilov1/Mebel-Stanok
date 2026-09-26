@@ -4,7 +4,7 @@ import {
   BranchComparisonRow, NO_BRANCH_ID, ReportData, branchComparison, costByMachine, formatAmps, formatDateKey, formatMoney, formatNumber,
   formatPercent, hasPurchaseData, isCompleted, LOG_TYPE_BADGE, LOG_TYPE_LABELS, MACHINE_STATUS_LABELS, sortLogsByDateDesc, toLocalDateKey,
 } from '../reportUtils';
-import { CsvButton, EmptyState, KpiCard, Panel, SCROLL_BOX, SortTh, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, useSorted } from '../ReportUi';
+import { XlsxButton, EmptyState, KpiCard, Panel, SCROLL_BOX, SortTh, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, useSorted } from '../ReportUi';
 import { machineService } from '../../../services/machineService';
 
 const STATUS_BADGE = {
@@ -58,7 +58,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
       icon={Building2}
       bodyClass=""
       actions={canExport && (
-        <CsvButton filename="sravnenie_filialov" disabled={!sorted.length} headers={CSV_HEADERS}
+        <XlsxButton filename="sravnenie_filialov" disabled={!sorted.length} headers={CSV_HEADERS}
           rows={() => [...sorted.map(csvRow), csvRow(comparison.total)]} />
       )}
       footer="Нажмите на филиал, чтобы открыть его паспорт. Ремонт и аварии — выполненные работы за период; пользователь, привязанный к нескольким филиалам, в «Итого» учтён один раз."
@@ -178,7 +178,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
           icon={Cog}
           bodyClass=""
           actions={canExport && (
-            <CsvButton filename="oborudovanie_filiala" disabled={!details.machines.length}
+            <XlsxButton filename="oborudovanie_filiala" disabled={!details.machines.length}
               headers={['Станок', 'Модель', 'Статус', 'Ток, А', 'Остаточная амортизация, $', 'Ремонт за период, $']}
               rows={() => details.machines.map(r => [r.machine.name, r.machine.model, MACHINE_STATUS_LABELS[r.machine.status], Number(r.machine.amperage) || null, r.residual, r.cost])} />
           )}

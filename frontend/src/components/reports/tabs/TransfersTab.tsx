@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ArrowRight, ArrowRightLeft, Scale } from 'lucide-react';
 import { machineService } from '../../../services/machineService';
 import { ReportData, filterTransferRows, formatDateTime, formatPeriod, rangeToInstants, transferBalance } from '../reportUtils';
-import { AsyncContent, CsvButton, KpiCard, Panel, SCROLL_BOX, Skeleton, TD, TD_FIRST, THEAD_ROW } from '../ReportUi';
+import { AsyncContent, XlsxButton, KpiCard, Panel, SCROLL_BOX, Skeleton, TD, TD_FIRST, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
 
 export function TransfersTab({ data, canExport }: { data: ReportData; canExport: boolean }) {
@@ -39,7 +39,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
         icon={Scale}
         bodyClass=""
         actions={canExport && stats && (
-          <CsvButton filename="balans_peremescheniy" disabled={!stats.balance.length}
+          <XlsxButton filename="balans_peremescheniy" disabled={!stats.balance.length}
             headers={['Филиал', 'Поступило', 'Убыло', 'Баланс']}
             rows={() => stats.balance.map(r => [r.branchName, r.incoming, r.outgoing, r.balance])} />
         )}
@@ -80,7 +80,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
         icon={ArrowRightLeft}
         bodyClass=""
         actions={canExport && stats && (
-          <CsvButton filename="peremescheniya" disabled={!stats.rows.length}
+          <XlsxButton filename="peremescheniya" disabled={!stats.rows.length}
             headers={['Дата', 'Станок', 'Модель', 'Откуда', 'Куда', 'Кто переместил']}
             rows={() => stats.rows.map(r => [formatDateTime(r.date), r.machineName, r.machineModel, r.fromBranchName || '—', r.toBranchName, r.createdByName || ''])} />
         )}
