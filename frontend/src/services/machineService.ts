@@ -12,6 +12,7 @@ import {
   ActivityLog,
   UnitOfMeasure,
 } from '../types';
+import { parseDateKey, toLocalDateKey } from '../utils/dates';
 
 export const DEFAULT_UNITS: UnitOfMeasure[] = [
   { id: 'sys-1', code: 'шт', name: 'Штука', isSystem: true },
@@ -266,14 +267,18 @@ export const machineService = {
     return apiClient.post(`/logs/${id}/complete`);
   },
 
-  calculateCurrentValue(machine: Machine) {
+  /** Straight-line residual value; only fully elapsed months are depreciated. */
+  calculateCurrentValue(machine: Machine, at: Date = new Date()) {
     if (!machine.purchasePrice || !machine.purchaseDate) return 0;
+    const purchaseKey = toLocalDateKey(machine.purchaseDate);
+    if (!purchaseKey) return 0;
     const usefulLifeYears = machine.usefulLifeYears || 10;
-    const purchaseDate = new Date(machine.purchaseDate);
-    const now = new Date();
-    const monthsPassed = (now.getFullYear() - purchaseDate.getFullYear()) * 12 + (now.getMonth() - purchaseDate.getMonth());
+    const purchaseDate = parseDateKey(purchaseKey);
+    let monthsPassed = (at.getFullYear() - purchaseDate.getFullYear()) * 12 + (at.getMonth() - purchaseDate.getMonth());
+    if (at.getDate() < purchaseDate.getDate()) monthsPassed -= 1;
     const totalMonths = usefulLifeYears * 12;
 
+    if (monthsPassed <= 0) return machine.purchasePrice;
     if (monthsPassed >= totalMonths) return 0;
 
     const monthlyDepreciation = machine.purchasePrice / totalMonths;
@@ -293,33 +298,39 @@ export const machineService = {
     return machine.purchasePrice / usefulLifeYears;
   },
 
-  getDepreciationData(machine: Machine) {
+  /**
+   * One point per calendar year starting at the purchase year: the purchase year shows the purchase
+   * price, the current year shows today's value (same as calculateCurrentValue), other years show
+   * the value on January 1st. Ends at the first year the value reaches zero.
+   */
+  getDepreciationData(machine: Machine, now: Date = new Date()) {
     if (!machine.purchasePrice || !machine.purchaseDate) return [];
+    const purchaseKey = toLocalDateKey(machine.purchaseDate);
+    if (!purchaseKey) return [];
     const usefulLifeYears = machine.usefulLifeYears || 10;
-    const purchaseDate = new Date(machine.purchaseDate);
-    const data = [];
-    const totalMonths = usefulLifeYears * 12;
-    const monthlyDepreciation = machine.purchasePrice / totalMonths;
+    const purchaseYear = parseDateKey(purchaseKey).getFullYear();
+    const currentYear = now.getFullYear();
+    const data: { year: string; value: number }[] = [];
 
-    for (let i = 0; i <= usefulLifeYears; i++) {
-      const year = purchaseDate.getFullYear() + i;
-      const monthsPassed = i * 12;
-      const value = Math.max(0, machine.purchasePrice - (monthlyDepreciation * monthsPassed));
-      data.push({
-        year: year.toString(),
-        value: Math.round(value),
-      });
+    for (let year = purchaseYear; year <= purchaseYear + usefulLifeYears + 1; year++) {
+      const value = year === currentYear
+        ? this.calculateCurrentValue(machine, now)
+        : year === purchaseYear
+          ? machine.purchasePrice
+          : this.calculateCurrentValue(machine, new Date(year, 0, 1));
+      data.push({ year: year.toString(), value: Math.round(value) });
+      if (value <= 0) break;
     }
     return data;
   },
 
-  getTotalDepreciationData(machines: Machine[]) {
+  getTotalDepreciationData(machines: Machine[], now: Date = new Date()) {
     if (machines.length === 0) return [];
 
     const yearlyData: { [year: number]: number } = {};
 
     machines.forEach(machine => {
-      const depData = this.getDepreciationData(machine);
+      const depData = this.getDepreciationData(machine, now);
       depData.forEach(d => {
         const year = parseInt(d.year);
         yearlyData[year] = (yearlyData[year] || 0) + d.value;
