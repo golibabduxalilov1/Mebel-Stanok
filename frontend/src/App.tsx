@@ -908,7 +908,7 @@ export default function App() {
             </div>
 
             {/* Desktop Search Input */}
-            {activeTab !== 'inventory' && activeTab !== 'users' && (
+            {activeTab !== 'inventory' && activeTab !== 'users' && activeTab !== 'reports' && (
               <div className="hidden lg:flex items-center gap-3">
                 <div className="w-px h-6 bg-slate-200"></div>
                 {activeTab === 'all' && (
@@ -943,7 +943,7 @@ export default function App() {
 
         {/* Mobile Search Bar Expandable */}
         <AnimatePresence>
-          {isMobileSearchOpen && activeTab !== 'users' && (
+          {isMobileSearchOpen && activeTab !== 'users' && activeTab !== 'reports' && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}

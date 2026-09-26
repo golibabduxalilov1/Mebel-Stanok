@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  BarChart3, Boxes, Building2, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert, Wrench,
+  BarChart3, Building2, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert, Wrench,
 } from 'lucide-react';
 import type { Branch, Machine, MachineStatus, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
 import { canPerformAction } from '../../services/userService';
@@ -12,8 +12,7 @@ import { OverviewTab } from './tabs/OverviewTab';
 import { BranchesTab } from './tabs/BranchesTab';
 import { EquipmentTab } from './tabs/EquipmentTab';
 import { MaintenanceTab } from './tabs/MaintenanceTab';
-import { InventoryTab } from './tabs/InventoryTab';
-type ReportTabId = 'overview' | 'branches' | 'equipment' | 'maintenance' | 'inventory';
+type ReportTabId = 'overview' | 'branches' | 'equipment' | 'maintenance';
 
 const STORAGE_KEY = 'mebel-stanok.reports.v2';
 const STATUS_VALUES: StatusFilter[] = ['all', 'completed', 'planned'];
@@ -92,20 +91,17 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
   const can = (key: string, action: 'view' | 'export' = 'view') => canPerformAction(role, key, action);
   const canEquipment = can('reports.equipment_report');
   const canToir = can('reports.toir_report');
-  const canInventory = can('reports.inventory_report');
   const canSummary = can('reports.summary_report');
   const exportSummary = can('reports.summary_report', 'export');
   const exportEquipment = can('reports.equipment_report', 'export');
   const exportToir = can('reports.toir_report', 'export');
-  const exportInventory = can('reports.inventory_report', 'export');
-  const canPrint = exportSummary || exportEquipment || exportToir || exportInventory;
+  const canPrint = exportSummary || exportEquipment || exportToir;
 
   const tabs = [
     { id: 'overview' as const, label: 'Обзор', icon: LayoutDashboard, allowed: canSummary },
     { id: 'branches' as const, label: 'Филиалы', icon: Building2, allowed: canSummary },
     { id: 'equipment' as const, label: 'Оборудование', icon: Cog, allowed: canEquipment },
     { id: 'maintenance' as const, label: 'ТОиР и ремонты', icon: Wrench, allowed: canToir },
-    { id: 'inventory' as const, label: 'Склад', icon: Boxes, allowed: canInventory },
   ].filter(t => t.allowed);
   const currentTab = tabs.some(t => t.id === activeTab) ? activeTab : tabs[0]?.id;
   const currentTabLabel = tabs.find(t => t.id === currentTab)?.label ?? '';
@@ -309,7 +305,7 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
       </div>
 
       {currentTab === 'overview' && (
-        <OverviewTab data={data} canExport={exportSummary} canEquipment={canEquipment} canToir={canToir} canInventory={canInventory} onNavigate={navigate} />
+        <OverviewTab data={data} canExport={exportSummary} canEquipment={canEquipment} canToir={canToir} canInventory={false} onNavigate={navigate} />
       )}
       {currentTab === 'branches' && (
         <BranchesTab data={data} canExport={exportSummary} onSelectBranch={id => update({ branchId: id, machineId: 'all' })} onOpenMachine={openMachine} />
@@ -318,7 +314,6 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
         <EquipmentTab data={data} canExport={exportEquipment} onSelectMachine={id => update({ machineId: id })} onOpenMachine={openMachine} />
       )}
       {currentTab === 'maintenance' && <MaintenanceTab data={data} canExport={exportToir} />}
-      {currentTab === 'inventory' && <InventoryTab data={data} canExport={exportInventory} />}
     </div>
   );
 }
