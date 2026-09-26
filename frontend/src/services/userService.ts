@@ -200,6 +200,9 @@ export function canAccessTab(role: Role | undefined | null, tabId: string): bool
 
   const permTabId = tabId === 'all' ? 'machines' : tabId;
 
+  // "Обзор" is accessible to all authenticated users.
+  if (permTabId === 'overview') return true;
+
   // "История" is admin-only regardless of the role's permission matrix, so
   // granting other rows/actions to a role (e.g. Мастер) never exposes it.
   if (permTabId === 'history') {

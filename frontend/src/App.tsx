@@ -123,6 +123,7 @@ import { TOIR_CATEGORIES, getToirCategory, calculateDeadlineInfo, ToirCategoryCo
 import { partMatchesTarget, partMachineRank, partBoundMachines } from './utils/spareParts';
 import { UsersTab } from './components/UsersTab';
 import { ReportsTab } from './components/reports/ReportsTab';
+import { OverviewTab } from './components/OverviewTab';
 import { 
   CreateToirScheduleModal, 
   EditToirScheduleModal, 
@@ -182,14 +183,14 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [registryBranchFilter, setRegistryBranchFilter] = useState<string>('all');
   const [showArchive, setShowArchive] = useState(false);
-  const [activeTab, setActiveTab] = useState<'all' | 'maintenance' | 'repair' | 'branches' | 'inventory' | 'reports' | 'history' | 'users'>(() => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'all' | 'maintenance' | 'repair' | 'branches' | 'inventory' | 'reports' | 'history' | 'users'>(() => {
     try {
       const saved = localStorage.getItem('activeTab');
-      if (saved && ['all','maintenance','repair','branches','inventory','reports','history','users'].includes(saved)) {
+      if (saved && ['overview','all','maintenance','repair','branches','inventory','reports','history','users'].includes(saved)) {
         return saved as any;
       }
     } catch {}
-    return 'all';
+    return 'overview';
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -290,6 +291,7 @@ export default function App() {
   };
 
   const ALL_TABS = useMemo(() => [
+    { id: 'overview', permId: 'overview', label: 'Обзор', icon: BarChart3 },
     { id: 'all', permId: 'machines', label: 'Оборудование', icon: LayoutDashboard, count: machines.length },
     { id: 'maintenance', permId: 'maintenance', label: 'Техобслуживание (ТОиР)', icon: Cog, count: allSchedules.length },
     { id: 'branches', permId: 'branches', label: 'Филиалы', icon: Building2, count: branches.length },
@@ -824,6 +826,7 @@ export default function App() {
             </button>
 
             <h1 className="text-sm sm:text-base md:text-xl font-bold text-slate-800 uppercase tracking-tight truncate">
+              {activeTab === 'overview' && 'Обзор'}
               {activeTab === 'all' && 'Реестр оборудования'}
               {activeTab === 'maintenance' && 'График ТОиР'}
               {activeTab === 'repair' && 'Ремонтный цех'}
@@ -972,7 +975,9 @@ export default function App() {
 
         {/* Content Area */}
         <div className="flex-1 p-3 sm:p-6 md:p-8 space-y-4 sm:space-y-6 flex flex-col pb-6 md:pb-8">
-          {!canAccessTab(currentRole, activeTab === 'all' ? 'machines' : activeTab) ? (
+          {activeTab === 'overview' ? (
+            <OverviewTab role={currentRole} />
+          ) : !canAccessTab(currentRole, activeTab === 'all' ? 'machines' : activeTab) ? (
             <div className="flex flex-col items-center justify-center min-h-[420px] p-8 bg-white rounded-2xl border border-slate-200 shadow-sm text-center max-w-xl mx-auto my-12">
               <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4 border border-rose-100 shadow-xs">
                 <ShieldAlert className="w-8 h-8" />
