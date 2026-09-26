@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  BarChart3, Building2, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert, Wrench,
+  BarChart3, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert, Wrench,
 } from 'lucide-react';
 import type { Branch, Machine, MachineStatus, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
 import { canPerformAction } from '../../services/userService';
@@ -9,10 +9,9 @@ import {
   MACHINE_STATUSES, manufacturerKey, manufacturerOptions, PERIOD_PRESETS, presetRange, ReportFilters, StatusFilter,
 } from './reportUtils';
 import { OverviewTab } from './tabs/OverviewTab';
-import { BranchesTab } from './tabs/BranchesTab';
 import { EquipmentTab } from './tabs/EquipmentTab';
 import { MaintenanceTab } from './tabs/MaintenanceTab';
-type ReportTabId = 'overview' | 'branches' | 'equipment' | 'maintenance';
+type ReportTabId = 'overview' | 'equipment' | 'maintenance';
 
 const STORAGE_KEY = 'mebel-stanok.reports.v2';
 const STATUS_VALUES: StatusFilter[] = ['all', 'completed', 'planned'];
@@ -99,7 +98,6 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
 
   const tabs = [
     { id: 'overview' as const, label: 'Обзор', icon: LayoutDashboard, allowed: canSummary },
-    { id: 'branches' as const, label: 'Филиалы', icon: Building2, allowed: canSummary },
     { id: 'equipment' as const, label: 'Оборудование', icon: Cog, allowed: canEquipment },
     { id: 'maintenance' as const, label: 'ТОиР и ремонты', icon: Wrench, allowed: canToir },
   ].filter(t => t.allowed);
@@ -316,10 +314,8 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
 
       {currentTab === 'overview' && (
         <OverviewTab data={data} canExport={exportSummary} canEquipment={canEquipment} canToir={canToir} canInventory={false} onNavigate={navigate}
-          onSelectBranch={id => { update({ branchId: id, machineId: 'all' }); setActiveTab('branches'); }} />
-      )}
-      {currentTab === 'branches' && (
-        <BranchesTab data={data} canExport={exportSummary} onSelectBranch={id => update({ branchId: id, machineId: 'all' })} onOpenMachine={openMachine} />
+          onSelectBranch={id => { update({ branchId: id, machineId: 'all' }); setActiveTab('branches'); }}
+          onSelectMachine={id => { update({ machineId: id }); setActiveTab('equipment'); }} />
       )}
       {currentTab === 'equipment' && (
         <EquipmentTab data={data} canExport={exportEquipment} onSelectMachine={id => update({ machineId: id })} onOpenMachine={openMachine} />

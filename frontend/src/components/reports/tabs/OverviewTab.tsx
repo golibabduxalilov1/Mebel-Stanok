@@ -1,15 +1,28 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AlertTriangle, BarChart3, Building2, ChevronRight, Cog, Package, TrendingDown } from 'lucide-react';
 import {
-  AttentionTab, BranchComparisonRow, NO_BRANCH_ID, ReportData, assetSummary, attentionGroups, branchComparison, formatAmps, formatMoney,
-  formatNumber, formatPercent, isCompleted, isEmergencyType, isRetired, monthlyCost, overdueSchedules, percentChange, plannedSummary,
-  pluralRu, powerSummary, stockSummary, sumCompletedCost, uptimePercent, WORKS_FORMS,
+  AttentionTab, BranchComparisonRow, MachineRankingRow, NO_BRANCH_ID, ReportData, assetSummary, attentionGroups, branchComparison,
+  formatAmps, formatDateKey, formatMoney, formatNumber, formatPercent, isCompleted, isEmergencyType, isRetired,
+  lastMaintenanceByMachine, MACHINE_STATUS_LABELS, machineRanking, monthlyCost, overdueSchedules, percentChange, plannedSummary,
+  pluralRu, powerSummary, ratioLevel, searchMatches, stockSummary, sumCompletedCost, uptimePercent, WORKS_FORMS,
 } from '../reportUtils';
-import { CsvButton, EmptyState, KpiCard, KPI_GRID, Panel, ProgressBar, SCROLL_BOX, SortTh, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, useSorted } from '../ReportUi';
+import {
+  CsvButton, EmptyState, KpiCard, KPI_GRID, Panel, ProgressBar, SCROLL_BOX, SearchInput, SortTh, StatusBadge,
+  TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, useSorted,
+} from '../ReportUi';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
-const SORT = {
+const STATUS_BADGE = {
+  active: 'bg-emerald-50 text-emerald-700',
+  maintenance: 'bg-amber-50 text-amber-700',
+  repair: 'bg-rose-50 text-rose-700',
+  retired: 'bg-slate-100 text-slate-600',
+} as const;
+
+const formatRatio = (ratio: number | null) => (ratio === null ? '—' : ratio === Infinity ? '> 100%' : formatPercent(ratio, 1));
+
+const BRANCH_SORT = {
   name: (r: BranchComparisonRow) => r.branchName,
   machines: (r: BranchComparisonRow) => r.machineCount,
   active: (r: BranchComparisonRow) => r.byStatus.active,
@@ -26,9 +39,22 @@ const SORT = {
   users: (r: BranchComparisonRow) => r.users,
 };
 
-const CSV_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Списано', 'Ток всего, А', 'Ток в работе, А',
+const RANKING_SORT = {
+  name: (r: MachineRankingRow) => r.name,
+  branch: (r: MachineRankingRow) => r.branchName,
+  status: (r: MachineRankingRow) => r.status,
+  age: (r: MachineRankingRow) => r.ageYears,
+  residual: (r: MachineRankingRow) => r.residual,
+  cost: (r: MachineRankingRow) => r.cost,
+  ratio: (r: MachineRankingRow) => (r.ratio === Infinity ? Number.MAX_VALUE : r.ratio),
+  emergencies: (r: MachineRankingRow) => r.emergencies,
+  mtbf: (r: MachineRankingRow) => r.mtbfDays,
+  last: (r: MachineRankingRow) => r.lastMaintenance || null,
+};
+
+const CSV_BRANCH_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Списано', 'Ток всего, А', 'Ток в работе, А',
   'Остаточная стоимость, $', 'Затраты за период, $', 'Аварий', 'Просрочено ТО', 'Склад, $', 'Пользователей'];
-const csvRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
+const csvBranchRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
   r.byStatus.retired, r.totalAmps, r.activeAmps, r.residual, r.cost, r.emergencies, r.overdue, r.stockValue, r.users];
 
 function ChangeBadge({ change, invert = false }: { change: number | null | undefined; invert?: boolean }) {
@@ -43,7 +69,7 @@ function ChangeBadge({ change, invert = false }: { change: number | null | undef
   );
 }
 
-export function OverviewTab({ data, canExport, canEquipment, canToir, canInventory, onNavigate, onSelectBranch }: {
+export function OverviewTab({ data, canExport, canEquipment, canToir, canInventory, onNavigate, onSelectBranch, onSelectMachine }: {
   data: ReportData;
   canExport: boolean;
   canEquipment: boolean;
@@ -51,7 +77,10 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
   canInventory: boolean;
   onNavigate: (tab: AttentionTab) => void;
   onSelectBranch: (branchId: string) => void;
+  onSelectMachine: (machineId: string) => void;
 }) {
+  const [search, setSearch] = useState('');
+
   const stats = useMemo(() => {
     const cost = sumCompletedCost(data.logs);
     const emergencies = (logs: typeof data.logs) => logs.filter(l => isCompleted(l) && isEmergencyType(l.type)).length;
@@ -83,9 +112,21 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
 
   const stock = useMemo(() => stockSummary(data.parts), [data.parts]);
   const assets = useMemo(() => assetSummary(data.machines, data.now), [data.machines, data.now]);
+
   const comparison = useMemo(() => branchComparison(data), [data]);
-  const { sorted, sort, toggle } = useSorted(comparison.rows, SORT, { key: 'cost', dir: 'desc' });
-  const th = (label: string, key: string) => <SortTh label={label} sortKey={key} sort={sort} onSort={toggle} />;
+  const { sorted: branchSorted, sort: branchSort, toggle: branchToggle } = useSorted(comparison.rows, BRANCH_SORT, { key: 'cost', dir: 'desc' });
+  const bth = (label: string, key: string) => <SortTh label={label} sortKey={key} sort={branchSort} onSort={branchToggle} />;
+
+  const ranking = useMemo(
+    () => machineRanking(data.machines, data.logs, data.branchMap, lastMaintenanceByMachine(data.machines, data.allLogs), data.now),
+    [data],
+  );
+  const filtered = useMemo(
+    () => ranking.filter(r => searchMatches(search, r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status])),
+    [ranking, search],
+  );
+  const { sorted: machineSorted, sort: machineSort, toggle: machineToggle } = useSorted(filtered, RANKING_SORT, { key: 'cost', dir: 'desc' });
+  const mth = (label: string, key: string, align: 'left' | 'right' = 'right') => <SortTh label={label} sortKey={key} sort={machineSort} onSort={machineToggle} align={align} />;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -130,36 +171,36 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         icon={Building2}
         bodyClass=""
         actions={canExport && (
-          <CsvButton filename="sravnenie_filialov" disabled={!sorted.length} headers={CSV_HEADERS}
-            rows={() => [...sorted.map(csvRow), csvRow(comparison.total)]} />
+          <CsvButton filename="sravnenie_filialov" disabled={!branchSorted.length} headers={CSV_BRANCH_HEADERS}
+            rows={() => [...branchSorted.map(csvBranchRow), csvBranchRow(comparison.total)]} />
         )}
         footer="Нажмите на филиал, чтобы перейти в его паспорт. Затраты и аварии — выполненные работы за период."
       >
-        {sorted.length === 0 ? (
+        {branchSorted.length === 0 ? (
           <EmptyState text="Нет филиалов по выбранным фильтрам" />
         ) : (
           <div className="report-scroll overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className={THEAD_ROW}>
-                  <SortTh label="Филиал" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6" />
-                  {th('Станков', 'machines')}
-                  {th('В работе', 'active')}
-                  {th('ТО', 'maintenance')}
-                  {th('Ремонт', 'repair')}
-                  {th('Списано', 'retired')}
-                  {th('Ток', 'amps')}
-                  {th('Ток в работе', 'activeAmps')}
-                  {th('Ост. стоимость', 'residual')}
-                  {th('Затраты', 'cost')}
-                  {th('Аварий', 'emergencies')}
-                  {th('Просрочено ТО', 'overdue')}
-                  {th('Склад', 'stock')}
-                  {th('Польз.', 'users')}
+                  <SortTh label="Филиал" sortKey="name" sort={branchSort} onSort={branchToggle} className="sm:pl-6" />
+                  {bth('Станков', 'machines')}
+                  {bth('В работе', 'active')}
+                  {bth('ТО', 'maintenance')}
+                  {bth('Ремонт', 'repair')}
+                  {bth('Списано', 'retired')}
+                  {bth('Ток', 'amps')}
+                  {bth('Ток в работе', 'activeAmps')}
+                  {bth('Ост. стоимость', 'residual')}
+                  {bth('Затраты', 'cost')}
+                  {bth('Аварий', 'emergencies')}
+                  {bth('Просрочено ТО', 'overdue')}
+                  {bth('Склад', 'stock')}
+                  {bth('Польз.', 'users')}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {sorted.map(r => {
+                {branchSorted.map(r => {
                   const clickable = r.branchId !== NO_BRANCH_ID;
                   return (
                     <tr key={r.branchId} className={`transition-colors ${clickable ? 'hover:bg-blue-50/40 cursor-pointer' : ''}`}
@@ -188,13 +229,91 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               <tfoot>
                 <tr className={TFOOT_ROW}>
                   <td className={`${TD_FIRST} text-[11px] uppercase tracking-widest`}>Итого</td>
-                  {csvRow(comparison.total).slice(1).map((v, i) => (
+                  {csvBranchRow(comparison.total).slice(1).map((v, i) => (
                     <td key={i} className={`${TD} text-right font-mono whitespace-nowrap`}>
                       {[5, 6].includes(i) ? formatAmps(Number(v)) : [7, 8, 11].includes(i) ? formatMoney(Number(v)) : v}
                     </td>
                   ))}
                 </tr>
               </tfoot>
+            </table>
+          </div>
+        )}
+      </Panel>
+
+      <Panel
+        title="Рейтинг станков"
+        icon={AlertTriangle}
+        iconClass="text-amber-500"
+        bodyClass=""
+        actions={
+          <>
+            <SearchInput value={search} onChange={setSearch} placeholder="Станок, модель, филиал…" />
+            {canExport && canEquipment && (
+              <CsvButton
+                filename="reiting_stankov"
+                disabled={!machineSorted.length}
+                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная стоимость, $',
+                  'Затраты на ТО за период, $', 'Затраты / стоимость, %', 'Аварий', 'MTBF, дней', 'Последнее ТО']}
+                rows={() => machineSorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status],
+                  r.ageYears, r.residual, r.cost, r.ratio === Infinity ? '>100' : r.ratio, r.emergencies, r.mtbfDays,
+                  r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
+              />
+            )}
+          </>
+        }
+        footer="Выше 50% — повышенные затраты, выше 80% — рекомендуется рассмотреть замену. Нажмите на станок, чтобы открыть его карточку."
+      >
+        {machineSorted.length === 0 ? (
+          <EmptyState text={search ? 'Ничего не найдено' : 'Нет оборудования по выбранным фильтрам'} />
+        ) : (
+          <div className={`${SCROLL_BOX} max-h-[600px]`}>
+            <table className="w-full text-left text-sm">
+              <thead className="sticky top-0 bg-white z-10">
+                <tr className={THEAD_ROW}>
+                  <SortTh label="Станок" sortKey="name" sort={machineSort} onSort={machineToggle} className="sm:pl-6" />
+                  {mth('Филиал', 'branch', 'left')}
+                  {mth('Статус', 'status', 'left')}
+                  {mth('Возраст', 'age')}
+                  {mth('Ост. стоимость', 'residual')}
+                  {mth('Затраты', 'cost')}
+                  {mth('Затраты / стоим.', 'ratio')}
+                  {mth('Аварий', 'emergencies')}
+                  {mth('MTBF', 'mtbf')}
+                  {mth('Посл. ТО', 'last')}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {machineSorted.map(r => {
+                  const level = ratioLevel(r.ratio);
+                  return (
+                    <tr key={r.id}
+                      className={`cursor-pointer transition-colors ${level === 'critical' ? 'bg-rose-50/60 hover:bg-rose-50' : level === 'warn' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-blue-50/30'}`}
+                      onClick={() => onSelectMachine(r.id)}>
+                      <td className={`${TD_FIRST} min-w-44`}>
+                        <p className="font-bold text-slate-800 leading-tight">{r.name}</p>
+                        <p className="text-[10px] text-slate-400 font-mono uppercase">{[r.manufacturer, r.model].filter(Boolean).join(' · ')}</p>
+                      </td>
+                      <td className={`${TD} text-slate-600 min-w-32`}>{r.branchName}</td>
+                      <td className={TD}><StatusBadge label={MACHINE_STATUS_LABELS[r.status]} className={STATUS_BADGE[r.status]} /></td>
+                      <td className={`${TD} text-right font-mono whitespace-nowrap ${r.ageYears === null ? 'text-slate-300' : ''}`}>{r.ageYears === null ? '—' : `${formatNumber(r.ageYears, 1)} г.`}</td>
+                      <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
+                      <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
+                      <td className={`${TD} text-right whitespace-nowrap`}>
+                        <span className={`font-mono font-black ${level === 'critical' ? 'text-rose-700' : level === 'warn' ? 'text-amber-700' : 'text-slate-600'}`}>{formatRatio(r.ratio)}</span>
+                        {level === 'critical' && (
+                          <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[9px] font-black uppercase">
+                            <AlertTriangle className="w-3 h-3" />рассмотреть замену
+                          </span>
+                        )}
+                      </td>
+                      <td className={`${TD} text-right font-mono ${r.emergencies ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{r.emergencies}</td>
+                      <td className={`${TD} text-right font-mono whitespace-nowrap ${r.mtbfDays === null ? 'text-slate-300' : ''}`}>{r.mtbfDays === null ? '—' : `${formatNumber(r.mtbfDays, 1)} дн.`}</td>
+                      <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
             </table>
           </div>
         )}
