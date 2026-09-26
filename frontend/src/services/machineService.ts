@@ -11,6 +11,10 @@ import {
   Transfer,
   ActivityLog,
   UnitOfMeasure,
+  AnalyticsTransfer,
+  AnalyticsReservation,
+  AnalyticsUsersActivity,
+  AnalyticsAttachmentsSummary,
 } from '../types';
 import { parseDateKey, toLocalDateKey } from '../utils/dates';
 
@@ -61,6 +65,16 @@ function toIsoStrings<T extends Record<string, any>>(obj: T): T {
     if (out[key] instanceof Date) out[key] = out[key].toISOString();
   }
   return out;
+}
+
+/** "?a=1&b=2" from the defined, non-empty, non-'all' params ('' when there are none). */
+function toQuery(params: Record<string, string | number | undefined>): string {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '' && value !== 'all') search.set(key, String(value));
+  });
+  const query = search.toString();
+  return query ? `?${query}` : '';
 }
 
 /** Maps a raw backend attachment row (storageKey/thumbnailKey) to the frontend's url-based shape. */
@@ -340,6 +354,23 @@ export const machineService = {
     return Object.entries(yearlyData)
       .map(([year, value]) => ({ year, value }))
       .sort((a, b) => parseInt(a.year) - parseInt(b.year));
+  },
+
+  // --- Analytics (read-only aggregates for the reports tab, branch-scoped on the backend) ---
+  async getAnalyticsTransfers(params: { from?: string; to?: string; branchId?: string; machineId?: string } = {}): Promise<AnalyticsTransfer[]> {
+    return apiClient.get<AnalyticsTransfer[]>(`/analytics/transfers${toQuery(params)}`);
+  },
+
+  async getAnalyticsReservations(params: { branchId?: string } = {}): Promise<AnalyticsReservation[]> {
+    return apiClient.get<AnalyticsReservation[]>(`/analytics/reservations${toQuery(params)}`);
+  },
+
+  async getAnalyticsUsersActivity(params: { from?: string; to?: string; branchId?: string; tzOffset?: number } = {}): Promise<AnalyticsUsersActivity> {
+    return apiClient.get<AnalyticsUsersActivity>(`/analytics/users-activity${toQuery(params)}`);
+  },
+
+  async getAnalyticsAttachmentsSummary(params: { branchId?: string } = {}): Promise<AnalyticsAttachmentsSummary> {
+    return apiClient.get<AnalyticsAttachmentsSummary>(`/analytics/attachments-summary${toQuery(params)}`);
   },
 
   // --- History/Activity Logs ---

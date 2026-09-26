@@ -3,6 +3,7 @@ import { emitEntity } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { getDiffDetails, writeActivity } from '../../utils/activityLog';
 import { adjustPartQuantity, assertPartsAvailable } from '../../utils/partsStock';
+import { costFields, partsTotal, priceParts } from '../../utils/logCosts';
 import {
   assertMachineInScope,
   assertSparePartsInScope,
@@ -18,7 +19,16 @@ interface Actor {
 
 function toApi(schedule: any) {
   const { parts, ...rest } = schedule;
-  return { ...rest, partsUsed: parts?.map((p: any) => ({ partId: p.partId, quantity: Number(p.quantity), name: p.name })) };
+  return {
+    ...rest,
+    partsUsed: parts?.map((p: any) => ({
+      partId: p.partId,
+      quantity: Number(p.quantity),
+      name: p.name,
+      // Present on log parts (price at save time); schedule parts have none.
+      ...(p.unitPrice !== null && p.unitPrice !== undefined ? { unitPrice: Number(p.unitPrice) } : {}),
+    })),
+  };
 }
 
 function logTypeForTask(taskType?: string | null): 'routine' | 'repair' | 'inspection' {
@@ -170,6 +180,7 @@ export const schedulesService = {
       }
       await tx.partReservation.deleteMany({ where: { sourceType: 'toir_schedule', sourceId: id } });
 
+      const priced = await priceParts(tx, original.parts);
       const createdLog = await tx.maintenanceLog.create({
         data: {
           machineId: original.machineId,
@@ -179,7 +190,7 @@ export const schedulesService = {
           status: 'completed',
           taskType: original.taskType ?? 'routine',
           notes: `Выполнено ТО: ${original.taskName}${original.description ? ` (${original.description})` : ''}`,
-          cost: original.laborCost ?? 0,
+          ...costFields(Number(original.laborCost ?? 0), partsTotal(priced)),
           performedBy: actor.userId,
           scheduleId: original.id,
           nextMaintenanceDate: recurring ? nextDue : null,
@@ -189,7 +200,7 @@ export const schedulesService = {
       });
       if (original.parts.length) {
         await tx.maintenanceLogPart.createMany({
-          data: original.parts.map((p) => ({ logId: createdLog.id, partId: p.partId, quantity: p.quantity, name: p.name })),
+          data: priced.map((p) => ({ logId: createdLog.id, partId: p.partId, quantity: p.quantity, name: p.name, unitPrice: p.unitPrice })),
         });
       }
 

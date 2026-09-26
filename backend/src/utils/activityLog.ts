@@ -65,7 +65,9 @@ const FIELD_LABELS: Record<string, string> = {
   technicianName: 'Техник',
   type: 'Тип работы',
   notes: 'Заметки',
-  cost: 'Затраты',
+  cost: 'Затраты (итого)',
+  laborCost: 'Стоимость работ',
+  partsCost: 'Стоимость запчастей',
 };
 
 const STATUS_LABELS: Record<string, string> = {

@@ -19,6 +19,7 @@ import { activityHistoryRouter } from './modules/activityHistory/activityHistory
 import { usersRouter } from './modules/users/users.routes';
 import { rolesRouter } from './modules/roles/roles.routes';
 import { adminRouter } from './modules/admin/admin.routes';
+import { analyticsRouter } from './modules/analytics/analytics.routes';
 
 export function createApp() {
   const app = express();
@@ -59,6 +60,7 @@ export function createApp() {
   api.use('/users', usersRouter);
   api.use('/roles', rolesRouter);
   api.use('/admin', adminRouter);
+  api.use('/analytics', analyticsRouter);
 
   app.use('/api/v1', api);
 

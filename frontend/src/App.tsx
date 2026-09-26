@@ -480,7 +480,7 @@ export default function App() {
               <Settings className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-slate-900 mb-1 tracking-tight">StankoBase Pro</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-center text-slate-900 mb-1 tracking-tight">Silknode Machine Pro</h1>
           <p className="text-slate-500 text-center mb-6 text-xs sm:text-sm font-medium">Система учета промышленного оборудования</p>
 
           {/* Credentials Login Form */}
@@ -543,7 +543,7 @@ export default function App() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-[10px] text-slate-400 font-mono">Enterprise Edition v1.3 • StankoBase RBAC</p>
+          <p className="mt-5 text-center text-[10px] text-slate-400 font-mono">Enterprise Edition v1.3 • Silknode RBAC</p>
         </motion.div>
       </div>
     );
@@ -606,7 +606,7 @@ export default function App() {
                     <Settings className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <span className="font-bold text-base tracking-tight block">StankoBase Pro</span>
+                    <span className="font-bold text-base tracking-tight block">Silknode Machine Pro</span>
                     <span className="text-[10px] text-slate-400 font-mono">Мобильная версия</span>
                   </div>
                 </div>
@@ -703,7 +703,7 @@ export default function App() {
           <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
             <Settings className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight">StankoBase Pro</span>
+          <span className="font-bold text-lg tracking-tight">Silknode Machine Pro</span>
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-1">
@@ -1339,7 +1339,19 @@ export default function App() {
               role={currentRole}
             />
           ) : activeTab === 'reports' ? (
-            <ReportsTab machines={machines} branches={branches} logs={allLogs} parts={spareParts} schedules={allSchedules} role={currentRole} />
+            <ReportsTab
+              machines={machines}
+              branches={branches}
+              logs={allLogs}
+              parts={spareParts}
+              schedules={allSchedules}
+              activityLogs={activityLogs}
+              users={appUsers}
+              roles={appRoles}
+              units={units}
+              role={currentRole}
+              onOpenMachine={canOpenMachineManagement ? setSelectedMachine : undefined}
+            />
           ) : activeTab === 'history' ? (
             <HistoryTab 
               logs={activityLogs} 
@@ -3870,7 +3882,9 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
       await machineService.addLog({
         ...formData,
         scheduleId: scheduleId || '',
-        cost: formData.cost > 0 ? formData.cost : partsCostSum
+        // Labor only; the backend adds the parts at today's prices and stores the total as `cost`.
+        laborCost: formData.cost,
+        cost: Math.round((formData.cost + partsCostSum) * 100) / 100
       });
       
       // If this corresponds to a schedule, update it
@@ -4140,7 +4154,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
                 </div>
               ))}
               <div className="ml-auto text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5">
-                Итого: {partsCostSum.toLocaleString()} $
+                Запчасти: {partsCostSum.toLocaleString()} $ · Итого с работами: {(Math.round(((formData.cost || 0) + partsCostSum) * 100) / 100).toLocaleString()} $
               </div>
             </div>
           )}
@@ -4198,7 +4212,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
     date: (log.date || new Date().toISOString()).split('T')[0],
     type: log.type || 'routine',
     notes: log.notes || '',
-    cost: log.cost || 0,
+    cost: log.laborCost ?? log.cost ?? 0,
     partsUsed: log.partsUsed || [],
     imageUrl: log.imageUrl || '',
     imageUrls: log.imageUrls && log.imageUrls.length > 0 ? log.imageUrls : log.imageUrl ? [log.imageUrl] : []
@@ -4301,9 +4315,12 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
     return () => { active = false; };
   }, [log.machineId, log.scheduleId, log.notes, nextMaintenanceDate]);
 
+  // Parts already on the log keep the price they were saved with (the backend does the same).
+  const savedPartPrices = new Map((log.partsUsed || []).filter(p => p.unitPrice !== undefined).map(p => [p.partId, p.unitPrice as number]));
   const partsCostSum = Math.round(formData.partsUsed.reduce((acc, p) => {
     const matchedPart = parts.find(spare => spare.id === p.partId);
-    return acc + (matchedPart ? (matchedPart.unitPrice || 0) * p.quantity : 0);
+    const price = savedPartPrices.get(p.partId) ?? matchedPart?.unitPrice ?? 0;
+    return acc + price * p.quantity;
   }, 0) * 100) / 100;
 
   const addPart = () => {
@@ -4359,10 +4376,10 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
     setLoading(true);
     setError(null);
     try {
-      const finalCost = formData.cost > 0 ? formData.cost : partsCostSum;
       await machineService.updateLog(log.id, {
         ...formData,
-        cost: finalCost,
+        laborCost: formData.cost,
+        cost: Math.round((formData.cost + partsCostSum) * 100) / 100,
         nextMaintenanceDate: nextMaintenanceDate,
         scheduleId: selectedScheduleId
       });
@@ -4423,7 +4440,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
           <input required type="date" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
         </div>
         <div className="col-span-1">
-          <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость ($)</label>
+          <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 mb-0.5 block px-0.5">Стоимость работ ($)</label>
           <input type="number" className="min-h-10 w-full px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold h-7 bg-white focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0 $" value={formData.cost || ''} onChange={e => setFormData({...formData, cost: Number(e.target.value)})} />
         </div>
       </div>
@@ -4507,7 +4524,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
               </div>
             ))}
             <div className="ml-auto text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5">
-              Итого: {partsCostSum.toLocaleString()} $
+              Запчасти: {partsCostSum.toLocaleString()} $ · Итого с работами: {(Math.round(((formData.cost || 0) + partsCostSum) * 100) / 100).toLocaleString()} $
             </div>
           </div>
         )}
@@ -5639,6 +5656,7 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
           status: 'completed',
           taskType: schedule.taskType || 'routine',
           notes: `Выполнено ТО: ${schedule.taskName}${schedule.description ? ` (${schedule.description})` : ` — ${category.goal}`}`,
+          laborCost: schedule.laborCost || 0,
           cost: schedule.laborCost || 0,
           partsUsed: [],
           nextMaintenanceDate: '',

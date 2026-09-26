@@ -117,8 +117,12 @@ export interface MaintenanceLog {
   status?: LogStatus;
   taskType?: ToirTaskType;
   notes: string;
+  /** Total = laborCost + partsCost (computed by the backend). */
   cost: number;
-  partsUsed?: { partId: string; quantity: number; name: string }[];
+  laborCost?: number;
+  /** Parts at the prices stored when the log was saved (or completed, for planned logs). */
+  partsCost?: number;
+  partsUsed?: { partId: string; quantity: number; name: string; unitPrice?: number }[];
   performedBy: string;
   scheduleId?: string;
   nextMaintenanceDate?: string;
@@ -188,3 +192,82 @@ export interface AppUser {
   isSuperadmin?: boolean; // Суперадмин из .env: всегда все права, удалить нельзя
 }
 
+
+// --- Analytics (GET /analytics/*) ---
+
+export interface AnalyticsTransfer {
+  id: string;
+  date: string;
+  machineId: string;
+  machineName: string;
+  machineModel: string;
+  fromBranchId: string | null;
+  fromBranchName: string | null;
+  toBranchId: string;
+  toBranchName: string;
+  createdBy: string | null;
+  createdByName: string | null;
+}
+
+export interface AnalyticsReservation {
+  id: string;
+  partId: string;
+  partName: string;
+  sku: string;
+  unit: string | null;
+  isArchived: boolean;
+  quantity: number;
+  unitPrice: number;
+  value: number;
+  sourceType: 'toir_schedule' | 'maintenance_log';
+  sourceId: string;
+  sourceName: string | null;
+  sourceDate: string | null;
+  machineId: string | null;
+  machineName: string | null;
+  /** Reserved by a machine of a branch outside the viewer's scope - source details are hidden. */
+  isForeign: boolean;
+  createdAt: string;
+}
+
+export type ActivityActionType = ActivityLog['actionType'];
+
+export interface AnalyticsUserActivity {
+  id: string;
+  username: string;
+  fullName: string;
+  email: string;
+  status: 'active' | 'blocked';
+  position: string | null;
+  lastLogin: string | null;
+  createdAt: string;
+  roleId: string | null;
+  roleName: string | null;
+  roleColor: string | null;
+  branchIds: string[];
+  actions: Record<ActivityActionType, number>;
+  total: number;
+}
+
+export interface AnalyticsUsersActivity {
+  users: AnalyticsUserActivity[];
+  byActionType: Record<ActivityActionType, number>;
+  byEntityType: Partial<Record<ActivityLog['entityType'] | 'other', number>>;
+  daily: { date: string; count: number }[];
+  total: number;
+  unattributed: number;
+}
+
+export interface AnalyticsAttachmentsSummary {
+  totals: { files: number; size: number; machines: number; machinesWithFiles: number; machinesWithoutFiles: number };
+  byType: { type: MachineAttachmentType; count: number; size: number }[];
+  machines: {
+    machineId: string;
+    name: string;
+    branchId: string | null;
+    status: MachineStatus;
+    files: number;
+    size: number;
+    byType: Partial<Record<MachineAttachmentType, { count: number; size: number }>>;
+  }[];
+}

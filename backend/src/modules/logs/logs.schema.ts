@@ -18,7 +18,10 @@ export const createLogSchema = z.object({
   status: z.enum(['planned', 'completed']).default('completed'),
   taskType: toirTaskType.optional(),
   notes: z.string().optional(),
-  cost: z.coerce.number().min(0).default(0),
+  /** Labor only; parts cost and the total (`cost`) are computed on the server from the used parts. */
+  laborCost: z.coerce.number().min(0).optional(),
+  /** Legacy total/labor field from clients that predate laborCost - see resolveLaborCost(). */
+  cost: z.coerce.number().min(0).optional(),
   scheduleId: z.string().uuid().optional(),
   nextMaintenanceDate: nullableDate,
   imageUrl: z.string().optional(),

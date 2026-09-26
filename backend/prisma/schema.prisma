@@ -257,7 +257,11 @@ model MaintenanceLog {
   status              LogStatus             @default(completed)
   taskType            ToirTaskType?         @map("task_type")
   notes               String?
+  /// Total = laborCost + partsCost.
   cost                Decimal               @default(0) @db.Decimal(14, 2)
+  laborCost           Decimal               @default(0) @map("labor_cost") @db.Decimal(14, 2)
+  /// Sum of parts at the unit prices stored on the log's parts when they were saved.
+  partsCost           Decimal               @default(0) @map("parts_cost") @db.Decimal(14, 2)
   performedBy         String?               @map("performed_by")
   scheduleId          String?               @map("schedule_id")
   schedule            MaintenanceSchedule?  @relation(fields: [scheduleId], references: [id])
@@ -276,8 +280,10 @@ model MaintenanceLogPart {
   log      MaintenanceLog @relation(fields: [logId], references: [id], onDelete: Cascade)
   partId   String         @map("part_id")
   part     SparePart      @relation(fields: [partId], references: [id])
-  quantity Decimal        @db.Decimal(14, 3)
-  name     String
+  quantity  Decimal        @db.Decimal(14, 3)
+  name      String
+  /// Part price at the time the log was saved/completed, so later price changes don't rewrite history.
+  unitPrice Decimal?       @map("unit_price") @db.Decimal(14, 2)
 
   @@id([logId, partId])
   @@map("maintenance_log_parts")

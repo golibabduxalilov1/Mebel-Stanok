@@ -133,7 +133,7 @@ export const UserModal: React.FC<UserModalProps> = ({
       await onSave({
         fullName: fullName.trim(),
         username: username.trim().toLowerCase(),
-        email: email.trim() || `${username.trim().toLowerCase()}@stankobase.local`,
+        email: email.trim() || `${username.trim().toLowerCase()}@silknode.local`,
         password: password.trim(),
         roleId: roleId || (roles[0]?.id ?? 'role-tech'),
         roleName: selectedRole?.name || 'Пользователь',

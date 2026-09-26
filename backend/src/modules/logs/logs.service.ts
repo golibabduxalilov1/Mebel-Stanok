@@ -3,6 +3,7 @@ import { emitEntity } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { getDiffDetails, writeActivity } from '../../utils/activityLog';
 import { adjustPartQuantity, assertPartsAvailable, diffPartUsage } from '../../utils/partsStock';
+import { costFields, partsTotal, priceParts, resolveLaborCost } from '../../utils/logCosts';
 import {
   assertMachineInScope,
   assertSparePartsInScope,
@@ -18,7 +19,15 @@ interface Actor {
 
 function toApi(log: any) {
   const { parts, ...rest } = log;
-  return { ...rest, partsUsed: parts?.map((p: any) => ({ partId: p.partId, quantity: Number(p.quantity), name: p.name })) };
+  return {
+    ...rest,
+    partsUsed: parts?.map((p: any) => ({
+      partId: p.partId,
+      quantity: Number(p.quantity),
+      name: p.name,
+      unitPrice: p.unitPrice === null || p.unitPrice === undefined ? undefined : Number(p.unitPrice),
+    })),
+  };
 }
 
 function logTypeLabel(type?: string | null): string {
@@ -58,7 +67,7 @@ export const logsService = {
    * until it's later confirmed with `complete()`.
    */
   async create(input: CreateLogInput, actor: Actor, scope: BranchScope) {
-    const { partsUsed, ...data } = input;
+    const { partsUsed, laborCost, cost, ...data } = input;
     const status = input.status ?? 'completed';
     await assertMachineInScope(scope, data.machineId);
     await assertSparePartsInScope(scope, (partsUsed ?? []).map((p) => p.partId));
@@ -68,11 +77,15 @@ export const logsService = {
         await assertPartsAvailable(tx, partsUsed);
       }
 
-      const created = await tx.maintenanceLog.create({ data: { ...data, status, performedBy: actor.userId } });
+      const priced = await priceParts(tx, partsUsed ?? []);
+      const partsCost = partsTotal(priced);
+      const created = await tx.maintenanceLog.create({
+        data: { ...data, status, performedBy: actor.userId, ...costFields(resolveLaborCost({ laborCost, cost }, partsCost), partsCost) },
+      });
 
       if (partsUsed?.length) {
         await tx.maintenanceLogPart.createMany({
-          data: partsUsed.map((p) => ({ logId: created.id, partId: p.partId, quantity: p.quantity, name: p.name })),
+          data: priced.map((p) => ({ logId: created.id, partId: p.partId, quantity: p.quantity, name: p.name, unitPrice: p.unitPrice })),
         });
         if (status === 'completed') {
           for (const p of partsUsed) {
@@ -125,10 +138,10 @@ export const logsService = {
       throw Errors.badRequest('Статус записи меняется только через отдельное действие "Выполнено"', 'STATUS_LOCKED');
     }
 
-    const { partsUsed, status: _ignoredStatus, ...data } = input;
+    const { partsUsed, status: _ignoredStatus, laborCost, cost, ...data } = input;
 
     const log = await prisma.$transaction(async (tx) => {
-      const updated = await tx.maintenanceLog.update({ where: { id }, data });
+      let partsCost = Number(original.partsCost);
 
       if (partsUsed) {
         const before = original.parts.map((p) => ({ partId: p.partId, quantity: Number(p.quantity), name: p.name }));
@@ -149,13 +162,28 @@ export const logsService = {
           }
         }
 
+        // Parts already on the log keep the price they were saved with; newly added ones get today's price.
+        const keep = new Map(
+          original.parts.filter((p) => p.unitPrice !== null).map((p) => [p.partId, Number(p.unitPrice)] as [string, number]),
+        );
+        const priced = await priceParts(tx, partsUsed, keep);
+        partsCost = partsTotal(priced);
         await tx.maintenanceLogPart.deleteMany({ where: { logId: id } });
-        if (partsUsed.length) {
+        if (priced.length) {
           await tx.maintenanceLogPart.createMany({
-            data: partsUsed.map((p) => ({ logId: id, partId: p.partId, quantity: p.quantity, name: p.name })),
+            data: priced.map((p) => ({ logId: id, partId: p.partId, quantity: p.quantity, name: p.name, unitPrice: p.unitPrice })),
           });
         }
       }
+
+      const costsChanged = Boolean(partsUsed) || laborCost !== undefined || cost !== undefined;
+      const updated = await tx.maintenanceLog.update({
+        where: { id },
+        data: {
+          ...data,
+          ...(costsChanged ? costFields(resolveLaborCost({ laborCost, cost }, partsCost, Number(original.laborCost)), partsCost) : {}),
+        },
+      });
 
       const diffDetails = getDiffDetails(toApi(original), input as Record<string, unknown>);
       await writeActivity(tx, {
@@ -193,7 +221,16 @@ export const logsService = {
       for (const p of original.parts) {
         await adjustPartQuantity(tx, p.partId, -Number(p.quantity));
       }
-      const updated = await tx.maintenanceLog.update({ where: { id }, data: { status: 'completed' } });
+      // Stock is consumed now, so the parts are priced at today's prices (the planned figure was an estimate).
+      const priced = await priceParts(tx, original.parts);
+      for (const p of priced) {
+        await tx.maintenanceLogPart.update({ where: { logId_partId: { logId: id, partId: p.partId } }, data: { unitPrice: p.unitPrice } });
+      }
+      const partsCost = partsTotal(priced);
+      const updated = await tx.maintenanceLog.update({
+        where: { id },
+        data: { status: 'completed', ...costFields(Number(original.laborCost), partsCost) },
+      });
 
       await writeActivity(tx, {
         actionType: 'update',

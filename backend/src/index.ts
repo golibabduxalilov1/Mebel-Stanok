@@ -12,7 +12,7 @@ async function main() {
   initSocket(server);
 
   server.listen(env.PORT, () => {
-    console.log(`StankoBase API listening on http://localhost:${env.PORT}`);
+    console.log(`Silknode Machine Pro API listening on http://localhost:${env.PORT}`);
   });
 }
 
