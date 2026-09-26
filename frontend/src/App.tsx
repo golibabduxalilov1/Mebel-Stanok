@@ -1402,7 +1402,6 @@ export default function App() {
               logs={allLogs}
               parts={spareParts}
               schedules={allSchedules}
-              activityLogs={activityLogs}
               users={appUsers}
               roles={appRoles}
               units={units}

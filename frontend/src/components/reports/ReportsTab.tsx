@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowRightLeft, BarChart3, Boxes, Building2, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert, Users, Wrench, Zap,
+  BarChart3, Boxes, Building2, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert, Wrench,
 } from 'lucide-react';
-import type { ActivityLog, AppUser, Branch, Machine, MachineStatus, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
+import type { Branch, Machine, MachineStatus, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
 import { canPerformAction } from '../../services/userService';
 import {
   AttentionTab, buildReportData, defaultDateRange, detectPreset, formatDateTime, formatPeriod, LOG_TYPES, LOG_TYPE_LABELS, MACHINE_STATUS_LABELS,
@@ -11,12 +11,9 @@ import {
 import { OverviewTab } from './tabs/OverviewTab';
 import { BranchesTab } from './tabs/BranchesTab';
 import { EquipmentTab } from './tabs/EquipmentTab';
-import { PowerTab } from './tabs/PowerTab';
 import { MaintenanceTab } from './tabs/MaintenanceTab';
 import { InventoryTab } from './tabs/InventoryTab';
-import { TransfersTab } from './tabs/TransfersTab';
-import { UsersActivityTab } from './tabs/UsersActivityTab';
-type ReportTabId = 'overview' | 'branches' | 'equipment' | 'power' | 'maintenance' | 'inventory' | 'transfers' | 'users';
+type ReportTabId = 'overview' | 'branches' | 'equipment' | 'maintenance' | 'inventory';
 
 const STORAGE_KEY = 'mebel-stanok.reports.v2';
 const STATUS_VALUES: StatusFilter[] = ['all', 'completed', 'planned'];
@@ -76,13 +73,12 @@ const PRINT_CSS = `
 const SELECT_CLASS = 'w-full p-3 rounded-xl border border-slate-200 text-sm font-semibold bg-slate-50 min-w-0';
 const LABEL_CLASS = 'text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2';
 
-export function ReportsTab({ machines, branches, logs, parts, schedules, activityLogs = [], users = [], roles = [], units = [], role, onOpenMachine }: {
+export function ReportsTab({ machines, branches, logs, parts, schedules, users = [], roles = [], units = [], role, onOpenMachine }: {
   machines: Machine[];
   branches: Branch[];
   logs: MaintenanceLog[];
   parts: SparePart[];
   schedules: MaintenanceSchedule[];
-  activityLogs?: ActivityLog[];
   users?: AppUser[];
   roles?: Role[];
   units?: UnitOfMeasure[];
@@ -98,23 +94,18 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, activit
   const canToir = can('reports.toir_report');
   const canInventory = can('reports.inventory_report');
   const canSummary = can('reports.summary_report');
-  const canHistory = can('history.activity_log');
   const exportSummary = can('reports.summary_report', 'export');
   const exportEquipment = can('reports.equipment_report', 'export');
   const exportToir = can('reports.toir_report', 'export');
   const exportInventory = can('reports.inventory_report', 'export');
-  const exportHistory = can('history.activity_log', 'export');
   const canPrint = exportSummary || exportEquipment || exportToir || exportInventory;
 
   const tabs = [
     { id: 'overview' as const, label: 'Обзор', icon: LayoutDashboard, allowed: canSummary },
     { id: 'branches' as const, label: 'Филиалы', icon: Building2, allowed: canSummary },
     { id: 'equipment' as const, label: 'Оборудование', icon: Cog, allowed: canEquipment },
-    { id: 'power' as const, label: 'Электрическая нагрузка', icon: Zap, allowed: canEquipment },
     { id: 'maintenance' as const, label: 'ТОиР и ремонты', icon: Wrench, allowed: canToir },
     { id: 'inventory' as const, label: 'Склад', icon: Boxes, allowed: canInventory },
-    { id: 'transfers' as const, label: 'Перемещения', icon: ArrowRightLeft, allowed: canEquipment || canSummary },
-    { id: 'users' as const, label: 'Пользователи и активность', icon: Users, allowed: canHistory },
   ].filter(t => t.allowed);
   const currentTab = tabs.some(t => t.id === activeTab) ? activeTab : tabs[0]?.id;
   const currentTabLabel = tabs.find(t => t.id === currentTab)?.label ?? '';
@@ -326,11 +317,8 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, activit
       {currentTab === 'equipment' && (
         <EquipmentTab data={data} canExport={exportEquipment} onSelectMachine={id => update({ machineId: id })} onOpenMachine={openMachine} />
       )}
-      {currentTab === 'power' && <PowerTab data={data} canExport={exportEquipment} onOpenMachine={openMachine} />}
       {currentTab === 'maintenance' && <MaintenanceTab data={data} canExport={exportToir} />}
       {currentTab === 'inventory' && <InventoryTab data={data} canExport={exportInventory} />}
-      {currentTab === 'transfers' && <TransfersTab data={data} canExport={exportEquipment || exportSummary} />}
-      {currentTab === 'users' && <UsersActivityTab data={data} canExport={exportHistory} recentActivity={activityLogs} />}
     </div>
   );
 }
