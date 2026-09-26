@@ -620,7 +620,7 @@ export default function App() {
                 <button
                   onClick={() => { setActiveTab('all'); setIsMobileMenuOpen(false); }}
                   className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                  title="Asosiy sahifaga o'tish"
+                  title="На главную страницу"
                 >
                   <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-md">
                     <Settings className="w-5 h-5 text-white" />
@@ -724,7 +724,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('all')}
               className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
-              title="Asosiy sahifaga o'tish"
+              title="На главную страницу"
             >
               <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center shrink-0">
                 <Settings className="w-5 h-5 text-white" />

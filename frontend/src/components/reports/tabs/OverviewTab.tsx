@@ -55,10 +55,10 @@ const RANKING_SORT = {
   last: (r: MachineRankingRow) => r.lastMaintenance || null,
 };
 
-const CSV_BRANCH_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Списано', 'Ток всего, А',
-  'Остаточная амортизация, $', 'Ремонт за период, $', 'Аварий', 'Просрочено ТО', 'Склад, $', 'Пользователей'];
+const CSV_BRANCH_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Ток всего, А',
+  'Остаточная амортизация, $', 'Ремонт за период, $', 'Склад, $'];
 const csvBranchRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
-  r.byStatus.retired, r.totalAmps, r.residual, r.cost, r.emergencies, r.overdue, r.stockValue, r.users];
+  r.totalAmps, r.residual, r.cost, r.stockValue];
 
 function ChangeBadge({ change, invert = false }: { change: number | null | undefined; invert?: boolean }) {
   if (change === undefined) return <span>Нет периода для сравнения</span>;
@@ -148,19 +148,19 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
     <div className="space-y-4 sm:space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <KpiCard
-          label="Umumiy stanoklar soni"
+          label="Всего станков"
           value={formatNumber(stats.total)}
-          hint={`Faol: ${stats.inService}`}
+          hint={`В работе: ${stats.inService}`}
         />
         <KpiCard
-          label="Umumiy skladda xarajat"
+          label="Итого на складе"
           value={formatMoney(stock.value)}
-          hint={`${formatNumber(stock.items)} ta pozitsiya`}
+          hint={`${formatNumber(stock.items)} позиций`}
         />
         <KpiCard
-          label="Umumiy Ремонт"
+          label="Итого ремонт"
           value={formatMoney(stats.cost)}
-          hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Davr uchun xarajatlar'}
+          hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Расходы за период'}
         />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -210,14 +210,10 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {bth('В работе', 'active')}
                   {bth('ТО', 'maintenance')}
                   {bth('Ремонт', 'repair')}
-                  {bth('Списано', 'retired')}
                   {bth('Ток', 'amps')}
                   {bth('Ост. амортизация', 'residual')}
                   {bth('Ремонт', 'cost')}
-                  {bth('Аварий', 'emergencies')}
-                  {bth('Просрочено ТО', 'overdue')}
                   {bth('Склад', 'stock')}
-                  {bth('Польз.', 'users')}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -234,14 +230,10 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={`${TD} text-right font-mono text-emerald-700`}>{r.byStatus.active}</td>
                       <td className={`${TD} text-right font-mono ${r.byStatus.maintenance ? 'text-amber-700' : 'text-slate-300'}`}>{r.byStatus.maintenance}</td>
                       <td className={`${TD} text-right font-mono ${r.byStatus.repair ? 'text-rose-700 font-bold' : 'text-slate-300'}`}>{r.byStatus.repair}</td>
-                      <td className={`${TD} text-right font-mono text-slate-400`}>{r.byStatus.retired}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatAmps(r.totalAmps)}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
-                      <td className={`${TD} text-right font-mono ${r.emergencies ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{r.emergencies}</td>
-                      <td className={`${TD} text-right font-mono ${r.overdue ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{r.overdue}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.stockValue)}</td>
-                      <td className={`${TD} text-right font-mono`}>{r.users}</td>
                     </tr>
                   );
                 })}
@@ -251,7 +243,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   <td className={`${TD_FIRST} text-[11px] uppercase tracking-widest`}>Итого</td>
                   {csvBranchRow(comparison.total).slice(1).map((v, i) => (
                     <td key={i} className={`${TD} text-right font-mono whitespace-nowrap`}>
-                      {i === 5 ? formatAmps(Number(v)) : [6, 7, 10].includes(i) ? formatMoney(Number(v)) : v}
+                      {i === 4 ? formatAmps(Number(v)) : [5, 6, 7].includes(i) ? formatMoney(Number(v)) : v}
                     </td>
                   ))}
                 </tr>
@@ -274,9 +266,9 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                 filename="reiting_stankov"
                 disabled={!machineSorted.length}
                 headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $',
-                  'Ремонт на ТО за период, $', 'Ремонт / амортизация, %', 'Аварий', 'MTBF, дней', 'Последнее ТО']}
+                  'Ремонт на ТО за период, $', 'Ремонт / амортизация, %', 'MTBF, дней', 'Последнее ТО']}
                 rows={() => machineSorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status],
-                  r.ageYears, r.residual, r.cost, r.ratio === Infinity ? '>100' : r.ratio, r.emergencies, r.mtbfDays,
+                  r.ageYears, r.residual, r.cost, r.ratio === Infinity ? '>100' : r.ratio, r.mtbfDays,
                   r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
               />
             )}
@@ -298,7 +290,6 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {mth('Ост. амортизация', 'residual')}
                   {mth('Ремонт', 'cost')}
                   {mth('Ремонт / стоим.', 'ratio')}
-                  {mth('Аварий', 'emergencies')}
                   {mth('MTBF', 'mtbf')}
                   {mth('Посл. ТО', 'last')}
                 </tr>
@@ -327,7 +318,6 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                           </span>
                         )}
                       </td>
-                      <td className={`${TD} text-right font-mono ${r.emergencies ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{r.emergencies}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.mtbfDays === null ? 'text-slate-300' : ''}`}>{r.mtbfDays === null ? '—' : `${formatNumber(r.mtbfDays, 1)} дн.`}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
                     </tr>

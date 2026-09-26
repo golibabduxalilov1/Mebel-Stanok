@@ -31,10 +31,10 @@ const SORT = {
   users: (r: BranchComparisonRow) => r.users,
 };
 
-const CSV_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Списано', 'Ток всего, А', 'Ток в работе, А',
-  'Остаточная амортизация, $', 'Ремонт за период, $', 'Аварий', 'Просрочено ТО', 'Склад, $', 'Пользователей'];
+const CSV_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Ток всего, А', 'Ток в работе, А',
+  'Остаточная амортизация, $', 'Ремонт за период, $', 'Склад, $'];
 const csvRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
-  r.byStatus.retired, r.totalAmps, r.activeAmps, r.residual, r.cost, r.emergencies, r.overdue, r.stockValue, r.users];
+  r.totalAmps, r.activeAmps, r.residual, r.cost, r.stockValue];
 
 export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: {
   data: ReportData;
@@ -75,15 +75,11 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                 {th('В работе', 'active')}
                 {th('ТО', 'maintenance')}
                 {th('Ремонт', 'repair')}
-                {th('Списано', 'retired')}
                 {th('Ток', 'amps')}
                 {th('Ток в работе', 'activeAmps')}
                 {th('Ост. амортизация', 'residual')}
                 {th('Ремонт', 'cost')}
-                {th('Аварий', 'emergencies')}
-                {th('Просрочено ТО', 'overdue')}
                 {th('Склад', 'stock')}
-                {th('Польз.', 'users')}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -99,15 +95,11 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                     <td className={`${TD} text-right font-mono text-emerald-700`}>{r.byStatus.active}</td>
                     <td className={`${TD} text-right font-mono ${r.byStatus.maintenance ? 'text-amber-700' : 'text-slate-300'}`}>{r.byStatus.maintenance}</td>
                     <td className={`${TD} text-right font-mono ${r.byStatus.repair ? 'text-rose-700 font-bold' : 'text-slate-300'}`}>{r.byStatus.repair}</td>
-                    <td className={`${TD} text-right font-mono text-slate-400`}>{r.byStatus.retired}</td>
                     <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatAmps(r.totalAmps)}</td>
                     <td className={`${TD} text-right font-mono whitespace-nowrap text-slate-600`}>{formatAmps(r.activeAmps)}</td>
                     <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                     <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
-                    <td className={`${TD} text-right font-mono ${r.emergencies ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{r.emergencies}</td>
-                    <td className={`${TD} text-right font-mono ${r.overdue ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{r.overdue}</td>
                     <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.stockValue)}</td>
-                    <td className={`${TD} text-right font-mono`}>{r.users}</td>
                   </tr>
                 );
               })}
@@ -117,7 +109,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                 <td className={`${TD_FIRST} text-[11px] uppercase tracking-widest`}>Итого</td>
                 {csvRow(comparison.total).slice(1).map((v, i) => (
                   <td key={i} className={`${TD} text-right font-mono whitespace-nowrap`}>
-                    {[5, 6].includes(i) ? formatAmps(Number(v)) : [7, 8, 11].includes(i) ? formatMoney(Number(v)) : v}
+                    {[4, 5].includes(i) ? formatAmps(Number(v)) : [6, 7, 8].includes(i) ? formatMoney(Number(v)) : v}
                   </td>
                 ))}
               </tr>

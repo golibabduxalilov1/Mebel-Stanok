@@ -134,9 +134,9 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                 filename="reiting_stankov"
                 disabled={!sorted.length}
                 headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Ремонт на ТО за период, $',
-                  'Ремонт / амортизация, %', 'Аварий', 'MTBF, дней', 'Последнее ТО']}
+                  'Ремонт / амортизация, %', 'MTBF, дней', 'Последнее ТО']}
                 rows={() => sorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status], r.ageYears, r.residual, r.cost,
-                  r.ratio === Infinity ? '>100' : r.ratio, r.emergencies, r.mtbfDays, r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
+                  r.ratio === Infinity ? '>100' : r.ratio, r.mtbfDays, r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
               />
             )}
           </>
@@ -157,7 +157,6 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                   {th('Ост. амортизация', 'residual')}
                   {th('Ремонт', 'cost')}
                   {th('Ремонт / стоим.', 'ratio')}
-                  {th('Аварий', 'emergencies')}
                   {th('MTBF', 'mtbf')}
                   {th('Посл. ТО', 'last')}
                 </tr>
@@ -185,7 +184,6 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                           </span>
                         )}
                       </td>
-                      <td className={`${TD} text-right font-mono ${r.emergencies ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{r.emergencies}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.mtbfDays === null ? 'text-slate-300' : ''}`}>{r.mtbfDays === null ? '—' : `${formatNumber(r.mtbfDays, 1)} дн.`}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
                     </tr>
