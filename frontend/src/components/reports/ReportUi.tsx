@@ -2,6 +2,27 @@ import React, { useMemo, useState } from 'react';
 import { AlertCircle, ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, FileSpreadsheet, RefreshCw, Search, ServerCrash } from 'lucide-react';
 import { CsvCell, formatNumber, formatPercent, todayKey, toCsv } from './reportUtils';
 
+function toExcel(headers: string[], rows: CsvCell[][]): string {
+  const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cell = (v: CsvCell, tag: 'th' | 'td') =>
+    `<${tag} style="mso-number-format:'\\@'">${esc(String(v ?? ''))}</${tag}>`;
+  const headerRow = `<tr>${headers.map(h => cell(h, 'th')).join('')}</tr>`;
+  const dataRows = rows.map(r => `<tr>${r.map(v => cell(v, 'td')).join('')}</tr>`).join('');
+  return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>th{background:#e2e8f0;font-weight:bold}td,th{border:1px solid #cbd5e1;padding:4px 8px;white-space:nowrap}</style></head><body><table>${headerRow}${dataRows}</table></body></html>`;
+}
+
+export function downloadExcel(filename: string, headers: string[], rows: CsvCell[][]) {
+  const blob = new Blob(['﻿' + toExcel(headers, rows)], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}_${todayKey()}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 export function Panel({ title, icon: Icon, iconClass = 'text-blue-500', actions, children, bodyClass = 'p-4 sm:p-6', footer }: {
   title: string;
   icon?: React.ComponentType<{ className?: string }>;
@@ -160,12 +181,12 @@ export function CsvButton({ filename, headers, rows, disabled }: { filename: str
     <button
       type="button"
       disabled={disabled}
-      onClick={() => downloadCsv(filename, headers, rows())}
+      onClick={() => downloadExcel(filename, headers, rows())}
       className="print:hidden flex items-center gap-1.5 min-h-8 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-      title="Скачать таблицу в CSV (Excel)"
+      title="Скачать таблицу в Excel"
     >
       <FileSpreadsheet className="w-3.5 h-3.5" />
-      Экспорт CSV
+      Экспорт Excel
     </button>
   );
 }

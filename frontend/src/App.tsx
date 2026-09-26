@@ -185,6 +185,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'all' | 'maintenance' | 'repair' | 'branches' | 'inventory' | 'reports' | 'history' | 'users'>('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearingDb, setIsClearingDb] = useState(false);
   const [clearPassword, setClearPassword] = useState('');
@@ -698,26 +699,38 @@ export default function App() {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <aside className="w-64 bg-[#1e293b] text-white hidden lg:flex flex-col border-r border-slate-200 shrink-0 sticky top-0 h-screen">
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-            <Settings className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-bold text-lg tracking-tight">Silknode Machine Pro</span>
+      <aside className={`bg-[#1e293b] text-white hidden lg:flex flex-col border-r border-slate-200 shrink-0 sticky top-0 h-screen transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-64'}`}>
+        <div className={`flex items-center border-b border-slate-700/50 ${isSidebarCollapsed ? 'p-3 justify-center' : 'p-4 gap-3'}`}>
+          {!isSidebarCollapsed && (
+            <>
+              <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center shrink-0">
+                <Settings className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-bold text-base tracking-tight flex-1 min-w-0 truncate">Silknode Machine Pro</span>
+            </>
+          )}
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-all cursor-pointer shrink-0"
+            title={isSidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню'}
+          >
+            {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
+        <nav className={`flex-1 py-4 space-y-1 ${isSidebarCollapsed ? 'px-2' : 'px-4'}`}>
           {allowedTabs.map((tab) => (
-            <button 
+            <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-lg text-sm text-left font-medium transition-all cursor-pointer ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+              title={isSidebarCollapsed ? tab.label : undefined}
+              className={`w-full flex items-center gap-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${isSidebarCollapsed ? 'justify-center px-0 py-3' : 'justify-between px-4 py-3 text-left'} ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className={`flex items-center min-w-0 ${isSidebarCollapsed ? '' : 'gap-3'}`}>
                 <tab.icon className="w-5 h-5 shrink-0" />
-                <span>{tab.label}</span>
+                {!isSidebarCollapsed && <span>{tab.label}</span>}
               </div>
-              {tab.count !== undefined && (
+              {!isSidebarCollapsed && tab.count !== undefined && (
                 <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${
                   activeTab === tab.id ? 'bg-blue-700/60 text-white' : 'bg-slate-800 text-slate-400'
                 }`}>
@@ -728,31 +741,49 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-700 bg-slate-900/50">
-          <div className="flex items-center gap-3">
-            <div 
-              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-sm shrink-0"
-              style={{ backgroundColor: currentRole?.color || activeAppUser?.roleColor || '#3b82f6' }}
-            >
-              {activeAppUser?.fullName
-                ? activeAppUser.fullName.split(' ').map(n => n[0]).slice(0, 2).join('')
-                : <User className="w-4 h-4 text-slate-400" />
-              }
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white truncate">
-                {activeAppUser?.fullName || 'Пользователь'}
-              </p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-600/40 text-blue-200">
-                  {currentRole?.name || activeAppUser?.roleName || 'Без роли'}
-                </span>
+        <div className={`border-t border-slate-700 bg-slate-900/50 ${isSidebarCollapsed ? 'p-2' : 'p-4'}`}>
+          {isSidebarCollapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-sm shrink-0"
+                style={{ backgroundColor: currentRole?.color || activeAppUser?.roleColor || '#3b82f6' }}
+                title={activeAppUser?.fullName || 'Пользователь'}
+              >
+                {activeAppUser?.fullName
+                  ? activeAppUser.fullName.split(' ').map(n => n[0]).slice(0, 2).join('')
+                  : <User className="w-4 h-4 text-slate-400" />
+                }
               </div>
+              <button onClick={handleAppSignOut} className="text-slate-400 hover:text-rose-400 transition-colors cursor-pointer p-1.5" title="Выйти">
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
-            <button onClick={handleAppSignOut} className="text-slate-400 hover:text-rose-400 transition-colors cursor-pointer p-1.5" title="Выйти">
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-sm shrink-0"
+                style={{ backgroundColor: currentRole?.color || activeAppUser?.roleColor || '#3b82f6' }}
+              >
+                {activeAppUser?.fullName
+                  ? activeAppUser.fullName.split(' ').map(n => n[0]).slice(0, 2).join('')
+                  : <User className="w-4 h-4 text-slate-400" />
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-white truncate">
+                  {activeAppUser?.fullName || 'Пользователь'}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-600/40 text-blue-200">
+                    {currentRole?.name || activeAppUser?.roleName || 'Без роли'}
+                  </span>
+                </div>
+              </div>
+              <button onClick={handleAppSignOut} className="text-slate-400 hover:text-rose-400 transition-colors cursor-pointer p-1.5" title="Выйти">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
       </aside>
