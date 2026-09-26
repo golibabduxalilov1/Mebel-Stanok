@@ -1,16 +1,20 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, Building2, ChevronRight, Cog, Package, TrendingDown } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, Building2, ChevronRight, Cog, History as HistoryIcon, Package, TrendingDown } from 'lucide-react';
 import {
   AttentionTab, BranchComparisonRow, MachineRankingRow, NO_BRANCH_ID, ReportData, assetSummary, attentionGroups, branchComparison,
   formatAmps, formatDateKey, formatMoney, formatNumber, formatPercent, isCompleted, isEmergencyType, isRetired,
-  lastMaintenanceByMachine, MACHINE_STATUS_LABELS, machineRanking, monthlyCost, overdueSchedules, percentChange, plannedSummary,
-  pluralRu, powerSummary, ratioLevel, searchMatches, stockSummary, sumCompletedCost, uptimePercent, WORKS_FORMS,
+  lastMaintenanceByMachine, LOG_TYPE_BADGE, LOG_TYPE_LABELS, MACHINE_STATUS_LABELS, machineRanking, monthlyCost, overdueSchedules,
+  percentChange, plannedSummary, pluralRu, powerSummary, ratioLevel, searchLogs, searchMatches, sortLogsByDate, stockSummary,
+  sumCompletedCost, toLocalDateKey, uptimePercent, WORKS_FORMS,
 } from '../reportUtils';
 import {
-  CsvButton, EmptyState, KpiCard, KPI_GRID, Panel, ProgressBar, SCROLL_BOX, SearchInput, SortTh, StatusBadge,
-  TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, useSorted,
+  CsvButton, EmptyState, KpiCard, KPI_GRID, Pagination, Panel, ProgressBar, SCROLL_BOX, SearchInput, SortTh, StatusBadge,
+  TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, usePaged, useSorted,
 } from '../ReportUi';
+import type { MaintenanceLog } from '../../../types';
+import { machineService } from '../../../services/machineService';
 import { SERIES_COLORS } from '../charts/ChartFrame';
+import { DepreciationChart } from '../charts/DepreciationChart';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
 const STATUS_BADGE = {
@@ -80,6 +84,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
   onSelectMachine: (machineId: string) => void;
 }) {
   const [search, setSearch] = useState('');
+  const [journalSearch, setJournalSearch] = useState('');
+  const [journalDir, setJournalDir] = useState<'asc' | 'desc'>('desc');
 
   const stats = useMemo(() => {
     const cost = sumCompletedCost(data.logs);
@@ -112,6 +118,11 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
 
   const stock = useMemo(() => stockSummary(data.parts), [data.parts]);
   const assets = useMemo(() => assetSummary(data.machines, data.now), [data.machines, data.now]);
+  const depreciation = useMemo(
+    () => machineService.getTotalDepreciationData(data.machines.filter(m => !isRetired(m)), data.now),
+    [data.machines, data.now],
+  );
+  const currentYear = String(data.now.getFullYear());
 
   const comparison = useMemo(() => branchComparison(data), [data]);
   const { sorted: branchSorted, sort: branchSort, toggle: branchToggle } = useSorted(comparison.rows, BRANCH_SORT, { key: 'cost', dir: 'desc' });
@@ -127,6 +138,12 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
   );
   const { sorted: machineSorted, sort: machineSort, toggle: machineToggle } = useSorted(filtered, RANKING_SORT, { key: 'cost', dir: 'desc' });
   const mth = (label: string, key: string, align: 'left' | 'right' = 'right') => <SortTh label={label} sortKey={key} sort={machineSort} onSort={machineToggle} align={align} />;
+
+  const journal: MaintenanceLog[] = useMemo(
+    () => sortLogsByDate(searchLogs(data.logs, journalSearch, data.machineMap), journalDir),
+    [data.logs, data.machineMap, journalSearch, journalDir],
+  );
+  const paged = usePaged(journal, 25);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -165,6 +182,12 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           hint={assets.purchaseTotal ? `${formatPercent((assets.depreciation / assets.purchaseTotal) * 100)} от стоимости покупки` : undefined}
         />
       </div>
+
+      <Panel title="Сводный прогноз амортизации" icon={TrendingDown} iconClass="text-indigo-600">
+        {depreciation.length === 0
+          ? <EmptyState text="Нет данных для расчёта амортизации: укажите цену и дату покупки" compact />
+          : <DepreciationChart data={depreciation} currentYear={currentYear} />}
+      </Panel>
 
       <Panel
         title="Сравнение филиалов"
@@ -316,6 +339,84 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               </tbody>
             </table>
           </div>
+        )}
+      </Panel>
+
+      <Panel
+        title="Журнал обслуживания и ремонтов"
+        icon={HistoryIcon}
+        bodyClass=""
+        actions={
+          <>
+            <SearchInput value={journalSearch} onChange={v => { setJournalSearch(v); paged.setPage(0); }} placeholder="Станок, мастер, запчасть…" />
+            <button type="button" onClick={() => setJournalDir(d => (d === 'desc' ? 'asc' : 'desc'))}
+              className="print:hidden inline-flex items-center gap-1 min-h-8 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:bg-slate-50 cursor-pointer">
+              {journalDir === 'desc' ? <ArrowDown className="w-3.5 h-3.5" /> : <ArrowUp className="w-3.5 h-3.5" />}
+              {journalDir === 'desc' ? 'Сначала новые' : 'Сначала старые'}
+            </button>
+            {canExport && canToir && (
+              <CsvButton
+                filename="zhurnal_obsluzhivaniya"
+                disabled={!journal.length}
+                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость, $']}
+                rows={() => journal.map(log => {
+                  const machine = data.machineMap.get(log.machineId);
+                  return [formatDateKey(toLocalDateKey(log.date)), machine?.name, machine?.model, LOG_TYPE_LABELS[log.type] || log.type,
+                    isCompleted(log) ? 'Выполнено' : 'Запланировано', log.technicianName, log.notes,
+                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.cost || 0];
+                })}
+              />
+            )}
+          </>
+        }
+      >
+        {journal.length === 0 ? <EmptyState text={journalSearch ? 'Ничего не найдено' : undefined} /> : (
+          <>
+            <div className="report-scroll overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className={THEAD_ROW}>
+                    <th className="px-4 sm:px-6 py-3">Дата / Станок</th>
+                    <th className="px-4 py-3">Вид работ</th>
+                    <th className="px-4 py-3">Статус</th>
+                    <th className="px-4 py-3">Исполнитель</th>
+                    <th className="px-4 py-3">Запчасти</th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {paged.pageRows.map(log => {
+                    const machine = data.machineMap.get(log.machineId);
+                    const done = isCompleted(log);
+                    return (
+                      <tr key={log.id} className="hover:bg-blue-50/20 transition-colors">
+                        <td className={TD_FIRST}>
+                          <p className="text-xs font-mono text-slate-400 mb-0.5">{formatDateKey(toLocalDateKey(log.date))}</p>
+                          <p className="font-bold text-slate-800 leading-tight min-w-40">{machine?.name || '—'}</p>
+                          <p className="text-[10px] text-slate-400 font-mono uppercase">{machine?.model}</p>
+                        </td>
+                        <td className={TD}>
+                          <StatusBadge label={LOG_TYPE_LABELS[log.type] || log.type} className={LOG_TYPE_BADGE[log.type] || 'bg-slate-100 text-slate-600'} />
+                          {log.notes && <p className="text-xs text-slate-600 italic truncate w-44 mt-1" title={log.notes}>"{log.notes}"</p>}
+                        </td>
+                        <td className={TD}><StatusBadge label={done ? 'Выполнено' : 'Запланировано'} className={done ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'} /></td>
+                        <td className={`${TD} text-xs text-slate-600`}>{log.technicianName || '—'}</td>
+                        <td className={TD}>
+                          <div className="flex flex-wrap gap-1 min-w-32">
+                            {log.partsUsed?.length ? log.partsUsed.map((p, i) => (
+                              <span key={i} className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{p.name} (x{p.quantity})</span>
+                            )) : <span className="text-slate-300">—</span>}
+                          </div>
+                        </td>
+                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.cost || 0)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <Pagination page={paged.page} pageCount={paged.pageCount} total={journal.length} pageSize={paged.pageSize} onPage={paged.setPage} />
+          </>
         )}
       </Panel>
     </div>
