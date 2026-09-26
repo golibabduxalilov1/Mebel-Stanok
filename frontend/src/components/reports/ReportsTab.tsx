@@ -208,7 +208,7 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div>
             <label className={LABEL_CLASS}>Филиал</label>
             <select className={SELECT_CLASS} value={filters.branchId} onChange={e => update({ branchId: e.target.value, machineId: 'all', manufacturer: 'all' })}>
@@ -216,42 +216,52 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
               {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>
-          <div>
-            <label className={LABEL_CLASS}>Производитель</label>
-            <select className={SELECT_CLASS} value={filters.manufacturer} onChange={e => update({ manufacturer: e.target.value, machineId: 'all' })}>
-              <option value="all">Все производители</option>
-              {manufacturers.map(m => <option key={m.key} value={m.key}>{m.label} ({m.count})</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Статус станка</label>
-            <select className={SELECT_CLASS} value={filters.machineStatus} onChange={e => update({ machineStatus: e.target.value as 'all' | MachineStatus, machineId: 'all' })}>
-              <option value="all">Любой статус</option>
-              {MACHINE_STATUSES.map(s => <option key={s} value={s}>{MACHINE_STATUS_LABELS[s]}</option>)}
-            </select>
-          </div>
-          <div className="lg:col-span-3 2xl:col-span-3">
-            <label className={LABEL_CLASS}>Станок</label>
-            <select className={SELECT_CLASS} value={filters.machineId} onChange={e => update({ machineId: e.target.value })}>
-              <option value="all">Все оборудование ({machineOptions.length})</option>
-              {machineOptions.map(m => <option key={m.id} value={m.id}>{m.name}{m.model ? ` — ${m.model}` : ''}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Тип работ</label>
-            <select className={SELECT_CLASS} value={filters.type} onChange={e => update({ type: e.target.value as ReportFilters['type'] })}>
-              <option value="all">Любые работы</option>
-              {LOG_TYPES.map(t => <option key={t} value={t}>{LOG_TYPE_LABELS[t]}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Статус работы</label>
-            <select className={SELECT_CLASS} value={filters.status} onChange={e => update({ status: e.target.value as StatusFilter })}>
-              <option value="all">Все</option>
-              <option value="completed">Выполнено</option>
-              <option value="planned">Запланировано</option>
-            </select>
-          </div>
+          {currentTab !== 'overview' && (
+            <div>
+              <label className={LABEL_CLASS}>Производитель</label>
+              <select className={SELECT_CLASS} value={filters.manufacturer} onChange={e => update({ manufacturer: e.target.value, machineId: 'all' })}>
+                <option value="all">Все производители</option>
+                {manufacturers.map(m => <option key={m.key} value={m.key}>{m.label} ({m.count})</option>)}
+              </select>
+            </div>
+          )}
+          {currentTab !== 'overview' && (
+            <div>
+              <label className={LABEL_CLASS}>Статус станка</label>
+              <select className={SELECT_CLASS} value={filters.machineStatus} onChange={e => update({ machineStatus: e.target.value as 'all' | MachineStatus, machineId: 'all' })}>
+                <option value="all">Любой статус</option>
+                {MACHINE_STATUSES.map(s => <option key={s} value={s}>{MACHINE_STATUS_LABELS[s]}</option>)}
+              </select>
+            </div>
+          )}
+          {currentTab !== 'overview' && (
+            <div className="lg:col-span-2">
+              <label className={LABEL_CLASS}>Станок</label>
+              <select className={SELECT_CLASS} value={filters.machineId} onChange={e => update({ machineId: e.target.value })}>
+                <option value="all">Все оборудование ({machineOptions.length})</option>
+                {machineOptions.map(m => <option key={m.id} value={m.id}>{m.name}{m.model ? ` — ${m.model}` : ''}</option>)}
+              </select>
+            </div>
+          )}
+          {currentTab !== 'overview' && (
+            <div>
+              <label className={LABEL_CLASS}>Тип работ</label>
+              <select className={SELECT_CLASS} value={filters.type} onChange={e => update({ type: e.target.value as ReportFilters['type'] })}>
+                <option value="all">Любые работы</option>
+                {LOG_TYPES.map(t => <option key={t} value={t}>{LOG_TYPE_LABELS[t]}</option>)}
+              </select>
+            </div>
+          )}
+          {currentTab !== 'overview' && (
+            <div>
+              <label className={LABEL_CLASS}>Статус работы</label>
+              <select className={SELECT_CLASS} value={filters.status} onChange={e => update({ status: e.target.value as StatusFilter })}>
+                <option value="all">Все</option>
+                <option value="completed">Выполнено</option>
+                <option value="planned">Запланировано</option>
+              </select>
+            </div>
+          )}
           <div>
             <label className={LABEL_CLASS}>Начало периода</label>
             <input type="date" className={SELECT_CLASS} value={filters.start} max={filters.end || undefined} onChange={e => update({ start: e.target.value })} />
@@ -260,7 +270,7 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
             <label className={LABEL_CLASS}>Конец периода</label>
             <input type="date" className={SELECT_CLASS} value={filters.end} min={filters.start || undefined} onChange={e => update({ end: e.target.value })} />
           </div>
-          <div className="sm:col-span-2 lg:col-span-1 2xl:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-2">
             <span className={LABEL_CLASS}>Период</span>
             <div className="flex flex-wrap gap-1.5">
               {PERIOD_PRESETS.map(p => (

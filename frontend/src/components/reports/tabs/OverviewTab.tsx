@@ -63,7 +63,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className={KPI_GRID}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <KpiCard
           label="Umumiy stanoklar soni"
           value={formatNumber(stats.total)}
@@ -80,7 +80,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Davr uchun xarajatlar'}
         />
       </div>
-      <div className={KPI_GRID}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <KpiCard
           label="Стоимость покупки"
           value={formatMoney(assets.purchaseTotal)}
