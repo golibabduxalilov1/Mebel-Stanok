@@ -182,7 +182,15 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [registryBranchFilter, setRegistryBranchFilter] = useState<string>('all');
   const [showArchive, setShowArchive] = useState(false);
-  const [activeTab, setActiveTab] = useState<'all' | 'maintenance' | 'repair' | 'branches' | 'inventory' | 'reports' | 'history' | 'users'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'maintenance' | 'repair' | 'branches' | 'inventory' | 'reports' | 'history' | 'users'>(() => {
+    try {
+      const saved = localStorage.getItem('activeTab');
+      if (saved && ['all','maintenance','repair','branches','inventory','reports','history','users'].includes(saved)) {
+        return saved as any;
+      }
+    } catch {}
+    return 'all';
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -316,6 +324,11 @@ export default function App() {
       setActiveTab(allowedTabs[0].id as any);
     }
   }, [allowedTabs, activeTab]);
+
+  // Persist active tab across page refreshes
+  useEffect(() => {
+    try { localStorage.setItem('activeTab', activeTab); } catch {}
+  }, [activeTab]);
 
   // Machine attachment thumbnails point at an authenticated download endpoint that a
   // plain <img src> can't fetch (it needs a Bearer header) - resolve those to blob URLs
@@ -602,7 +615,11 @@ export default function App() {
             >
               {/* Drawer Header */}
               <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-700/60">
-                <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { setActiveTab('all'); setIsMobileMenuOpen(false); }}
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                  title="Asosiy sahifaga o'tish"
+                >
                   <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-md">
                     <Settings className="w-5 h-5 text-white" />
                   </div>
@@ -610,7 +627,7 @@ export default function App() {
                     <span className="font-bold text-base tracking-tight block">Silknode Machine Pro</span>
                     <span className="text-[10px] text-slate-400 font-mono">Мобильная версия</span>
                   </div>
-                </div>
+                </button>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -702,12 +719,16 @@ export default function App() {
       <aside className={`bg-[#1e293b] text-white hidden lg:flex flex-col border-r border-slate-200 shrink-0 sticky top-0 h-screen transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-64'}`}>
         <div className={`flex items-center border-b border-slate-700/50 ${isSidebarCollapsed ? 'p-3 justify-center' : 'p-4 gap-3'}`}>
           {!isSidebarCollapsed && (
-            <>
+            <button
+              onClick={() => setActiveTab('all')}
+              className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+              title="Asosiy sahifaga o'tish"
+            >
               <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center shrink-0">
                 <Settings className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-base tracking-tight flex-1 min-w-0 truncate">Silknode Machine Pro</span>
-            </>
+            </button>
           )}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
