@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
-import { AlertTriangle, BarChart3, ChevronRight } from 'lucide-react';
+import { AlertTriangle, BarChart3, ChevronRight, Cog, Package, TrendingDown } from 'lucide-react';
 import {
   AttentionTab, ReportData, attentionGroups, formatAmps, formatMoney, formatNumber, formatPercent, isCompleted, isEmergencyType,
   isRetired, monthlyCost, overdueSchedules, percentChange, plannedSummary, pluralRu, powerSummary, stockSummary, sumCompletedCost,
   uptimePercent, WORKS_FORMS,
 } from '../reportUtils';
-import { CsvButton, EmptyState, KpiCard, Panel, ProgressBar } from '../ReportUi';
+import { CsvButton, EmptyState, KpiCard, KPI_GRID, Panel, ProgressBar } from '../ReportUi';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
@@ -58,8 +58,27 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
   const hasMonthly = stats.monthly.some(p => p.planned > 0 || p.emergency > 0);
   const branchLabel = data.filters.branchId === 'all' ? 'все филиалы' : data.branchMap.get(data.filters.branchId)?.name || 'филиал';
 
+  const stock = useMemo(() => stockSummary(data.parts), [data.parts]);
+
   return (
     <div className="space-y-4 sm:space-y-6">
+      <div className={KPI_GRID}>
+        <KpiCard
+          label="Umumiy stanoklar soni"
+          value={formatNumber(stats.total)}
+          hint={`Faol: ${stats.inService}`}
+        />
+        <KpiCard
+          label="Umumiy skladda xarajat"
+          value={formatMoney(stock.value)}
+          hint={`${formatNumber(stock.items)} ta pozitsiya`}
+        />
+        <KpiCard
+          label="Umumiy Затраты"
+          value={formatMoney(stats.cost)}
+          hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Davr uchun xarajatlar'}
+        />
+      </div>
     </div>
   );
 }
