@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowRightLeft, BarChart3, Boxes, Building2, ClipboardCheck, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert, Users, Wrench, Zap,
+  ArrowRightLeft, BarChart3, Boxes, Building2, Cog, LayoutDashboard, Printer, RotateCcw, ShieldAlert, Users, Wrench, Zap,
 } from 'lucide-react';
 import type { ActivityLog, AppUser, Branch, Machine, MachineStatus, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
 import { canPerformAction } from '../../services/userService';
@@ -16,9 +16,7 @@ import { MaintenanceTab } from './tabs/MaintenanceTab';
 import { InventoryTab } from './tabs/InventoryTab';
 import { TransfersTab } from './tabs/TransfersTab';
 import { UsersActivityTab } from './tabs/UsersActivityTab';
-import { DataQualityTab } from './tabs/DataQualityTab';
-
-type ReportTabId = 'overview' | 'branches' | 'equipment' | 'power' | 'maintenance' | 'inventory' | 'transfers' | 'users' | 'quality';
+type ReportTabId = 'overview' | 'branches' | 'equipment' | 'power' | 'maintenance' | 'inventory' | 'transfers' | 'users';
 
 const STORAGE_KEY = 'mebel-stanok.reports.v2';
 const STATUS_VALUES: StatusFilter[] = ['all', 'completed', 'planned'];
@@ -117,7 +115,6 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, activit
     { id: 'inventory' as const, label: 'Склад', icon: Boxes, allowed: canInventory },
     { id: 'transfers' as const, label: 'Перемещения', icon: ArrowRightLeft, allowed: canEquipment || canSummary },
     { id: 'users' as const, label: 'Пользователи и активность', icon: Users, allowed: canHistory },
-    { id: 'quality' as const, label: 'Качество данных', icon: ClipboardCheck, allowed: canEquipment || canInventory || canToir },
   ].filter(t => t.allowed);
   const currentTab = tabs.some(t => t.id === activeTab) ? activeTab : tabs[0]?.id;
   const currentTabLabel = tabs.find(t => t.id === currentTab)?.label ?? '';
@@ -334,10 +331,6 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, activit
       {currentTab === 'inventory' && <InventoryTab data={data} canExport={exportInventory} />}
       {currentTab === 'transfers' && <TransfersTab data={data} canExport={exportEquipment || exportSummary} />}
       {currentTab === 'users' && <UsersActivityTab data={data} canExport={exportHistory} recentActivity={activityLogs} />}
-      {currentTab === 'quality' && (
-        <DataQualityTab data={data} canExport={exportEquipment || exportInventory || exportToir}
-          canEquipment={canEquipment} canInventory={canInventory} canToir={canToir} onOpenMachine={openMachine} />
-      )}
     </div>
   );
 }
