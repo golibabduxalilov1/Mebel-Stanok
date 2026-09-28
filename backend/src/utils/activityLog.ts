@@ -56,6 +56,7 @@ const FIELD_LABELS: Record<string, string> = {
   quantity: 'Количество',
   minQuantity: 'Минимальный остаток',
   unitPrice: 'Цена за единицу',
+  imageUrl: 'Изображение',
   machineId: 'ID станка / Станок',
   taskName: 'Задача',
   intervalDays: 'Интервал (дни)',
