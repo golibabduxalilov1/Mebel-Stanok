@@ -7628,7 +7628,7 @@ function HistoryTab({ logs, machines, branches, parts, maintenanceLogs, role }: 
                           {new Date(log.timestamp).toLocaleString('ru-RU')}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-600 font-medium break-words">{log.details}</p>
+                      <p className="text-sm text-slate-600 font-medium break-words">{log.details?.replace(/data:[a-zA-Z0-9]+\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[изображение]')}</p>
 
                       {extraInfo}
 
