@@ -3,7 +3,7 @@ import { emitEntity, emitToBranchUsers } from '../../lib/socket';
 import { Errors } from '../../utils/errors';
 import { getDiffDetails, writeActivity } from '../../utils/activityLog';
 import type { BranchScope } from '../../utils/branchScope';
-import type { CreateMachineInput, UpdateMachineInput } from './machines.schema';
+import type { CreateMachineInput, UpdateMachineInput, ListMachinesQueryInput } from './machines.schema';
 
 interface Actor {
   userId: string;
@@ -21,12 +21,12 @@ async function assertSerialNumberFree(serialNumber: string, excludeId?: string) 
 }
 
 export const machinesService = {
-  async list(filter: { branchId?: string; status?: string }, scope: BranchScope) {
+  async list(filter: ListMachinesQueryInput, scope: BranchScope) {
     if (scope && filter.branchId && !scope.includes(filter.branchId)) return [];
     return prisma.machine.findMany({
       where: {
         branchId: scope ? { in: scope } : filter.branchId,
-        status: filter.status as any,
+        status: filter.status,
       },
       orderBy: { updatedAt: 'desc' },
       include: { attachments: true },

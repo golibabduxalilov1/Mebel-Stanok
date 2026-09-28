@@ -35,3 +35,4 @@ export const listMachinesQuerySchema = z.object({
 
 export type CreateMachineInput = z.infer<typeof createMachineSchema>;
 export type UpdateMachineInput = z.infer<typeof updateMachineSchema>;
+export type ListMachinesQueryInput = z.infer<typeof listMachinesQuerySchema>;
