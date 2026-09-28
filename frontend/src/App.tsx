@@ -358,6 +358,19 @@ export default function App() {
 
   const imgSrc = (url: string): string => resolvedImageUrls[url] || url;
 
+  // Revoke all blob URLs when the top-level component unmounts (e.g. hot-reload in dev)
+  // to prevent memory leaks from unreachable object URLs.
+  const resolvedImageUrlsRef = React.useRef(resolvedImageUrls);
+  resolvedImageUrlsRef.current = resolvedImageUrls;
+  useEffect(() => {
+    return () => {
+      const urls = resolvedImageUrlsRef.current;
+      (Object.values(urls) as string[]).forEach((url: string) => {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+      });
+    };
+  }, []);
+
   // Only used for the two legitimate self-sync cases from UsersTab.tsx: an admin
   // editing their own active account (updatedUser), or deleting it (null, signs out).
   // "Become another user without a password" has been removed - real login is required.
@@ -1725,6 +1738,19 @@ export default function App() {
                 if (machineToDeleteId) {
                   setRefreshing(true);
                   try {
+                    // Revoke blob URLs for this machine's images before deleting
+                    const machineToDelete = machines.find(m => m.id === machineToDeleteId);
+                    if (machineToDelete) {
+                      const imageUrls = getMachineImages(machineToDelete);
+                      setResolvedImageUrls(prev => {
+                        const next = { ...prev };
+                        imageUrls.forEach(url => {
+                          if (next[url]?.startsWith('blob:')) URL.revokeObjectURL(next[url]);
+                          delete next[url];
+                        });
+                        return next;
+                      });
+                    }
                     await machineService.deleteMachine(machineToDeleteId);
                     setMachineToDeleteId(null);
                     setSelectedMachine(null);

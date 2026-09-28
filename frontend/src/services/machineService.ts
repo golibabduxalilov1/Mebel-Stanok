@@ -405,7 +405,13 @@ export const machineService = {
   },
 
   async deleteAttachment(attachmentId: string) {
-    attachmentUrlCache.delete(attachmentId);
+    // Revoke both the full-download and thumbnail blob URLs before clearing the cache
+    // to avoid a memory leak from unreachable object URLs.
+    for (const key of [attachmentId, `${attachmentId}:thumbnail`]) {
+      const url = attachmentUrlCache.get(key);
+      if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+      attachmentUrlCache.delete(key);
+    }
     await apiClient.delete(`/attachments/${attachmentId}`);
   },
 
