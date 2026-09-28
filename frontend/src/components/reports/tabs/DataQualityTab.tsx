@@ -156,7 +156,7 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
                     <th className="px-4 sm:px-6 py-3">Не заполнено</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {paged.pageRows.map(r => (
                     <tr key={`${r.kind}:${r.id}`}>
                       <td className={`${TD_FIRST} min-w-48`}>

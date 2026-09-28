@@ -89,7 +89,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
                     <th className="px-4 sm:px-6 py-3">Доля</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {stats.byBranch.rows.map(r => (
                     <tr key={r.branchId} className="hover:bg-blue-50/20 transition-colors">
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
@@ -195,7 +195,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
                   {onOpenMachine && <th className="px-4 sm:px-6 py-3 text-right print:hidden">Действие</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {stats.missing.map(m => (
                   <tr key={m.id}>
                     <td className={`${TD_FIRST} min-w-44`}>

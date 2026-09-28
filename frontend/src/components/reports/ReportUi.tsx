@@ -304,9 +304,9 @@ export function StatusBadge({ label, className }: { label: string; className: st
   return <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase whitespace-nowrap ${className}`}>{label}</span>;
 }
 
-export const TD = 'px-4 py-3';
-export const TD_FIRST = 'px-4 sm:px-6 py-3';
-export const THEAD_ROW = 'text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50/30';
-export const TFOOT_ROW = 'bg-slate-50 border-t-2 border-slate-200 font-black text-slate-900';
+export const TD = 'px-4 py-3.5';
+export const TD_FIRST = 'px-4 sm:px-6 py-3.5';
+export const THEAD_ROW = 'text-[10px] font-black text-slate-500 uppercase tracking-widest border-b-2 border-slate-200 bg-slate-50';
+export const TFOOT_ROW = 'bg-gradient-to-r from-slate-50 to-slate-100/50 border-t-2 border-slate-200 font-black text-slate-900';
 /** Scroll box for long tables; the print stylesheet lifts the height limit. */
 export const SCROLL_BOX = 'report-scroll overflow-auto max-h-[480px] custom-scrollbar';

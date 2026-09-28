@@ -170,7 +170,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     <th className="px-4 sm:px-6 py-3 text-right">Часы / амортизация</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {upcoming.map(t => (
                     <tr key={t.id}>
                       <td className={`${TD_FIRST} min-w-48`}>
@@ -218,7 +218,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                   <th className="px-4 sm:px-6 py-3">Ответственный</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {schedule.overdue.map(t => (
                   <tr key={t.id} className="hover:bg-rose-50/30 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{t.machineName}</td>
@@ -260,7 +260,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                   <SortTh label="Просрочено" sortKey="overdue" sort={tech.sort} onSort={tech.toggle} align="right" className="sm:pr-6" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {tech.sorted.map(t => (
                   <tr key={t.name} className="hover:bg-blue-50/20 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{t.name}</td>
@@ -321,7 +321,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {paged.pageRows.map(log => {
                     const machine = data.machineMap.get(log.machineId);
                     const done = isCompleted(log);

@@ -82,7 +82,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                 {th('Склад', 'stock')}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-100">
               {sorted.map(r => {
                 const clickable = r.branchId !== NO_BRANCH_ID;
                 return (
@@ -195,7 +195,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
                     <th className="px-4 sm:px-6 py-3 text-right">Ремонт</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {details.machines.map(({ machine, residual, cost }) => (
                     <tr key={machine.id} className="hover:bg-blue-50/20">
                       <td className={`${TD_FIRST} min-w-44`}>
@@ -220,7 +220,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
 
         <Panel title="Последние 10 работ" icon={HistoryIcon} bodyClass="">
           {details.lastWorks.length === 0 ? <EmptyState compact /> : (
-            <ul className="divide-y divide-slate-50">
+            <ul className="divide-y divide-slate-100">
               {details.lastWorks.map(log => (
                 <li key={log.id} className="px-4 sm:px-6 py-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">

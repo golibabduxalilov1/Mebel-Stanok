@@ -216,11 +216,11 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {bth('Склад', 'stock')}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {branchSorted.map(r => {
                   const clickable = r.branchId !== NO_BRANCH_ID;
                   return (
-                    <tr key={r.branchId} className={`transition-colors ${clickable ? 'hover:bg-blue-50/40 cursor-pointer' : ''}`}
+                    <tr key={r.branchId} className={`transition-colors ${clickable ? 'hover:bg-blue-50/60 hover:shadow-[inset_3px_0_0_#3b82f6] cursor-pointer' : ''}`}
                       onClick={clickable ? () => onSelectBranch(r.branchId) : undefined}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className={`font-bold ${clickable ? 'text-blue-700' : 'text-slate-800'}`}>{r.branchName}</p>
@@ -265,10 +265,9 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               <XlsxButton
                 filename="reiting_stankov"
                 disabled={!machineSorted.length}
-                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $',
-                  'Ремонт на ТО за период, $', 'Ремонт / амортизация, %', 'MTBF, дней', 'Последнее ТО']}
+                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Ремонт на ТО за период, $', 'Последнее ТО']}
                 rows={() => machineSorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status],
-                  r.ageYears, r.residual, r.cost, r.ratio === Infinity ? '>100' : r.ratio, r.mtbfDays,
+                  r.ageYears, r.residual, r.cost,
                   r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
               />
             )}
@@ -289,17 +288,14 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {mth('Возраст', 'age')}
                   {mth('Ост. амортизация', 'residual')}
                   {mth('Ремонт', 'cost')}
-                  {mth('Ремонт / стоим.', 'ratio')}
-                  {mth('MTBF', 'mtbf')}
                   {mth('Посл. ТО', 'last')}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {machineSorted.map(r => {
-                  const level = ratioLevel(r.ratio);
                   return (
                     <tr key={r.id}
-                      className={`cursor-pointer transition-colors ${level === 'critical' ? 'bg-rose-50/60 hover:bg-rose-50' : level === 'warn' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-blue-50/30'}`}
+                      className="cursor-pointer transition-colors hover:bg-blue-50/50 hover:shadow-[inset_3px_0_0_#3b82f6]"
                       onClick={() => onSelectMachine(r.id)}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800 leading-tight">{r.name}</p>
@@ -310,15 +306,6 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.ageYears === null ? 'text-slate-300' : ''}`}>{r.ageYears === null ? '—' : `${formatNumber(r.ageYears, 1)} г.`}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
-                      <td className={`${TD} text-right whitespace-nowrap`}>
-                        <span className={`font-mono font-black ${level === 'critical' ? 'text-rose-700' : level === 'warn' ? 'text-amber-700' : 'text-slate-600'}`}>{formatRatio(r.ratio)}</span>
-                        {level === 'critical' && (
-                          <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[9px] font-black uppercase">
-                            <AlertTriangle className="w-3 h-3" />рассмотреть замену
-                          </span>
-                        )}
-                      </td>
-                      <td className={`${TD} text-right font-mono whitespace-nowrap ${r.mtbfDays === null ? 'text-slate-300' : ''}`}>{r.mtbfDays === null ? '—' : `${formatNumber(r.mtbfDays, 1)} дн.`}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
                     </tr>
                   );
@@ -372,12 +359,12 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                     <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {paged.pageRows.map(log => {
                     const machine = data.machineMap.get(log.machineId);
                     const done = isCompleted(log);
                     return (
-                      <tr key={log.id} className="hover:bg-blue-50/20 transition-colors">
+                      <tr key={log.id} className="hover:bg-blue-50/50 hover:shadow-[inset_3px_0_0_#3b82f6] transition-colors">
                         <td className={TD_FIRST}>
                           <p className="text-xs font-mono text-slate-400 mb-0.5">{formatDateKey(toLocalDateKey(log.date))}</p>
                           <p className="font-bold text-slate-800 leading-tight min-w-40">{machine?.name || '—'}</p>

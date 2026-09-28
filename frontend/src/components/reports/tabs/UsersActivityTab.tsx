@@ -114,7 +114,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
                   <th className="px-4 sm:px-6 py-3">Последний вход</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {stats.top.map(u => (
                   <tr key={u.id}>
                     <td className={`${TD_FIRST} min-w-44`}>
@@ -134,7 +134,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
 
       {stats.recent.length > 0 && (
         <Panel title="Последние действия" icon={HistoryIcon} bodyClass="">
-          <ul className="divide-y divide-slate-50">
+          <ul className="divide-y divide-slate-100">
             {stats.recent.map(a => (
               <li key={a.id} className="px-4 sm:px-6 py-3 flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -173,7 +173,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
                     <th className="px-4 sm:px-6 py-3 text-right">Последний вход</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {stats.inactive.map(u => (
                     <tr key={u.id}>
                       <td className={`${TD_FIRST} min-w-44`}>

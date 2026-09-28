@@ -87,7 +87,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                     <th className="px-4 sm:px-6 py-3 text-right">В архиве</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {stats.byBranch.map(r => (
                     <tr key={r.branchId}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
@@ -143,7 +143,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                   <th className="px-4 sm:px-6 py-3">Ед.</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {stats.low.map(r => (
                   <tr key={r.part.id} className="hover:bg-amber-50/30 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-44`}>{r.part.name}</td>
@@ -187,7 +187,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                     <th className="px-4 sm:px-6 py-3">Дата</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {rows.map(r => (
                     <tr key={r.id}>
                       <td className={`${TD_FIRST} min-w-44`}>
@@ -277,7 +277,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                     <th className="px-4 sm:px-6 py-3 text-right">Сумма</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {stats.byMachine.map(r => (
                     <tr key={r.machineId}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.name}</td>
@@ -316,7 +316,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                     <th className="px-4 sm:px-6 py-3 text-right">Стоимость</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {stats.dead.map(p => (
                     <tr key={p.id}>
                       <td className={`${TD_FIRST} min-w-44`}>
@@ -354,7 +354,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                     <th className="px-4 sm:px-6 py-3 text-right">Стоимость</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {stats.units.map(u => (
                     <tr key={u.code}>
                       <td className={TD_FIRST}><span className="font-bold text-slate-800">{u.name}</span> <span className="text-[10px] font-mono text-slate-400">{u.code}</span></td>

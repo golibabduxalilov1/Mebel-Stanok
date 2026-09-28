@@ -57,7 +57,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
                     <th className="px-4 sm:px-6 py-3 text-right">Баланс</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {stats!.balance.map(r => (
                     <tr key={r.branchId}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
@@ -97,7 +97,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
                     <th className="px-4 sm:px-6 py-3">Кто</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {stats!.rows.map(r => (
                     <tr key={r.id}>
                       <td className={`${TD_FIRST} font-mono text-xs text-slate-500 whitespace-nowrap`}>{formatDateTime(r.date)}</td>

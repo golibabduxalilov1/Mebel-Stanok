@@ -133,10 +133,9 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
               <XlsxButton
                 filename="reiting_stankov"
                 disabled={!sorted.length}
-                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Ремонт на ТО за период, $',
-                  'Ремонт / амортизация, %', 'MTBF, дней', 'Последнее ТО']}
+                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Ремонт на ТО за период, $', 'Последнее ТО']}
                 rows={() => sorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status], r.ageYears, r.residual, r.cost,
-                  r.ratio === Infinity ? '>100' : r.ratio, r.mtbfDays, r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
+                  r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
               />
             )}
           </>
@@ -156,16 +155,13 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                   {th('Возраст', 'age')}
                   {th('Ост. амортизация', 'residual')}
                   {th('Ремонт', 'cost')}
-                  {th('Ремонт / стоим.', 'ratio')}
-                  {th('MTBF', 'mtbf')}
                   {th('Посл. ТО', 'last')}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {sorted.map(r => {
-                  const level = ratioLevel(r.ratio);
                   return (
-                    <tr key={r.id} className={`cursor-pointer transition-colors ${level === 'critical' ? 'bg-rose-50/60 hover:bg-rose-50' : level === 'warn' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-blue-50/30'}`}
+                    <tr key={r.id} className="cursor-pointer transition-colors hover:bg-blue-50/30"
                       onClick={() => onSelectMachine(r.id)}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800 leading-tight">{r.name}</p>
@@ -176,15 +172,6 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.ageYears === null ? 'text-slate-300' : ''}`}>{r.ageYears === null ? '—' : `${formatNumber(r.ageYears, 1)} г.`}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
-                      <td className={`${TD} text-right whitespace-nowrap`}>
-                        <span className={`font-mono font-black ${level === 'critical' ? 'text-rose-700' : level === 'warn' ? 'text-amber-700' : 'text-slate-600'}`}>{formatRatio(r.ratio)}</span>
-                        {level === 'critical' && (
-                          <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[9px] font-black uppercase">
-                            <AlertTriangle className="w-3 h-3" />рассмотреть замену
-                          </span>
-                        )}
-                      </td>
-                      <td className={`${TD} text-right font-mono whitespace-nowrap ${r.mtbfDays === null ? 'text-slate-300' : ''}`}>{r.mtbfDays === null ? '—' : `${formatNumber(r.mtbfDays, 1)} дн.`}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
                     </tr>
                   );
@@ -273,7 +260,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
             <div className={SCROLL_BOX}>
               <table className="w-full text-left text-sm">
                 <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Запчасть</th><th className="px-4 py-3 text-right">Кол-во</th><th className="px-4 sm:px-6 py-3 text-right">Сумма</th></tr></thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
                   {card.parts.map(p => (
                     <tr key={p.key}>
                       <td className={`${TD_FIRST} font-bold text-slate-800`}>{p.name}</td>
@@ -302,7 +289,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
           <div className={SCROLL_BOX}>
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Дата</th><th className="px-4 py-3">Вид работ</th><th className="px-4 py-3">Исполнитель</th><th className="px-4 sm:px-6 py-3 text-right">Амортизация</th></tr></thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {card.logs.map(l => (
                   <tr key={l.id}>
                     <td className={`${TD_FIRST} font-mono text-xs text-slate-500 whitespace-nowrap`}>{formatDateKey(toLocalDateKey(l.date))}</td>
@@ -327,7 +314,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
         <Panel title="История перемещений" icon={ArrowRightLeft} bodyClass="">
           <AsyncContent state={transfers} isEmpty={rows => rows.length === 0} emptyText="Станок не перемещался">
             {rows => (
-              <ul className="divide-y divide-slate-50">
+              <ul className="divide-y divide-slate-100">
                 {rows.map(t => (
                   <li key={t.id} className="px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-bold text-slate-800">{t.fromBranchName || '—'} → {t.toBranchName}</span>
