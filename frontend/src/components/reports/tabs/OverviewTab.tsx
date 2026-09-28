@@ -125,7 +125,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
 
   const comparison = useMemo(() => branchComparison(data), [data]);
   const { sorted: branchSorted, sort: branchSort, toggle: branchToggle } = useSorted(comparison.rows, BRANCH_SORT, { key: 'cost', dir: 'desc' });
-  const bth = (label: string, key: string) => <SortTh label={label} sortKey={key} sort={branchSort} onSort={branchToggle} />;
+  const bth = (label: string, key: string, align: 'left' | 'right' = 'right') => <SortTh label={label} sortKey={key} sort={branchSort} onSort={branchToggle} align={align} />;
 
   const ranking = useMemo(
     () => machineRanking(data.machines, data.logs, data.branchMap, lastMaintenanceByMachine(data.machines, data.allLogs), data.now),

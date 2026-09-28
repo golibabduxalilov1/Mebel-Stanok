@@ -189,7 +189,7 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
         {invalidRange && <p className="text-xs font-bold text-rose-600">Начало периода позже его конца — выборка будет пустой.</p>}
       </div>
 
-      <OverviewTab data={data} canExport={exportSummary} canEquipment={false} canToir={false} canInventory={false} onNavigate={() => {}} />
+      <OverviewTab data={data} canExport={exportSummary} canEquipment={exportSummary} canToir={exportSummary} canInventory={exportSummary} onNavigate={() => {}} />
     </div>
   );
 }
