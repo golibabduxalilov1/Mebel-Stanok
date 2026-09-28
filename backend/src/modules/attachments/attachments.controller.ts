@@ -70,6 +70,7 @@ export const attachmentsController = {
     const attachment = await attachmentsService.getForDownload(req.params.id);
     res.setHeader('Content-Type', mimeTypeFor(attachment.name));
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(attachment.name)}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     storage.createReadStream(attachment.storageKey).pipe(res);
   }),
 
@@ -77,6 +78,7 @@ export const attachmentsController = {
     const attachment = await attachmentsService.getForThumbnail(req.params.id);
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent('thumb-' + attachment.name)}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     storage.createReadStream(attachment.thumbnailKey!).pipe(res);
   }),
 

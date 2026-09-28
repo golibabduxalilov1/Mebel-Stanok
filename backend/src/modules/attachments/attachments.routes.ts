@@ -8,7 +8,21 @@ import { env } from '../../env';
 import { attachmentsController } from './attachments.controller';
 import { updateAttachmentSchema, uploadAttachmentSchema } from './attachments.schema';
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: env.MAX_UPLOAD_BYTES } });
+// SVG is blocked: an uploaded SVG served back as text/html via Content-Type sniffing
+// can execute arbitrary scripts. MIME is checked in addition to extension so a renamed
+// SVG cannot slip through.
+const BLOCKED_MIME_TYPES = new Set(['image/svg+xml']);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: env.MAX_UPLOAD_BYTES },
+  fileFilter: (_req, file, cb) => {
+    if (BLOCKED_MIME_TYPES.has(file.mimetype)) {
+      return cb(new Error('SVG files are not permitted'));
+    }
+    cb(null, true);
+  },
+});
 const uploadFields = upload.fields([
   { name: 'file', maxCount: 1 },
   { name: 'thumbnail', maxCount: 1 },

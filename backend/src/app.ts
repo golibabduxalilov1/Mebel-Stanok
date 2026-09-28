@@ -59,32 +59,34 @@ export function createApp() {
     originAgentCluster:       false,
   }));
   app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
-  // Machines/logs/parts/schedules carry compressed base64 photo strings (imageUrl/imageUrls)
-  // straight in the JSON body, so this needs more headroom than a typical API.
-  app.use(express.json({ limit: '15mb' }));
   app.use(cookieParser());
   app.use(serializeDecimals);
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+  // Routes that embed compressed base64 image strings in the JSON body get a higher limit.
+  // Everything else is capped at 1 mb to reduce the blast radius of a malformed-payload attack.
+  const bigJson = express.json({ limit: '15mb' });
+  const stdJson = express.json({ limit: '1mb' });
+
   const api = express.Router();
-  api.use('/auth', authRouter);
-  api.use('/machines/:machineId/schedules', schedulesForMachineRouter);
-  api.use('/machines/:machineId/transfers', transfersForMachineRouter);
-  api.use('/machines/:machineId/logs', logsForMachineRouter);
-  api.use('/machines', machinesRouter);
-  api.use('/attachments', attachmentsStandaloneRouter);
-  api.use('/branches', branchesRouter);
-  api.use('/units-of-measure', unitsRouter);
-  api.use('/spare-parts', sparePartsRouter);
-  api.use('/schedules', schedulesRouter);
-  api.use('/transfers', transfersRouter);
-  api.use('/logs', logsRouter);
-  api.use('/activity-history', activityHistoryRouter);
-  api.use('/users', usersRouter);
-  api.use('/roles', rolesRouter);
-  api.use('/admin', adminRouter);
-  api.use('/analytics', analyticsRouter);
+  api.use('/auth', stdJson, authRouter);
+  api.use('/machines/:machineId/schedules', bigJson, schedulesForMachineRouter);
+  api.use('/machines/:machineId/transfers', bigJson, transfersForMachineRouter);
+  api.use('/machines/:machineId/logs', bigJson, logsForMachineRouter);
+  api.use('/machines', bigJson, machinesRouter);
+  api.use('/attachments', stdJson, attachmentsStandaloneRouter);
+  api.use('/branches', stdJson, branchesRouter);
+  api.use('/units-of-measure', stdJson, unitsRouter);
+  api.use('/spare-parts', bigJson, sparePartsRouter);
+  api.use('/schedules', bigJson, schedulesRouter);
+  api.use('/transfers', bigJson, transfersRouter);
+  api.use('/logs', bigJson, logsRouter);
+  api.use('/activity-history', stdJson, activityHistoryRouter);
+  api.use('/users', stdJson, usersRouter);
+  api.use('/roles', stdJson, rolesRouter);
+  api.use('/admin', stdJson, adminRouter);
+  api.use('/analytics', stdJson, analyticsRouter);
 
   app.use('/api/v1', api);
 
