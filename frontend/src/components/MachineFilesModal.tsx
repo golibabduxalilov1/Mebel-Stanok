@@ -30,6 +30,7 @@ import { compressImage } from './PhotoPicker';
 import { machineService } from '../services/machineService';
 import { ApiError } from '../lib/apiClient';
 import { canPerformAction } from '../services/userService';
+import DOMPurify from 'dompurify';
 
 /** Generates a JPEG poster frame (~15-25KB) for a video, uploaded alongside it as the attachment's thumbnail. */
 async function generateVideoThumbnail(file: File | Blob): Promise<Blob | null> {
@@ -192,7 +193,7 @@ export function MachineFilesModal({
           const arrayBuffer = await res.arrayBuffer();
           const mammoth = await import('mammoth');
           const { value } = await mammoth.convertToHtml({ arrayBuffer });
-          if (isMounted) setPreviewDocxHtml(value);
+          if (isMounted) setPreviewDocxHtml(DOMPurify.sanitize(value));
         } catch (err) {
           console.error('DOCX preview error:', err);
           if (isMounted) setPreviewDocxError(true);
