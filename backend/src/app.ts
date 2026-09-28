@@ -28,15 +28,35 @@ export function createApp() {
   // from X-Forwarded-For instead of the proxy's address.
   app.set('trust proxy', 1);
 
-  // The API is served over plain HTTP (no TLS termination), so helmet's default
-  // CSP (which includes `upgrade-insecure-requests`) and COOP/origin-agent-cluster
-  // headers make browsers try to upgrade requests to HTTPS and fail with
-  // ERR_SSL_PROTOCOL_ERROR - e.g. opening an attachment's download URL.
+  // The API runs over plain HTTP (no TLS termination).
+  // crossOriginOpenerPolicy, crossOriginResourcePolicy, originAgentCluster remain disabled:
+  // enabling them over HTTP causes ERR_SSL_PROTOCOL_ERROR when browsers follow
+  // attachment download/inline URLs served from the same origin.
   app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginOpenerPolicy: false,
+    contentSecurityPolicy: {
+      // useDefaults: false so we can omit upgrade-insecure-requests entirely
+      // (the directive would force browsers to HTTPS, breaking plain-HTTP deploys).
+      useDefaults: false,
+      directives: {
+        defaultSrc:     ["'self'"],
+        baseUri:        ["'self'"],
+        fontSrc:        ["'self'", "https:", "data:"],
+        formAction:     ["'self'"],
+        frameAncestors: ["'self'"],
+        imgSrc:         ["'self'", "data:", "blob:"],
+        mediaSrc:       ["'self'", "blob:"],
+        objectSrc:      ["'none'"],
+        scriptSrc:      ["'self'"],
+        scriptSrcAttr:  ["'none'"],
+        styleSrc:       ["'self'", "https:", "'unsafe-inline'"],
+        // blob: and ws:/wss: for Socket.IO real-time connection
+        connectSrc:     ["'self'", "ws:", "wss:", "blob:"],
+        workerSrc:      ["'self'", "blob:"],
+      },
+    },
+    crossOriginOpenerPolicy:  false,
     crossOriginResourcePolicy: false,
-    originAgentCluster: false,
+    originAgentCluster:       false,
   }));
   app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
   // Machines/logs/parts/schedules carry compressed base64 photo strings (imageUrl/imageUrls)
