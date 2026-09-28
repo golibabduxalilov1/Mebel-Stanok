@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3, Printer, ShieldAlert,
 } from 'lucide-react';
-import type { Branch, Machine, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
+import type { AppUser, Branch, Machine, MaintenanceLog, MaintenanceSchedule, Role, SparePart, UnitOfMeasure } from '../../types';
 import { canPerformAction } from '../../services/userService';
 import {
   buildReportData, defaultDateRange, formatDateTime, formatPeriod, LOG_TYPE_LABELS, LOG_TYPES, ReportFilters,
@@ -189,7 +189,7 @@ export function ReportsTab({ machines, branches, logs, parts, schedules, users =
         {invalidRange && <p className="text-xs font-bold text-rose-600">Начало периода позже его конца — выборка будет пустой.</p>}
       </div>
 
-      <OverviewTab data={data} canExport={exportSummary} canEquipment={exportSummary} canToir={exportSummary} canInventory={exportSummary} onNavigate={() => {}} />
+      <OverviewTab data={data} canExport={exportSummary} canEquipment={exportSummary} canToir={exportSummary} canInventory={exportSummary} onNavigate={() => {}} onSelectBranch={() => {}} onSelectMachine={() => {}} />
     </div>
   );
 }

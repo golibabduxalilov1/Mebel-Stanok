@@ -40,7 +40,7 @@ export function DonutChart({ data, centerLabel, valueFormatter = v => formatNumb
               </Pie>
               <Tooltip
                 contentStyle={CHART_TOOLTIP_STYLE}
-                formatter={(value: number, name: string) => [`${valueFormatter(Number(value))} (${formatPercent(total ? (Number(value) / total) * 100 : 0)})`, name]}
+                formatter={(value, name) => [`${valueFormatter(Number(value ?? 0))} (${formatPercent(total ? (Number(value ?? 0) / total) * 100 : 0)})`, String(name)]}
               />
             </PieChart>
           )}

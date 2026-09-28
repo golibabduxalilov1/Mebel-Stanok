@@ -67,7 +67,7 @@ export function StackedBarChart({
               cursor={{ fill: '#f8fafc' }}
               contentStyle={CHART_TOOLTIP_STYLE}
               labelStyle={CHART_TOOLTIP_LABEL_STYLE}
-              formatter={(value: number, name: string) => [valueFormatter(Number(value)), name]}
+              formatter={(value, name) => [valueFormatter(Number(value ?? 0)), String(name)]}
             />
             {series.map((s, i) => (
               <Bar

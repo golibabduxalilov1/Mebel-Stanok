@@ -22,7 +22,7 @@ export function DepreciationChart({ data, currentYear, height = 260 }: { data: {
             contentStyle={CHART_TOOLTIP_STYLE}
             labelStyle={CHART_TOOLTIP_LABEL_STYLE}
             labelFormatter={label => (String(label) === currentYear ? `${label} (сейчас)` : `${label} (на 1 января)`)}
-            formatter={(value: number) => [formatMoney(Number(value)), 'Стоимость']}
+            formatter={(value) => [formatMoney(Number(value ?? 0)), 'Стоимость']}
           />
           <ReferenceLine x={currentYear} stroke="#64748b" strokeDasharray="4 4" label={{ value: 'Сейчас', position: 'top', fontSize: 10, fill: '#475569' }} />
           <Area type="monotone" dataKey="value" stroke={SERIES_COLORS.value} strokeWidth={2} fill="url(#reportDepreciationFill)" dot={{ r: 3, strokeWidth: 2, fill: '#fff' }} isAnimationActive={false} />

@@ -2637,7 +2637,7 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
  * from an internal -1/-1 state when sized by percentage (even once its parent already
  * has a real size), which is what produces the "-1" console warning. Feeding it real
  * numbers instead bypasses that internal auto-measurement pass entirely. */
-function useMeasuredSize<T extends HTMLElement>(): [React.RefObject<T>, { width: number; height: number }] {
+function useMeasuredSize<T extends HTMLElement>(): [React.RefObject<T | null>, { width: number; height: number }] {
   const ref = useRef<T>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
@@ -2696,7 +2696,7 @@ function DepreciationChart({ machine }: { machine: Machine }) {
           />
           <Tooltip 
             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-            formatter={(val: number) => [`${val.toLocaleString()} $`, 'Амортизация']}
+            formatter={(val) => [`${Number(val ?? 0).toLocaleString()} $`, 'Амортизация']}
             labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
           />
           <Area
