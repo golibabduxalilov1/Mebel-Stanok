@@ -197,10 +197,10 @@ export default function App() {
     '/inventory': 'inventory', '/users': 'users', '/reports': 'reports', '/history': 'history',
   };
 
-  const activeTab: 'all' | 'maintenance' | 'repair' | 'branches' | 'inventory' | 'reports' | 'history' | 'users' =
+  const activeTab: 'all' | 'maintenance' | 'branches' | 'inventory' | 'reports' | 'history' | 'users' =
     PATH_TO_TAB[location.pathname] ?? 'all';
 
-  const setActiveTab = (tab: 'all' | 'maintenance' | 'repair' | 'branches' | 'inventory' | 'reports' | 'history' | 'users') => {
+  const setActiveTab = (tab: 'all' | 'maintenance' | 'branches' | 'inventory' | 'reports' | 'history' | 'users') => {
     navigate(TAB_TO_PATH[tab] ?? '/machines');
   };
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -491,7 +491,6 @@ export default function App() {
       return matchesSearch && matchesBranch && m.status !== 'retired';
     }
     if (activeTab === 'maintenance') return matchesSearch && matchesBranch && m.status === 'maintenance';
-    if (activeTab === 'repair') return matchesSearch && matchesBranch && m.status === 'repair';
     return matchesSearch && matchesBranch;
   });
 
@@ -853,7 +852,6 @@ export default function App() {
             <h1 className="text-sm sm:text-base md:text-xl font-bold text-slate-800 uppercase tracking-tight truncate">
               {activeTab === 'all' && 'Реестр оборудования'}
               {activeTab === 'maintenance' && 'График ТОиР'}
-              {activeTab === 'repair' && 'Ремонтный цех'}
               {activeTab === 'branches' && 'Филиалы'}
               {activeTab === 'inventory' && 'Склад запчастей'}
               {activeTab === 'users' && 'Пользователи и роли'}
