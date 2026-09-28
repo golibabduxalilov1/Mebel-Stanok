@@ -24,6 +24,10 @@ import { analyticsRouter } from './modules/analytics/analytics.routes';
 export function createApp() {
   const app = express();
 
+  // Trust the first proxy hop so express-rate-limit reads the real client IP
+  // from X-Forwarded-For instead of the proxy's address.
+  app.set('trust proxy', 1);
+
   // The API is served over plain HTTP (no TLS termination), so helmet's default
   // CSP (which includes `upgrade-insecure-requests`) and COOP/origin-agent-cluster
   // headers make browsers try to upgrade requests to HTTPS and fail with
