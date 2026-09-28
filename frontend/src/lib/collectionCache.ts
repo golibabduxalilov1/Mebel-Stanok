@@ -52,25 +52,27 @@ export function createCollectionCache<T extends { id: string }>(opts: {
     return loadPromise;
   }
 
+  // Named handler refs so they can be removed before re-registration on a new socket,
+  // preventing duplicates if connectSocket is called more than once in a session.
+  let connectedBefore = false;
+  const onConnect = () => { if (connectedBefore && loaded) load(); connectedBefore = true; };
+  const onCreated = (item: T) => { upsert(fromSocket(item)); notify(); };
+  const onUpdated = (item: T) => { upsert(fromSocket(item)); notify(); };
+  const onDeleted = (payload: { id: string }) => { remove(payload.id); notify(); };
+
   onSocketReady((socket) => {
+    // Remove stale listeners before re-registering on the new socket (guards against
+    // duplicate handlers when connectSocket fires all onSocketReady callbacks again).
+    socket.off('connect', onConnect);
+    socket.off(`${opts.entity}:created`, onCreated);
+    socket.off(`${opts.entity}:updated`, onUpdated);
+    socket.off(`${opts.entity}:deleted`, onDeleted);
+
     // Events emitted while the socket was down are lost - re-sync from REST on every reconnect.
-    let connectedBefore = false;
-    socket.on('connect', () => {
-      if (connectedBefore && loaded) load();
-      connectedBefore = true;
-    });
-    socket.on(`${opts.entity}:created`, (item: T) => {
-      upsert(fromSocket(item));
-      notify();
-    });
-    socket.on(`${opts.entity}:updated`, (item: T) => {
-      upsert(fromSocket(item));
-      notify();
-    });
-    socket.on(`${opts.entity}:deleted`, (payload: { id: string }) => {
-      remove(payload.id);
-      notify();
-    });
+    socket.on('connect', onConnect);
+    socket.on(`${opts.entity}:created`, onCreated);
+    socket.on(`${opts.entity}:updated`, onUpdated);
+    socket.on(`${opts.entity}:deleted`, onDeleted);
   });
 
   return {
