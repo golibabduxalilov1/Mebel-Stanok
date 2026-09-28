@@ -244,9 +244,9 @@ export default function App() {
 
   const hasSession = Boolean(activeAppUser);
 
-  // Redirect bare root to /machines
+  // Redirect root and unknown paths to /machines
   useEffect(() => {
-    if (location.pathname === '/') navigate('/machines', { replace: true });
+    if (!PATH_TO_TAB[location.pathname]) navigate('/machines', { replace: true });
   }, [location.pathname]);
 
   useEffect(() => {
