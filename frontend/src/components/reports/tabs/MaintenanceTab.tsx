@@ -351,6 +351,17 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     );
                   })}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold">
+                    <td colSpan={5} className="px-4 sm:px-6 py-3 text-sm text-slate-700">Итого</td>
+                    <td className="px-4 sm:px-6 py-3 text-right text-sm text-slate-900 whitespace-nowrap">
+                      {formatMoney(journal.reduce((s, l) => s + (l.partsCost || 0), 0))}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 text-right text-sm text-slate-900 whitespace-nowrap">
+                      {formatMoney(journal.reduce((s, l) => s + (l.laborCost || 0), 0))}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
             <Pagination page={paged.page} pageCount={paged.pageCount} total={journal.length} pageSize={paged.pageSize} onPage={paged.setPage} />
