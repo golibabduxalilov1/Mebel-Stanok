@@ -119,8 +119,8 @@ export function ToirGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Типовые примеры:</p>
                     <ul className="space-y-1">
-                      {cat.examples.map((ex, i) => (
-                        <li key={i} className="text-xs text-slate-700 flex items-start gap-1.5 leading-relaxed">
+                      {cat.examples.map((ex) => (
+                        <li key={ex} className="text-xs text-slate-700 flex items-start gap-1.5 leading-relaxed">
                           <span className="text-blue-500 font-bold">•</span>
                           <span>{ex}</span>
                         </li>
@@ -673,7 +673,7 @@ export function CreateToirScheduleModal({
                 <div className="flex flex-wrap gap-1.5">
                   {selectedParts.map((p, idx) => (
                     <div
-                      key={idx}
+                      key={p.partId}
                       className="bg-white border border-emerald-300 text-emerald-950 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-2xs"
                     >
                       <span className="font-bold text-slate-800">{p.name}</span>
@@ -1301,7 +1301,7 @@ export function EditToirScheduleModal({
                 <div className="flex flex-wrap gap-1.5">
                   {selectedParts.map((p, idx) => (
                     <div
-                      key={idx}
+                      key={p.partId}
                       className="bg-white border border-emerald-300 text-emerald-950 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-2xs"
                     >
                       <span className="font-bold text-slate-800">{p.name}</span>
@@ -1594,8 +1594,8 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
               <span>⚙️ Запчасти (списано со склада):</span>
             </div>
             <div className="flex flex-wrap gap-1">
-              {schedule.partsUsed.map((p, idx) => (
-                <span key={idx} className="bg-white border border-emerald-300 text-emerald-900 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-2xs">
+              {schedule.partsUsed.map((p) => (
+                <span key={p.partId} className="bg-white border border-emerald-300 text-emerald-900 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-2xs">
                   {p.name} <span className="text-emerald-600 font-mono">×{p.quantity}</span>
                 </span>
               ))}
@@ -1623,7 +1623,7 @@ export const ToirScheduleCard: React.FC<ToirScheduleCardProps> = ({
             <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 custom-scrollbar">
               {scheduleImages.map((img, i) => (
                 <button
-                  key={i}
+                  key={img}
                   type="button"
                   onClick={() => setLightboxIndex(i)}
                   className="relative w-11 h-11 rounded-lg overflow-hidden border border-blue-200 hover:border-blue-500 shrink-0 group/img shadow-2xs transition-all hover:scale-105 bg-slate-900"

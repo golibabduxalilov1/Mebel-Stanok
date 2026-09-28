@@ -1605,8 +1605,8 @@ export default function App() {
                       canViewDepreciation && { label: 'Дневная амортизация', value: selectedMachine.purchasePrice > 0 && selectedMachine.purchaseDate ? `${machineService.calculateDailyDepreciation(selectedMachine).toLocaleString('en-US', { maximumFractionDigits: 2 })} $/день` : 'Не указана' },
                       { label: 'Срок службы', value: `${selectedMachine.usefulLifeYears || 10} лет` },
                       { label: 'Ампер', value: selectedMachine.amperage ? `${selectedMachine.amperage} А` : 'Не указан' },
-                    ].filter(item => !!item).map((item, idx) => (
-                      <div key={idx} className="min-w-0">
+                    ].filter(item => !!item).map((item) => (
+                      <div key={item.label} className="min-w-0">
                         <p className="text-xs text-slate-400 font-medium truncate mb-1">{item.label}</p>
                         <p className="font-semibold text-slate-900 break-words">{item.value}</p>
                       </div>
@@ -2393,9 +2393,9 @@ function AddScheduleForm({ machineId, onComplete }: { machineId: string, onCompl
       <div>
         <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">2. Шаблоны типовых задач</label>
         <div className="flex flex-wrap gap-1 mb-2">
-          {activeCategory.examples.slice(0, 4).map((ex, i) => (
+          {activeCategory.examples.slice(0, 4).map((ex) => (
             <button
-              key={i}
+              key={ex}
               type="button"
               onClick={() => setTaskName(ex)}
               className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border transition-all ${
@@ -2593,8 +2593,8 @@ function LogsList({ machineId, parts, machines, branches, onRefresh, role }: { m
                 
                 {log.partsUsed && log.partsUsed.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {log.partsUsed.map((p, idx) => (
-                      <span key={idx} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] rounded border border-slate-200">
+                    {log.partsUsed.map((p) => (
+                      <span key={p.partId} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] rounded border border-slate-200">
                         {p.name} (x{p.quantity})
                       </span>
                     ))}
@@ -2875,7 +2875,7 @@ function MultiPhotoPicker({
       {safeImages.length > 0 && (
         <div className={compact ? "grid grid-cols-4 sm:grid-cols-5 gap-1.5" : "grid grid-cols-3 sm:grid-cols-4 gap-3"}>
           {safeImages.map((url, idx) => (
-            <div key={idx} className={`relative group rounded-lg overflow-hidden border border-slate-200 aspect-square bg-slate-900 shadow-xs ${compact ? 'rounded-lg' : 'rounded-xl'}`}>
+            <div key={url} className={`relative group rounded-lg overflow-hidden border border-slate-200 aspect-square bg-slate-900 shadow-xs ${compact ? 'rounded-lg' : 'rounded-xl'}`}>
               <img src={url} alt={`Фото ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100" />
               {idx === 0 && (
                 <span className={`absolute top-1 left-1 bg-blue-600 text-white font-bold uppercase rounded shadow-xs ${compact ? 'px-1 py-0.2 text-[7px]' : 'px-2 py-0.5 text-[9px]'}`}>
@@ -3187,11 +3187,11 @@ function LightboxModal({
               </button>
             )}
 
-            <img 
-              key={index}
-              src={currentImg} 
-              alt="" 
-              className="max-h-[65vh] w-auto max-w-full object-contain rounded-xl shadow-2xl transition-all" 
+            <img
+              key={currentImg}
+              src={currentImg}
+              alt=""
+              className="max-h-[65vh] w-auto max-w-full object-contain rounded-xl shadow-2xl transition-all"
             />
 
             {allImages.length > 1 && (
@@ -3210,7 +3210,7 @@ function LightboxModal({
             <div className="p-3 bg-slate-950/80 border-t border-slate-800 flex items-center justify-center gap-2 overflow-x-auto custom-scrollbar">
               {allImages.map((img, i) => (
                 <button
-                  key={i}
+                  key={img}
                   onClick={() => setIndex(i)}
                   className={`relative w-12 h-12 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
                     i === index ? 'border-blue-500 scale-105 shadow-md' : 'border-slate-800 opacity-50 hover:opacity-100'
@@ -3379,7 +3379,7 @@ function MachineDetailPhotoGallery({
         <div className="flex items-center gap-2.5 overflow-x-auto p-1 custom-scrollbar">
           {images.map((img, i) => (
             <button
-              key={i}
+              key={img}
               onClick={() => setActiveIdx(i)}
               className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
                 i === activeIdx ? 'border-blue-600 ring-2 ring-blue-500/30 scale-105 shadow-sm' : 'border-slate-200 opacity-70 hover:opacity-100'
@@ -4216,7 +4216,7 @@ function AddLogForm({ machineId: initialMachineId, parts, onComplete, defaultNot
           {formData.partsUsed.length > 0 && (
             <div className="flex flex-wrap items-center gap-1 mt-1">
               {formData.partsUsed.map((p, idx) => (
-                <div key={idx} className="bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md px-1.5 py-0.5 text-[9px] font-bold flex items-center gap-1">
+                <div key={p.partId} className="bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md px-1.5 py-0.5 text-[9px] font-bold flex items-center gap-1">
                   <span>⚙️ {p.name} × {p.quantity}</span>
                   <button 
                     type="button" 
@@ -4586,7 +4586,7 @@ function EditLogForm({ log, parts, machines, branches, onComplete }: { log: Main
         {formData.partsUsed.length > 0 && (
           <div className="flex flex-wrap items-center gap-1 mt-1">
             {formData.partsUsed.map((p, i) => (
-              <div key={i} className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-md border border-slate-200 text-[9px] font-bold">
+              <div key={p.partId} className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-md border border-slate-200 text-[9px] font-bold">
                 <span>⚙️ {p.name} × {p.quantity}</span>
                 <button 
                   type="button" 
@@ -6111,8 +6111,8 @@ function MaintenanceScheduleTab({ machines, schedules, logs, branches, parts, on
                         {getLogImages(log).length > 0 && (
                           <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
                             {getLogImages(log).map((img, i) => (
-                              <button 
-                                key={i} 
+                              <button
+                                key={img}
                                 type="button" 
                                 onClick={() => setLogLightbox({ 
                                   images: getLogImages(log), 

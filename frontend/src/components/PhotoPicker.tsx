@@ -137,7 +137,7 @@ export function MultiPhotoPicker({
       {safeImages.length > 0 && (
         <div className={compact ? "grid grid-cols-4 sm:grid-cols-5 gap-1.5" : "grid grid-cols-3 sm:grid-cols-4 gap-2.5"}>
           {safeImages.map((url, idx) => (
-            <div key={idx} className={`relative group rounded-xl overflow-hidden border border-slate-200 aspect-square bg-slate-900 shadow-xs ${compact ? 'rounded-lg' : 'rounded-xl'}`}>
+            <div key={url} className={`relative group rounded-xl overflow-hidden border border-slate-200 aspect-square bg-slate-900 shadow-xs ${compact ? 'rounded-lg' : 'rounded-xl'}`}>
               <img 
                 src={url} 
                 alt={`Фото ${idx + 1}`} 
@@ -301,9 +301,9 @@ export function LightboxModal({
               </button>
             )}
 
-            <img 
-              key={index}
-              src={currentImg} 
+            <img
+              key={currentImg}
+              src={currentImg}
               alt="" 
               className="max-h-[65vh] w-auto max-w-full object-contain rounded-xl shadow-2xl transition-all" 
             />
@@ -324,7 +324,7 @@ export function LightboxModal({
             <div className="p-3 bg-slate-950/80 border-t border-slate-800 flex items-center justify-center gap-2 overflow-x-auto custom-scrollbar">
               {allImages.map((img, i) => (
                 <button
-                  key={i}
+                  key={img}
                   onClick={() => setIndex(i)}
                   className={`relative w-12 h-12 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
                     i === index ? 'border-blue-500 scale-105 shadow-md' : 'border-slate-800 opacity-50 hover:opacity-100'
