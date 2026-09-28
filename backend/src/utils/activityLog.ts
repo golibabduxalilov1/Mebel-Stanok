@@ -92,7 +92,11 @@ function translateValue(key: string, val: unknown): string {
   if (key === 'purchasePrice' || key === 'unitPrice' || key === 'cost') {
     return `${Number(val).toLocaleString('en-US')} $`;
   }
-  return String(val);
+  const str = String(val);
+  if (str.startsWith('data:image/') || str.startsWith('data:application/')) {
+    return '[изображение]';
+  }
+  return str;
 }
 
 /** Port of getDiffDetails() from the frontend's machineService.ts - same field labels and phrasing. */
