@@ -99,7 +99,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
       byStatus,
       uptime: uptimePercent(data.machines),
       cost,
-      journalTotal: data.logs.reduce((sum, l) => sum + (l.partsCost || 0) + (l.laborCost || 0), 0),
+      partsTotal: data.logs.reduce((sum, l) => sum + (l.partsCost || 0), 0),
+      laborTotal: data.logs.reduce((sum, l) => sum + (l.laborCost || 0), 0),
       costChange: data.prevLogs ? percentChange(cost, sumCompletedCost(data.prevLogs)) : undefined,
       completed: data.logs.filter(isCompleted).length,
       completedChange: data.prevLogs ? percentChange(data.logs.filter(isCompleted).length, data.prevLogs.filter(isCompleted).length) : undefined,
@@ -171,7 +172,13 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         />
         <KpiCard
           label="Итого ремонт"
-          value={formatMoney(stats.journalTotal)}
+          value={(
+            <span className="flex items-baseline gap-3 flex-wrap">
+              <span>{formatMoney(stats.partsTotal)}</span>
+              <span className="text-slate-300 font-normal">|</span>
+              <span className="text-blue-600">{formatMoney(stats.laborTotal)}</span>
+            </span>
+          )}
           hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Расходы за период'}
         />
       </div>
