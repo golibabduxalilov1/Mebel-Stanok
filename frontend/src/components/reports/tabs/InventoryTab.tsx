@@ -78,7 +78,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         >
           {stats.byBranch.length === 0 ? <EmptyState text="На складе нет запчастей" compact /> : (
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead>
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Филиал</th>
@@ -131,7 +131,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
       >
         {stats.low.length === 0 ? <EmptyState text="Все позиции выше минимального остатка" compact /> : (
           <div className={SCROLL_BOX}>
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm report-table">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
                   <th className="px-4 sm:px-6 py-3">Наименование</th>
@@ -177,7 +177,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         <AsyncContent state={reservations} isEmpty={rows => rows.length === 0} emptyText="Нет забронированных запчастей">
           {rows => (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Запчасть</th>
@@ -268,7 +268,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         >
           {stats.byMachine.length === 0 ? <EmptyState compact /> : (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Станок</th>
@@ -308,7 +308,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         >
           {stats.dead.length === 0 ? <EmptyState text="Все позиции в наличии использовались за период" compact /> : (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Наименование</th>
@@ -345,7 +345,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         >
           {stats.units.length === 0 ? <EmptyState text="На складе нет запчастей" compact /> : (
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead>
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Единица</th>

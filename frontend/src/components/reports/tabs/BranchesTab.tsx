@@ -67,7 +67,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
         <EmptyState text="Нет филиалов по выбранным фильтрам" />
       ) : (
         <div className="report-scroll overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm report-table">
             <thead>
               <tr className={THEAD_ROW}>
                 <SortTh label="Филиал" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6" />
@@ -185,7 +185,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
         >
           {details.machines.length === 0 ? <EmptyState text="Нет оборудования по выбранным фильтрам" compact /> : (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Станок</th>

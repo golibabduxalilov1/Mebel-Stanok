@@ -146,7 +146,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
           <EmptyState text={search ? 'Ничего не найдено' : 'Нет оборудования по выбранным фильтрам'} />
         ) : (
           <div className={`${SCROLL_BOX} max-h-[600px]`}>
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm report-table">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
                   <SortTh label="Станок" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6" />
@@ -258,7 +258,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
         <Panel title="Израсходованные запчасти" icon={Boxes} bodyClass="">
           {card.parts.length === 0 ? <EmptyState compact /> : (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Запчасть</th><th className="px-4 py-3 text-right">Кол-во</th><th className="px-4 sm:px-6 py-3 text-right">Сумма</th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {card.parts.map(p => (
@@ -287,7 +287,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
       >
         {card.logs.length === 0 ? <EmptyState compact /> : (
           <div className={SCROLL_BOX}>
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm report-table">
               <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Дата</th><th className="px-4 py-3">Вид работ</th><th className="px-4 py-3">Исполнитель</th><th className="px-4 sm:px-6 py-3 text-right">Амортизация</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
                 {card.logs.map(l => (

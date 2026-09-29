@@ -148,7 +148,7 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
         {records.length === 0 ? <EmptyState text={search ? 'Ничего не найдено' : 'Все обязательные поля заполнены'} /> : (
           <>
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead>
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Запись</th>

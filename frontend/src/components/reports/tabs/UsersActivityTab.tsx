@@ -105,7 +105,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
       >
         {stats.top.length === 0 ? <EmptyState /> : (
           <div className="report-scroll overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm report-table">
               <thead>
                 <tr className={THEAD_ROW}>
                   <th className="px-4 sm:px-6 py-3">Пользователь</th>
@@ -165,7 +165,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
         <AsyncContent state={state} isEmpty={() => stats.inactive.length === 0} emptyText="Все активные пользователи заходили за последние 30 дней">
           {() => (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Пользователь</th>

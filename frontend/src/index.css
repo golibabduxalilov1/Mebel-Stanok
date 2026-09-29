@@ -66,6 +66,25 @@ html, body, #root, * {
   max-width: 100%;
 }
 
+/* Analytics / report tables — full grid borders */
+.report-table {
+  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
+}
+.report-table th,
+.report-table td {
+  border: 1px solid #e2e8f0;
+}
+.report-table thead tr th {
+  border-bottom-width: 2px;
+  border-bottom-color: #cbd5e1;
+}
+.report-table tfoot tr td,
+.report-table tfoot tr th {
+  border-top-width: 2px;
+  border-top-color: #cbd5e1;
+}
+
 @layer utilities {
   .custom-scrollbar {
     scroll-behavior: smooth;

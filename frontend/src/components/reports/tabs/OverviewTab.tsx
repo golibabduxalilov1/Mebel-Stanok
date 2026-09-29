@@ -202,7 +202,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           <EmptyState text="Нет филиалов по выбранным фильтрам" />
         ) : (
           <div className="report-scroll overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm report-table">
               <thead>
                 <tr className={THEAD_ROW}>
                   <SortTh label="Филиал" sortKey="name" sort={branchSort} onSort={branchToggle} className="sm:pl-6" />
@@ -280,7 +280,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           <EmptyState text={search ? 'Ничего не найдено' : 'Нет оборудования по выбранным фильтрам'} />
         ) : (
           <div className={`${SCROLL_BOX} max-h-[600px]`}>
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm report-table">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
                   <SortTh label="Станок" sortKey="name" sort={machineSort} onSort={machineToggle} className="sm:pl-6" />
@@ -360,7 +360,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         {journal.length === 0 ? <EmptyState text={journalSearch ? 'Ничего не найдено' : undefined} /> : (
           <>
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead>
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Дата / Станок</th>

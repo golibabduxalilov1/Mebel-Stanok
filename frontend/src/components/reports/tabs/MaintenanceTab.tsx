@@ -161,7 +161,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
         >
           {upcoming.length === 0 ? <EmptyState text={`Нет задач на ближайшие ${upcomingWindow} дней`} compact /> : (
             <div className={`${SCROLL_BOX} max-h-[360px]`}>
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Задача</th>
@@ -207,7 +207,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
       >
         {schedule.overdue.length === 0 ? <EmptyState text="Просроченных задач нет" compact /> : (
           <div className={SCROLL_BOX}>
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm report-table">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
                   <th className="px-4 sm:px-6 py-3">Станок</th>
@@ -248,7 +248,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
       >
         {tech.sorted.length === 0 ? <EmptyState compact /> : (
           <div className="report-scroll overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm report-table">
               <thead>
                 <tr className={THEAD_ROW}>
                   <SortTh label="Исполнитель" sortKey="name" sort={tech.sort} onSort={tech.toggle} className="sm:pl-6" />
@@ -309,7 +309,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
         {journal.length === 0 ? <EmptyState text={search ? 'Ничего не найдено' : undefined} /> : (
           <>
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead>
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Дата / Станок</th>

@@ -48,7 +48,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
         <AsyncContent state={state} isEmpty={() => !stats?.balance.length} emptyText="Нет перемещений за выбранный период">
           {() => (
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead>
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Филиал</th>
@@ -88,7 +88,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
         <AsyncContent state={state} isEmpty={() => !stats?.rows.length} emptyText="Нет перемещений за выбранный период">
           {() => (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm report-table">
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Дата</th>
