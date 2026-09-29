@@ -11,6 +11,8 @@ import {
   XlsxButton, EmptyState, KpiCard, KPI_GRID, Pagination, Panel, ProgressBar, SCROLL_BOX, SearchInput, SortTh, StatusBadge,
   TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, usePaged, useSorted,
 } from '../ReportUi';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 import type { MaintenanceLog } from '../../../types';
 import { machineService } from '../../../services/machineService';
 import { SERIES_COLORS } from '../charts/ChartFrame';
@@ -51,7 +53,6 @@ const RANKING_SORT = {
   cost: (r: MachineRankingRow) => r.cost,
   ratio: (r: MachineRankingRow) => (r.ratio === Infinity ? Number.MAX_VALUE : r.ratio),
   emergencies: (r: MachineRankingRow) => r.emergencies,
-  mtbf: (r: MachineRankingRow) => r.mtbfDays,
   last: (r: MachineRankingRow) => r.lastMaintenance || null,
 };
 
@@ -143,6 +144,9 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
     [data.logs, data.machineMap, journalSearch, journalDir],
   );
   const paged = usePaged(journal, 25);
+  const { heights: hBranches, setHeight: setHBranches, resetHeight: resetHBranches } = useRowResize('overview-branches');
+  const { heights: hMachines, setHeight: setHMachines, resetHeight: resetHMachines } = useRowResize('overview-machines');
+  const { heights: hJournal, setHeight: setHJournal, resetHeight: resetHJournal } = useRowResize('overview-journal');
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -220,7 +224,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                 {branchSorted.map(r => {
                   const clickable = r.branchId !== NO_BRANCH_ID;
                   return (
-                    <tr key={r.branchId} className={`transition-colors ${clickable ? 'hover:bg-blue-50/40 cursor-pointer' : ''}`}
+                    <ResizableRow key={r.branchId} rowId={r.branchId} heights={hBranches} onHeightChange={setHBranches} onHeightReset={resetHBranches}
+                      className={`transition-colors ${clickable ? 'hover:bg-blue-50/40 cursor-pointer' : ''}`}
                       onClick={clickable ? () => onSelectBranch(r.branchId) : undefined}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className={`font-bold ${clickable ? 'text-blue-700' : 'text-slate-800'}`}>{r.branchName}</p>
@@ -234,7 +239,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.stockValue)}</td>
-                    </tr>
+                    </ResizableRow>
                   );
                 })}
               </tbody>
@@ -266,9 +271,9 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                 filename="reiting_stankov"
                 disabled={!machineSorted.length}
                 headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $',
-                  'Ремонт на ТО за период, $', 'Ремонт / амортизация, %', 'MTBF, дней', 'Последнее ТО']}
+                  'Ремонт на ТО за период, $', 'Ремонт / амортизация, %', 'Последнее ТО']}
                 rows={() => machineSorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status],
-                  r.ageYears, r.residual, r.cost, r.ratio === Infinity ? '>100' : r.ratio, r.mtbfDays,
+                  r.ageYears, r.residual, r.cost, r.ratio === Infinity ? '>100' : r.ratio,
                   r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
               />
             )}
@@ -289,8 +294,6 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {mth('Возраст', 'age')}
                   {mth('Ост. амортизация', 'residual')}
                   {mth('Ремонт', 'cost')}
-                  {mth('Ремонт / стоим.', 'ratio')}
-                  {mth('MTBF', 'mtbf')}
                   {mth('Посл. ТО', 'last')}
                 </tr>
               </thead>
@@ -298,7 +301,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                 {machineSorted.map(r => {
                   const level = ratioLevel(r.ratio);
                   return (
-                    <tr key={r.id}
+                    <ResizableRow key={r.id} rowId={r.id} heights={hMachines} onHeightChange={setHMachines} onHeightReset={resetHMachines}
                       className={`cursor-pointer transition-colors ${level === 'critical' ? 'bg-rose-50/60 hover:bg-rose-50' : level === 'warn' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-blue-50/30'}`}
                       onClick={() => onSelectMachine(r.id)}>
                       <td className={`${TD_FIRST} min-w-44`}>
@@ -310,17 +313,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.ageYears === null ? 'text-slate-300' : ''}`}>{r.ageYears === null ? '—' : `${formatNumber(r.ageYears, 1)} г.`}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
-                      <td className={`${TD} text-right whitespace-nowrap`}>
-                        <span className={`font-mono font-black ${level === 'critical' ? 'text-rose-700' : level === 'warn' ? 'text-amber-700' : 'text-slate-600'}`}>{formatRatio(r.ratio)}</span>
-                        {level === 'critical' && (
-                          <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[9px] font-black uppercase">
-                            <AlertTriangle className="w-3 h-3" />рассмотреть замену
-                          </span>
-                        )}
-                      </td>
-                      <td className={`${TD} text-right font-mono whitespace-nowrap ${r.mtbfDays === null ? 'text-slate-300' : ''}`}>{r.mtbfDays === null ? '—' : `${formatNumber(r.mtbfDays, 1)} дн.`}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
-                    </tr>
+                    </ResizableRow>
                   );
                 })}
               </tbody>
@@ -377,7 +371,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                     const machine = data.machineMap.get(log.machineId);
                     const done = isCompleted(log);
                     return (
-                      <tr key={log.id} className="hover:bg-blue-50/20 transition-colors">
+                      <ResizableRow key={log.id} rowId={log.id} heights={hJournal} onHeightChange={setHJournal} onHeightReset={resetHJournal} className="hover:bg-blue-50/20 transition-colors">
                         <td className={TD_FIRST}>
                           <p className="text-xs font-mono text-slate-400 mb-0.5">{formatDateKey(toLocalDateKey(log.date))}</p>
                           <p className="font-bold text-slate-800 leading-tight min-w-40">{machine?.name || '—'}</p>
@@ -398,7 +392,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                         </td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.partsCost || 0)}</td>
-                      </tr>
+                      </ResizableRow>
                     );
                   })}
                 </tbody>

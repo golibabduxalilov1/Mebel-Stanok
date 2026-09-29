@@ -8,6 +8,8 @@ import {
 import {
   XlsxButton, EmptyState, KpiCard, Pagination, Panel, SCROLL_BOX, SearchInput, SortTh, StatusBadge, TD, TD_FIRST, THEAD_ROW, usePaged, useSorted,
 } from '../ReportUi';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 import type { MaintenanceLog } from '../../../types';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
@@ -73,6 +75,10 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
   );
   const paged = usePaged(journal, 25);
   const tech = useSorted(stats.technicians, TECH_SORT, { key: 'count', dir: 'desc' });
+  const { heights: hUpcoming, setHeight: setHUpcoming, resetHeight: resetHUpcoming } = useRowResize('maint-upcoming');
+  const { heights: hOverdue, setHeight: setHOverdue, resetHeight: resetHOverdue } = useRowResize('maint-overdue');
+  const { heights: hTech, setHeight: setHTech, resetHeight: resetHTech } = useRowResize('maint-technicians');
+  const { heights: hJournal, setHeight: setHJournal, resetHeight: resetHJournal } = useRowResize('maint-journal');
 
   const { ratio, schedule } = stats;
   const hasRatio = ratio.planned.count + ratio.emergency.count > 0;
@@ -172,7 +178,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {upcoming.map(t => (
-                    <tr key={t.id}>
+                    <ResizableRow key={t.id} rowId={t.id} heights={hUpcoming} onHeightChange={setHUpcoming} onHeightReset={resetHUpcoming}>
                       <td className={`${TD_FIRST} min-w-48`}>
                         <p className="font-bold text-slate-800 text-xs">{t.taskName}</p>
                         <p className="text-[10px] text-slate-500">{t.machineName}{t.assignedTechnician ? ` · ${t.assignedTechnician}` : ''}</p>
@@ -185,7 +191,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                       <td className="px-4 sm:px-6 py-3 text-right font-mono text-xs whitespace-nowrap">
                         {t.estimatedHours ? `${formatNumber(t.estimatedHours, 1)} ч` : '—'} · {t.laborCost ? formatMoney(t.laborCost) : '—'}
                       </td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>
@@ -220,14 +226,14 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {schedule.overdue.map(t => (
-                  <tr key={t.id} className="hover:bg-rose-50/30 transition-colors">
+                  <ResizableRow key={t.id} rowId={t.id} heights={hOverdue} onHeightChange={setHOverdue} onHeightReset={resetHOverdue} className="hover:bg-rose-50/30 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{t.machineName}</td>
                     <td className={`${TD} text-slate-600 min-w-48`}>{t.taskName}</td>
                     <td className={`${TD} font-mono text-xs text-slate-500 whitespace-nowrap`}>{formatDateKey(t.nextDue)}</td>
                     <td className={`${TD} text-right font-mono font-black text-rose-600 whitespace-nowrap`}>{t.daysLate} дн.</td>
                     <td className={TD}><PriorityBadge priority={t.priority} /></td>
                     <td className="px-4 sm:px-6 py-3 text-slate-600 text-xs">{t.assignedTechnician || '—'}</td>
-                  </tr>
+                  </ResizableRow>
                 ))}
               </tbody>
             </table>
@@ -262,7 +268,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {tech.sorted.map(t => (
-                  <tr key={t.name} className="hover:bg-blue-50/20 transition-colors">
+                  <ResizableRow key={t.name} rowId={t.name} heights={hTech} onHeightChange={setHTech} onHeightReset={resetHTech} className="hover:bg-blue-50/20 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{t.name}</td>
                     <td className={`${TD} text-right font-mono`}>{t.count}</td>
                     <td className={`${TD} text-right font-mono ${t.emergencies ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{t.emergencies}</td>
@@ -270,7 +276,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     <td className={`${TD} text-right font-mono whitespace-nowrap text-slate-600`}>{t.count ? formatMoney(t.avgCost) : '—'}</td>
                     <td className={`${TD} text-right font-mono`}>{t.assignedTasks}</td>
                     <td className={`px-4 sm:px-6 py-3 text-right font-mono ${t.overdueTasks ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{t.overdueTasks}</td>
-                  </tr>
+                  </ResizableRow>
                 ))}
               </tbody>
             </table>
@@ -326,7 +332,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     const machine = data.machineMap.get(log.machineId);
                     const done = isCompleted(log);
                     return (
-                      <tr key={log.id} className="hover:bg-blue-50/20 transition-colors">
+                      <ResizableRow key={log.id} rowId={log.id} heights={hJournal} onHeightChange={setHJournal} onHeightReset={resetHJournal} className="hover:bg-blue-50/20 transition-colors">
                         <td className={TD_FIRST}>
                           <p className="text-xs font-mono text-slate-400 mb-0.5">{formatDateKey(toLocalDateKey(log.date))}</p>
                           <p className="font-bold text-slate-800 leading-tight min-w-40">{machine?.name || '—'}</p>
@@ -347,7 +353,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                         </td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.partsCost || 0)}</td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
-                      </tr>
+                      </ResizableRow>
                     );
                   })}
                 </tbody>

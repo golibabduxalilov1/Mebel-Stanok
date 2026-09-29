@@ -6,6 +6,8 @@ import {
 } from '../reportUtils';
 import { XlsxButton, EmptyState, KpiCard, Panel, SCROLL_BOX, SortTh, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, useSorted } from '../ReportUi';
 import { machineService } from '../../../services/machineService';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 
 const STATUS_BADGE = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -44,6 +46,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
 }) {
   const comparison = useMemo(() => branchComparison(data), [data]);
   const { sorted, sort, toggle } = useSorted(comparison.rows, SORT, { key: 'cost', dir: 'desc' });
+  const { heights: hComp, setHeight: setHComp, resetHeight: resetHComp } = useRowResize('branches-comparison');
   const selected = data.filters.branchId !== 'all' ? data.branchMap.get(data.filters.branchId) : undefined;
 
   if (selected) {
@@ -86,7 +89,8 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
               {sorted.map(r => {
                 const clickable = r.branchId !== NO_BRANCH_ID;
                 return (
-                  <tr key={r.branchId} className={`transition-colors ${clickable ? 'hover:bg-blue-50/40 cursor-pointer' : ''}`} onClick={clickable ? () => onSelectBranch(r.branchId) : undefined}>
+                  <ResizableRow key={r.branchId} rowId={r.branchId} heights={hComp} onHeightChange={setHComp} onHeightReset={resetHComp}
+                    className={`transition-colors ${clickable ? 'hover:bg-blue-50/40 cursor-pointer' : ''}`} onClick={clickable ? () => onSelectBranch(r.branchId) : undefined}>
                     <td className={`${TD_FIRST} min-w-44`}>
                       <p className={`font-bold ${clickable ? 'text-blue-700' : 'text-slate-800'}`}>{r.branchName}</p>
                       {r.location && <p className="text-[10px] text-slate-400 truncate max-w-56">{r.location}</p>}
@@ -100,7 +104,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                     <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                     <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                     <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.stockValue)}</td>
-                  </tr>
+                  </ResizableRow>
                 );
               })}
             </tbody>
@@ -128,6 +132,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
   onBack: () => void;
   onOpenMachine?: (machineId: string) => void;
 }) {
+  const { heights: hMachines, setHeight: setHMachines, resetHeight: resetHMachines } = useRowResize('branch-passport-machines');
   const details = useMemo(() => {
     const costs = costByMachine(data.logs);
     return {
@@ -197,7 +202,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {details.machines.map(({ machine, residual, cost }) => (
-                    <tr key={machine.id} className="hover:bg-blue-50/20">
+                    <ResizableRow key={machine.id} rowId={machine.id} heights={hMachines} onHeightChange={setHMachines} onHeightReset={resetHMachines} className="hover:bg-blue-50/20">
                       <td className={`${TD_FIRST} min-w-44`}>
                         {onOpenMachine ? (
                           <button type="button" onClick={() => onOpenMachine(machine.id)} className="font-bold text-blue-700 hover:underline text-left cursor-pointer">{machine.name}</button>
@@ -210,7 +215,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
                       </td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${residual === null ? 'text-slate-400' : ''}`}>{residual === null ? 'нет данных' : formatMoney(residual)}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{formatMoney(cost)}</td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>

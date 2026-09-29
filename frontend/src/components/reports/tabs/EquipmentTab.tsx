@@ -12,6 +12,8 @@ import {
   AsyncContent, BarList, XlsxButton, EmptyState, KpiCard, Panel, SCROLL_BOX, SearchInput, SortTh, StatusBadge, TD, TD_FIRST, THEAD_ROW, useSorted,
 } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 import { SERIES_COLORS, STATUS_COLORS } from '../charts/ChartFrame';
 import { DonutChart } from '../charts/DonutChart';
 import { DepreciationChart } from '../charts/DepreciationChart';
@@ -39,7 +41,6 @@ const RANKING_SORT = {
   cost: (r: MachineRankingRow) => r.cost,
   ratio: (r: MachineRankingRow) => (r.ratio === Infinity ? Number.MAX_VALUE : r.ratio),
   emergencies: (r: MachineRankingRow) => r.emergencies,
-  mtbf: (r: MachineRankingRow) => r.mtbfDays,
   last: (r: MachineRankingRow) => r.lastMaintenance || null,
 };
 
@@ -72,6 +73,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
     [stats.ranking, search],
   );
   const { sorted, sort, toggle } = useSorted(filtered, RANKING_SORT, { key: 'cost', dir: 'desc' });
+  const { heights: hRanking, setHeight: setHRanking, resetHeight: resetHRanking } = useRowResize('equipment-ranking');
   const th = (label: string, key: string, align: 'left' | 'right' = 'right') => <SortTh label={label} sortKey={key} sort={sort} onSort={toggle} align={align} />;
 
   return (
@@ -161,7 +163,8 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
               <tbody className="divide-y divide-slate-100">
                 {sorted.map(r => {
                   return (
-                    <tr key={r.id} className="cursor-pointer transition-colors hover:bg-blue-50/30"
+                    <ResizableRow key={r.id} rowId={r.id} heights={hRanking} onHeightChange={setHRanking} onHeightReset={resetHRanking}
+                      className="cursor-pointer transition-colors hover:bg-blue-50/30"
                       onClick={() => onSelectMachine(r.id)}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800 leading-tight">{r.name}</p>
@@ -173,7 +176,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
-                    </tr>
+                    </ResizableRow>
                   );
                 })}
               </tbody>
@@ -193,6 +196,8 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
   onOpenMachine?: (machineId: string) => void;
 }) {
   const transfers = useAsyncData(`transfers:${machine.id}`, () => machineService.getAnalyticsTransfers({ machineId: machine.id }));
+  const { heights: hParts, setHeight: setHParts, resetHeight: resetHParts } = useRowResize('equipment-parts');
+  const { heights: hHistory, setHeight: setHHistory, resetHeight: resetHHistory } = useRowResize('equipment-history');
   const card = useMemo(() => {
     const logs = sortLogsByDateDesc(data.logs.filter(l => l.machineId === machine.id));
     const files = new Map<string, { count: number; size: number }>();
@@ -262,11 +267,11 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
                 <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Запчасть</th><th className="px-4 py-3 text-right">Кол-во</th><th className="px-4 sm:px-6 py-3 text-right">Сумма</th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {card.parts.map(p => (
-                    <tr key={p.key}>
+                    <ResizableRow key={p.key} rowId={p.key} heights={hParts} onHeightChange={setHParts} onHeightReset={resetHParts}>
                       <td className={`${TD_FIRST} font-bold text-slate-800`}>{p.name}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatNumber(p.qty)} {p.unit}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{p.totalCost > 0 ? formatMoney(p.totalCost) : '—'}</td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>
@@ -291,7 +296,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
               <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Дата</th><th className="px-4 py-3">Вид работ</th><th className="px-4 py-3">Исполнитель</th><th className="px-4 sm:px-6 py-3 text-right">Амортизация</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
                 {card.logs.map(l => (
-                  <tr key={l.id}>
+                  <ResizableRow key={l.id} rowId={l.id} heights={hHistory} onHeightChange={setHHistory} onHeightReset={resetHHistory}>
                     <td className={`${TD_FIRST} font-mono text-xs text-slate-500 whitespace-nowrap`}>{formatDateKey(toLocalDateKey(l.date))}</td>
                     <td className={TD}>
                       <div className="flex flex-wrap gap-1">
@@ -302,7 +307,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
                     </td>
                     <td className={`${TD} text-slate-600 text-xs`}>{l.technicianName || '—'}</td>
                     <td className={`px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap ${isCompleted(l) ? '' : 'text-slate-400'}`}>{formatMoney(l.cost || 0)}</td>
-                  </tr>
+                  </ResizableRow>
                 ))}
               </tbody>
             </table>

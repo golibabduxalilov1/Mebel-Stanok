@@ -7,6 +7,8 @@ import {
 } from '../reportUtils';
 import { AsyncContent, XlsxButton, EmptyState, KpiCard, Panel, ProgressBar, SCROLL_BOX, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
@@ -16,6 +18,12 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
   const [topBy, setTopBy] = useState<'qty' | 'value'>('qty');
   const branchParam = data.filters.branchId === 'all' ? undefined : data.filters.branchId;
   const reservations = useAsyncData(`reservations:${branchParam ?? 'all'}`, () => machineService.getAnalyticsReservations({ branchId: branchParam }));
+  const { heights: hByBranch, setHeight: setHByBranch, resetHeight: resetHByBranch } = useRowResize('inv-by-branch');
+  const { heights: hLow, setHeight: setHLow, resetHeight: resetHLow } = useRowResize('inv-low-stock');
+  const { heights: hRes, setHeight: setHRes, resetHeight: resetHRes } = useRowResize('inv-reservations');
+  const { heights: hByMachine, setHeight: setHByMachine, resetHeight: resetHByMachine } = useRowResize('inv-by-machine');
+  const { heights: hDead, setHeight: setHDead, resetHeight: resetHDead } = useRowResize('inv-dead-stock');
+  const { heights: hUnits, setHeight: setHUnits, resetHeight: resetHUnits } = useRowResize('inv-units');
 
   const stats = useMemo(() => {
     const usage = partsUsage(data.logs, data.partLookup);
@@ -89,12 +97,12 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.byBranch.map(r => (
-                    <tr key={r.branchId}>
+                    <ResizableRow key={r.branchId} rowId={r.branchId} heights={hByBranch} onHeightChange={setHByBranch} onHeightReset={resetHByBranch}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
                       <td className={`${TD} text-right font-mono text-slate-600`}>{r.items}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.value)}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono whitespace-nowrap text-slate-400">{formatMoney(stats.archivedByBranch.get(r.branchId) || 0)}</td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
                 <tfoot>
@@ -145,7 +153,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {stats.low.map(r => (
-                  <tr key={r.part.id} className="hover:bg-amber-50/30 transition-colors">
+                  <ResizableRow key={r.part.id} rowId={r.part.id} heights={hLow} onHeightChange={setHLow} onHeightReset={resetHLow} className="hover:bg-amber-50/30 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-44`}>{r.part.name}</td>
                     <td className={`${TD} font-mono text-xs text-slate-500`}>{r.part.sku || '—'}</td>
                     <td className={`${TD} text-right font-mono font-black ${r.available <= 0 ? 'text-rose-600' : 'text-amber-600'}`}>{formatNumber(r.available)}</td>
@@ -153,7 +161,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                     <td className={`${TD} text-right font-mono text-slate-700`}>{formatNumber(r.min)}</td>
                     <td className={`${TD} text-right font-mono font-bold ${r.deficit > 0 ? 'text-rose-600' : 'text-slate-300'}`}>{formatNumber(r.deficit)}</td>
                     <td className="px-4 sm:px-6 py-3 text-slate-500">{r.part.unit || 'шт'}</td>
-                  </tr>
+                  </ResizableRow>
                 ))}
               </tbody>
             </table>
@@ -189,7 +197,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {rows.map(r => (
-                    <tr key={r.id}>
+                    <ResizableRow key={r.id} rowId={r.id} heights={hRes} onHeightChange={setHRes} onHeightReset={resetHRes}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800">{r.partName}</p>
                         <p className="text-[10px] font-mono text-slate-400">{r.sku}{r.isArchived ? ' · в архиве' : ''}</p>
@@ -204,7 +212,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                         {r.sourceDate && <p>Срок: {formatDateKey(toLocalDateKey(r.sourceDate))}</p>}
                         <p className="text-[10px]">Бронь: {formatDateKey(toLocalDateKey(r.createdAt))}</p>
                       </td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>
@@ -279,12 +287,12 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.byMachine.map(r => (
-                    <tr key={r.machineId}>
+                    <ResizableRow key={r.machineId} rowId={r.machineId} heights={hByMachine} onHeightChange={setHByMachine} onHeightReset={resetHByMachine}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.name}</td>
                       <td className={`${TD} text-right font-mono`}>{r.works}</td>
                       <td className={`${TD} text-right font-mono`}>{formatNumber(r.qty)}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{formatMoney(r.cost)}</td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>
@@ -318,14 +326,14 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.dead.map(p => (
-                    <tr key={p.id}>
+                    <ResizableRow key={p.id} rowId={p.id} heights={hDead} onHeightChange={setHDead} onHeightReset={resetHDead}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800">{p.name}</p>
                         {p.sku && <p className="text-[10px] font-mono text-slate-400">{p.sku}</p>}
                       </td>
                       <td className={`${TD} text-right font-mono text-slate-600 whitespace-nowrap`}>{formatNumber(p.quantity)} {p.unit || 'шт'}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{formatMoney(partValue(p))}</td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>
@@ -356,12 +364,12 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.units.map(u => (
-                    <tr key={u.code}>
+                    <ResizableRow key={u.code} rowId={u.code} heights={hUnits} onHeightChange={setHUnits} onHeightReset={resetHUnits}>
                       <td className={TD_FIRST}><span className="font-bold text-slate-800">{u.name}</span> <span className="text-[10px] font-mono text-slate-400">{u.code}</span></td>
                       <td className={`${TD} text-right font-mono`}>{u.items}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatNumber(u.qty)} {u.code}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{formatMoney(u.value)}</td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>

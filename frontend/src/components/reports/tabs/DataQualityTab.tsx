@@ -4,6 +4,8 @@ import { machineService } from '../../../services/machineService';
 import { CompletenessField, IncompleteRecord, ReportData, dataQuality, formatBytes, formatNumber, formatPercent, searchMatches } from '../reportUtils';
 import { AsyncContent, BarList, XlsxButton, EmptyState, KpiCard, Pagination, Panel, ProgressBar, SearchInput, TD, TD_FIRST, THEAD_ROW, usePaged } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 
 const KIND_LABELS: Record<IncompleteRecord['kind'], string> = { machine: 'Станок', part: 'Запчасть', schedule: 'Задача ТО' };
 const ATTACHMENT_TYPE_LABELS: Record<string, string> = {
@@ -57,6 +59,7 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
     [quality.records, allowedKinds, kind, search],
   );
   const paged = usePaged(records, 30);
+  const { heights: hDQ, setHeight: setHDQ, resetHeight: resetHDQ } = useRowResize('data-quality');
   const visibleFields = [...(canEquipment ? quality.machines : []), ...(canInventory ? quality.parts : []), ...(canToir ? quality.schedules : [])];
   const filled = visibleFields.reduce((a, f) => a + f.filled, 0);
   const total = visibleFields.reduce((a, f) => a + f.total, 0);
@@ -158,7 +161,7 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paged.pageRows.map(r => (
-                    <tr key={`${r.kind}:${r.id}`}>
+                    <ResizableRow key={`${r.kind}:${r.id}`} rowId={`${r.kind}:${r.id}`} heights={hDQ} onHeightChange={setHDQ} onHeightReset={resetHDQ}>
                       <td className={`${TD_FIRST} min-w-48`}>
                         <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{KIND_LABELS[r.kind]}</p>
                         {r.kind === 'machine' && onOpenMachine ? (
@@ -173,7 +176,7 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
                           {r.missing.map(f => <span key={f} className="text-[9px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">{f}</span>)}
                         </div>
                       </td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>

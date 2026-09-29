@@ -85,6 +85,14 @@ html, body, #root, * {
   border-top-color: #cbd5e1;
 }
 
+/* Resizable rows — drag handle highlight */
+.report-table tbody .rr-row td {
+  vertical-align: middle;
+}
+.report-table tbody .rr-row[data-rr] td {
+  border-bottom: 2px solid var(--color-primary, #2563eb);
+}
+
 @layer utilities {
   .custom-scrollbar {
     scroll-behavior: smooth;

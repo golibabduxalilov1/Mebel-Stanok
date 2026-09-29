@@ -5,6 +5,8 @@ import {
   powerByBranch, powerSummary, topConsumers,
 } from '../reportUtils';
 import { XlsxButton, EmptyState, KpiCard, Panel, ProgressBar, SCROLL_BOX, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW } from '../ReportUi';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 import { STATUS_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
@@ -33,6 +35,8 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
 
   const { summary } = stats;
   const hasChart = stats.statusChart.some(r => r.active + r.maintenance + r.repair > 0);
+  const { heights: hByBranch, setHeight: setHByBranch, resetHeight: resetHByBranch } = useRowResize('power-by-branch');
+  const { heights: hMissing, setHeight: setHMissing, resetHeight: resetHMissing } = useRowResize('power-missing-amps');
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -91,7 +95,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.byBranch.rows.map(r => (
-                    <tr key={r.branchId} className="hover:bg-blue-50/20 transition-colors">
+                    <ResizableRow key={r.branchId} rowId={r.branchId} heights={hByBranch} onHeightChange={setHByBranch} onHeightReset={resetHByBranch} className="hover:bg-blue-50/20 transition-colors">
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
                       <td className={`${TD} text-right font-mono text-slate-600`}>{r.machineCount}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatAmps(r.totalAmps)}</td>
@@ -104,7 +108,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
                           <span className="text-[10px] font-mono font-bold">{formatPercent(r.share, 1)}</span>
                         </div>
                       </td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
                 <tfoot>
@@ -197,7 +201,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {stats.missing.map(m => (
-                  <tr key={m.id}>
+                  <ResizableRow key={m.id} rowId={m.id} heights={hMissing} onHeightChange={setHMissing} onHeightReset={resetHMissing}>
                     <td className={`${TD_FIRST} min-w-44`}>
                       <p className="font-bold text-slate-800">{m.name}</p>
                       <p className="text-[10px] text-slate-400 font-mono uppercase">{m.model}</p>
@@ -211,7 +215,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
                         </button>
                       </td>
                     )}
-                  </tr>
+                  </ResizableRow>
                 ))}
               </tbody>
             </table>

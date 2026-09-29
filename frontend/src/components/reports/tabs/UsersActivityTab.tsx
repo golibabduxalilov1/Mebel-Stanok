@@ -8,6 +8,8 @@ import {
 } from '../reportUtils';
 import { AsyncContent, BarList, XlsxButton, EmptyState, ErrorState, KpiCard, Panel, SCROLL_BOX, Skeleton, StatusBadge, TD, TD_FIRST, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
@@ -20,6 +22,8 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
     tzOffset: -data.now.getTimezoneOffset(),
   };
   const state = useAsyncData(`users-activity:${JSON.stringify(params)}`, () => machineService.getAnalyticsUsersActivity(params));
+  const { heights: hTop, setHeight: setHTop, resetHeight: resetHTop } = useRowResize('users-top10');
+  const { heights: hInactive, setHeight: setHInactive, resetHeight: resetHInactive } = useRowResize('users-inactive');
 
   const stats = useMemo(() => {
     if (!state.data) return null;
@@ -116,7 +120,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {stats.top.map(u => (
-                  <tr key={u.id}>
+                  <ResizableRow key={u.id} rowId={u.id} heights={hTop} onHeightChange={setHTop} onHeightReset={resetHTop}>
                     <td className={`${TD_FIRST} min-w-44`}>
                       <p className="font-bold text-slate-800">{u.fullName}</p>
                       <p className="text-[10px] text-slate-400">{u.username}{u.roleName ? ` · ${u.roleName}` : ''}</p>
@@ -124,7 +128,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
                     {ACTION_KEYS.map(k => <td key={k} className={`px-3 py-3 text-right font-mono ${u.actions[k] ? '' : 'text-slate-300'}`}>{u.actions[k]}</td>)}
                     <td className={`${TD} text-right font-mono font-black`}>{u.total}</td>
                     <td className="px-4 sm:px-6 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDateTime(u.lastLogin)}</td>
-                  </tr>
+                  </ResizableRow>
                 ))}
               </tbody>
             </table>
@@ -175,7 +179,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.inactive.map(u => (
-                    <tr key={u.id}>
+                    <ResizableRow key={u.id} rowId={u.id} heights={hInactive} onHeightChange={setHInactive} onHeightReset={resetHInactive}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800">{u.fullName}</p>
                         <p className="text-[10px] text-slate-400">{u.username}{u.position ? ` · ${u.position}` : ''}</p>
@@ -186,7 +190,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
                           ? <span className="font-bold text-amber-600">Ни разу не входил</span>
                           : <><span className="font-bold text-slate-700">{u.daysSince} {pluralRu(u.daysSince, ['день', 'дня', 'дней'])} назад</span><p className="text-[10px] text-slate-400">{formatDateTime(u.lastLogin)}</p></>}
                       </td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>

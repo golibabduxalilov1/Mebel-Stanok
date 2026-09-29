@@ -4,11 +4,15 @@ import { machineService } from '../../../services/machineService';
 import { ReportData, filterTransferRows, formatDateTime, formatPeriod, rangeToInstants, transferBalance } from '../reportUtils';
 import { AsyncContent, XlsxButton, KpiCard, Panel, SCROLL_BOX, Skeleton, TD, TD_FIRST, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
+import { useRowResize } from '../useRowResize';
+import { ResizableRow } from '../ResizableRow';
 
 export function TransfersTab({ data, canExport }: { data: ReportData; canExport: boolean }) {
   const { branchId, machineId, start, end } = data.filters;
   const params = { ...rangeToInstants({ start, end }), branchId, machineId };
   const state = useAsyncData(`transfers:${JSON.stringify(params)}`, () => machineService.getAnalyticsTransfers(params));
+  const { heights: hBalance, setHeight: setHBalance, resetHeight: resetHBalance } = useRowResize('transfers-balance');
+  const { heights: hJournal, setHeight: setHJournal, resetHeight: resetHJournal } = useRowResize('transfers-journal');
 
   const stats = useMemo(() => {
     if (!state.data) return null;
@@ -59,14 +63,14 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats!.balance.map(r => (
-                    <tr key={r.branchId}>
+                    <ResizableRow key={r.branchId} rowId={r.branchId} heights={hBalance} onHeightChange={setHBalance} onHeightReset={resetHBalance}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
                       <td className={`${TD} text-right font-mono ${r.incoming ? 'text-emerald-700' : 'text-slate-300'}`}>{r.incoming ? `+${r.incoming}` : 0}</td>
                       <td className={`${TD} text-right font-mono ${r.outgoing ? 'text-rose-700' : 'text-slate-300'}`}>{r.outgoing ? `−${r.outgoing}` : 0}</td>
                       <td className={`px-4 sm:px-6 py-3 text-right font-mono font-black ${r.balance > 0 ? 'text-emerald-700' : r.balance < 0 ? 'text-rose-700' : 'text-slate-500'}`}>
                         {r.balance > 0 ? `+${r.balance}` : r.balance < 0 ? `−${Math.abs(r.balance)}` : '0'}
                       </td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>
@@ -99,7 +103,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats!.rows.map(r => (
-                    <tr key={r.id}>
+                    <ResizableRow key={r.id} rowId={r.id} heights={hJournal} onHeightChange={setHJournal} onHeightReset={resetHJournal}>
                       <td className={`${TD_FIRST} font-mono text-xs text-slate-500 whitespace-nowrap`}>{formatDateTime(r.date)}</td>
                       <td className={`${TD} min-w-40`}>
                         <p className="font-bold text-slate-800">{r.machineName}</p>
@@ -113,7 +117,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-xs text-slate-600">{r.createdByName || '—'}</td>
-                    </tr>
+                    </ResizableRow>
                   ))}
                 </tbody>
               </table>
