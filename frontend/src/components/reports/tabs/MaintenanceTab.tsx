@@ -8,8 +8,8 @@ import {
 import {
   XlsxButton, EmptyState, KpiCard, Pagination, Panel, SCROLL_BOX, SearchInput, SortTh, StatusBadge, TD, TD_FIRST, THEAD_ROW, usePaged, useSorted,
 } from '../ReportUi';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 import type { MaintenanceLog } from '../../../types';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
@@ -75,10 +75,10 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
   );
   const paged = usePaged(journal, 25);
   const tech = useSorted(stats.technicians, TECH_SORT, { key: 'count', dir: 'desc' });
-  const { heights: hUpcoming, setHeight: setHUpcoming, resetHeight: resetHUpcoming } = useRowResize('maint-upcoming');
-  const { heights: hOverdue, setHeight: setHOverdue, resetHeight: resetHOverdue } = useRowResize('maint-overdue');
-  const { heights: hTech, setHeight: setHTech, resetHeight: resetHTech } = useRowResize('maint-technicians');
-  const { heights: hJournal, setHeight: setHJournal, resetHeight: resetHJournal } = useRowResize('maint-journal');
+  const crUpcoming = useColumnResize('maint-upcoming', { task: 200, due: 120, priority: 120, hours: 140 });
+  const crOverdue = useColumnResize('maint-overdue', { machine: 180, task: 200, due: 120, late: 90, priority: 120, tech: 140 });
+  const crTech = useColumnResize('maint-technicians', { name: 180, count: 80, emergencies: 90, cost: 110, avg: 110, assigned: 90, overdue: 90 });
+  const crJournal = useColumnResize('maint-journal', { date_machine: 180, type: 160, status: 120, tech: 140, parts: 180, parts_cost: 130, labor_cost: 130 });
 
   const { ratio, schedule } = stats;
   const hasRatio = ratio.planned.count + ratio.emergency.count > 0;
@@ -167,18 +167,19 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
         >
           {upcoming.length === 0 ? <EmptyState text={`Нет задач на ближайшие ${upcomingWindow} дней`} compact /> : (
             <div className={`${SCROLL_BOX} max-h-[360px]`}>
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crUpcoming.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crUpcoming} columnIds={['task', 'due', 'priority', 'hours']} />
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Задача</th>
-                    <th className="px-4 py-3">Срок</th>
-                    <th className="px-4 py-3">Приоритет</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Часы / амортизация</th>
+                    <th className="px-4 sm:px-6 py-3">Задача<ColResizeHandle cr={crUpcoming} colId="task" label="Задача" /></th>
+                    <th className="px-4 py-3">Срок<ColResizeHandle cr={crUpcoming} colId="due" label="Срок" /></th>
+                    <th className="px-4 py-3">Приоритет<ColResizeHandle cr={crUpcoming} colId="priority" label="Приоритет" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Часы / амортизация<ColResizeHandle cr={crUpcoming} colId="hours" label="Часы / амортизация" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {upcoming.map(t => (
-                    <ResizableRow key={t.id} rowId={t.id} heights={hUpcoming} onHeightChange={setHUpcoming} onHeightReset={resetHUpcoming}>
+                    <tr key={t.id}>
                       <td className={`${TD_FIRST} min-w-48`}>
                         <p className="font-bold text-slate-800 text-xs">{t.taskName}</p>
                         <p className="text-[10px] text-slate-500">{t.machineName}{t.assignedTechnician ? ` · ${t.assignedTechnician}` : ''}</p>
@@ -191,7 +192,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                       <td className="px-4 sm:px-6 py-3 text-right font-mono text-xs whitespace-nowrap">
                         {t.estimatedHours ? `${formatNumber(t.estimatedHours, 1)} ч` : '—'} · {t.laborCost ? formatMoney(t.laborCost) : '—'}
                       </td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -213,27 +214,28 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
       >
         {schedule.overdue.length === 0 ? <EmptyState text="Просроченных задач нет" compact /> : (
           <div className={SCROLL_BOX}>
-            <table className="w-full text-left text-sm report-table">
+            <table ref={crOverdue.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crOverdue} columnIds={['machine', 'task', 'due', 'late', 'priority', 'tech']} />
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
-                  <th className="px-4 sm:px-6 py-3">Станок</th>
-                  <th className="px-4 py-3">Задача</th>
-                  <th className="px-4 py-3">Срок</th>
-                  <th className="px-4 py-3 text-right">Просрочка</th>
-                  <th className="px-4 py-3">Приоритет</th>
-                  <th className="px-4 sm:px-6 py-3">Ответственный</th>
+                  <th className="px-4 sm:px-6 py-3">Станок<ColResizeHandle cr={crOverdue} colId="machine" label="Станок" /></th>
+                  <th className="px-4 py-3">Задача<ColResizeHandle cr={crOverdue} colId="task" label="Задача" /></th>
+                  <th className="px-4 py-3">Срок<ColResizeHandle cr={crOverdue} colId="due" label="Срок" /></th>
+                  <th className="px-4 py-3 text-right">Просрочка<ColResizeHandle cr={crOverdue} colId="late" label="Просрочка" /></th>
+                  <th className="px-4 py-3">Приоритет<ColResizeHandle cr={crOverdue} colId="priority" label="Приоритет" /></th>
+                  <th className="px-4 sm:px-6 py-3">Ответственный<ColResizeHandle cr={crOverdue} colId="tech" label="Ответственный" isLast /></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {schedule.overdue.map(t => (
-                  <ResizableRow key={t.id} rowId={t.id} heights={hOverdue} onHeightChange={setHOverdue} onHeightReset={resetHOverdue} className="hover:bg-rose-50/30 transition-colors">
+                  <tr key={t.id} className="hover:bg-rose-50/30 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{t.machineName}</td>
                     <td className={`${TD} text-slate-600 min-w-48`}>{t.taskName}</td>
                     <td className={`${TD} font-mono text-xs text-slate-500 whitespace-nowrap`}>{formatDateKey(t.nextDue)}</td>
                     <td className={`${TD} text-right font-mono font-black text-rose-600 whitespace-nowrap`}>{t.daysLate} дн.</td>
                     <td className={TD}><PriorityBadge priority={t.priority} /></td>
                     <td className="px-4 sm:px-6 py-3 text-slate-600 text-xs">{t.assignedTechnician || '—'}</td>
-                  </ResizableRow>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -254,21 +256,22 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
       >
         {tech.sorted.length === 0 ? <EmptyState compact /> : (
           <div className="report-scroll overflow-x-auto">
-            <table className="w-full text-left text-sm report-table">
+            <table ref={crTech.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crTech} columnIds={['name', 'count', 'emergencies', 'cost', 'avg', 'assigned', 'overdue']} />
               <thead>
                 <tr className={THEAD_ROW}>
-                  <SortTh label="Исполнитель" sortKey="name" sort={tech.sort} onSort={tech.toggle} className="sm:pl-6" />
-                  <SortTh label="Работ" sortKey="count" sort={tech.sort} onSort={tech.toggle} align="right" />
-                  <SortTh label="Аварийных" sortKey="emergencies" sort={tech.sort} onSort={tech.toggle} align="right" />
-                  <SortTh label="Ремонт" sortKey="cost" sort={tech.sort} onSort={tech.toggle} align="right" />
-                  <SortTh label="Средние" sortKey="avg" sort={tech.sort} onSort={tech.toggle} align="right" />
-                  <SortTh label="Задач в графике" sortKey="assigned" sort={tech.sort} onSort={tech.toggle} align="right" />
-                  <SortTh label="Просрочено" sortKey="overdue" sort={tech.sort} onSort={tech.toggle} align="right" className="sm:pr-6" />
+                  <SortTh label="Исполнитель" sortKey="name" sort={tech.sort} onSort={tech.toggle} className="sm:pl-6" resizeHandle={<ColResizeHandle cr={crTech} colId="name" label="Исполнитель" />} />
+                  <SortTh label="Работ" sortKey="count" sort={tech.sort} onSort={tech.toggle} align="right" resizeHandle={<ColResizeHandle cr={crTech} colId="count" label="Работ" />} />
+                  <SortTh label="Аварийных" sortKey="emergencies" sort={tech.sort} onSort={tech.toggle} align="right" resizeHandle={<ColResizeHandle cr={crTech} colId="emergencies" label="Аварийных" />} />
+                  <SortTh label="Ремонт" sortKey="cost" sort={tech.sort} onSort={tech.toggle} align="right" resizeHandle={<ColResizeHandle cr={crTech} colId="cost" label="Ремонт" />} />
+                  <SortTh label="Средние" sortKey="avg" sort={tech.sort} onSort={tech.toggle} align="right" resizeHandle={<ColResizeHandle cr={crTech} colId="avg" label="Средние" />} />
+                  <SortTh label="Задач в графике" sortKey="assigned" sort={tech.sort} onSort={tech.toggle} align="right" resizeHandle={<ColResizeHandle cr={crTech} colId="assigned" label="Задач в графике" />} />
+                  <SortTh label="Просрочено" sortKey="overdue" sort={tech.sort} onSort={tech.toggle} align="right" className="sm:pr-6" resizeHandle={<ColResizeHandle cr={crTech} colId="overdue" label="Просрочено" isLast />} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {tech.sorted.map(t => (
-                  <ResizableRow key={t.name} rowId={t.name} heights={hTech} onHeightChange={setHTech} onHeightReset={resetHTech} className="hover:bg-blue-50/20 transition-colors">
+                  <tr key={t.name} className="hover:bg-blue-50/20 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{t.name}</td>
                     <td className={`${TD} text-right font-mono`}>{t.count}</td>
                     <td className={`${TD} text-right font-mono ${t.emergencies ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{t.emergencies}</td>
@@ -276,7 +279,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     <td className={`${TD} text-right font-mono whitespace-nowrap text-slate-600`}>{t.count ? formatMoney(t.avgCost) : '—'}</td>
                     <td className={`${TD} text-right font-mono`}>{t.assignedTasks}</td>
                     <td className={`px-4 sm:px-6 py-3 text-right font-mono ${t.overdueTasks ? 'text-rose-600 font-bold' : 'text-slate-300'}`}>{t.overdueTasks}</td>
-                  </ResizableRow>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -315,16 +318,17 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
         {journal.length === 0 ? <EmptyState text={search ? 'Ничего не найдено' : undefined} /> : (
           <>
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crJournal.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crJournal} columnIds={['date_machine', 'type', 'status', 'tech', 'parts', 'parts_cost', 'labor_cost']} />
                 <thead>
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Дата / Станок</th>
-                    <th className="px-4 py-3">Вид работ</th>
-                    <th className="px-4 py-3">Статус</th>
-                    <th className="px-4 py-3">Исполнитель</th>
-                    <th className="px-4 py-3">Запчасти</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ</th>
+                    <th className="px-4 sm:px-6 py-3">Дата / Станок<ColResizeHandle cr={crJournal} colId="date_machine" label="Дата / Станок" /></th>
+                    <th className="px-4 py-3">Вид работ<ColResizeHandle cr={crJournal} colId="type" label="Вид работ" /></th>
+                    <th className="px-4 py-3">Статус<ColResizeHandle cr={crJournal} colId="status" label="Статус" /></th>
+                    <th className="px-4 py-3">Исполнитель<ColResizeHandle cr={crJournal} colId="tech" label="Исполнитель" /></th>
+                    <th className="px-4 py-3">Запчасти<ColResizeHandle cr={crJournal} colId="parts" label="Запчасти" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей<ColResizeHandle cr={crJournal} colId="parts_cost" label="Стоимость деталей" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ<ColResizeHandle cr={crJournal} colId="labor_cost" label="Стоимость работ" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -332,7 +336,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                     const machine = data.machineMap.get(log.machineId);
                     const done = isCompleted(log);
                     return (
-                      <ResizableRow key={log.id} rowId={log.id} heights={hJournal} onHeightChange={setHJournal} onHeightReset={resetHJournal} className="hover:bg-blue-50/20 transition-colors">
+                      <tr key={log.id} className="hover:bg-blue-50/20 transition-colors">
                         <td className={TD_FIRST}>
                           <p className="text-xs font-mono text-slate-400 mb-0.5">{formatDateKey(toLocalDateKey(log.date))}</p>
                           <p className="font-bold text-slate-800 leading-tight min-w-40">{machine?.name || '—'}</p>
@@ -353,7 +357,7 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                         </td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.partsCost || 0)}</td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
-                      </ResizableRow>
+                      </tr>
                     );
                   })}
                 </tbody>

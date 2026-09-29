@@ -8,8 +8,8 @@ import {
 } from '../reportUtils';
 import { AsyncContent, BarList, XlsxButton, EmptyState, ErrorState, KpiCard, Panel, SCROLL_BOX, Skeleton, StatusBadge, TD, TD_FIRST, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
@@ -22,8 +22,8 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
     tzOffset: -data.now.getTimezoneOffset(),
   };
   const state = useAsyncData(`users-activity:${JSON.stringify(params)}`, () => machineService.getAnalyticsUsersActivity(params));
-  const { heights: hTop, setHeight: setHTop, resetHeight: resetHTop } = useRowResize('users-top10');
-  const { heights: hInactive, setHeight: setHInactive, resetHeight: resetHInactive } = useRowResize('users-inactive');
+  const crTop = useColumnResize('users-top10', { user: 180, create: 80, update: 80, delete: 80, transfer: 80, other: 80, total: 80, last_login: 140 });
+  const crInactive = useColumnResize('users-inactive', { user: 200, role: 120, last_login: 160 });
 
   const stats = useMemo(() => {
     if (!state.data) return null;
@@ -109,18 +109,19 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
       >
         {stats.top.length === 0 ? <EmptyState /> : (
           <div className="report-scroll overflow-x-auto">
-            <table className="w-full text-left text-sm report-table">
+            <table ref={crTop.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crTop} columnIds={['user', 'create', 'update', 'delete', 'transfer', 'other', 'total', 'last_login']} />
               <thead>
                 <tr className={THEAD_ROW}>
-                  <th className="px-4 sm:px-6 py-3">Пользователь</th>
-                  {ACTION_KEYS.map(k => <th key={k} className="px-3 py-3 text-right">{ACTION_TYPE_LABELS[k]}</th>)}
-                  <th className="px-4 py-3 text-right">Всего</th>
-                  <th className="px-4 sm:px-6 py-3">Последний вход</th>
+                  <th className="px-4 sm:px-6 py-3">Пользователь<ColResizeHandle cr={crTop} colId="user" label="Пользователь" /></th>
+                  {ACTION_KEYS.map(k => <th key={k} className="px-3 py-3 text-right">{ACTION_TYPE_LABELS[k]}<ColResizeHandle cr={crTop} colId={k} label={ACTION_TYPE_LABELS[k]} /></th>)}
+                  <th className="px-4 py-3 text-right">Всего<ColResizeHandle cr={crTop} colId="total" label="Всего" /></th>
+                  <th className="px-4 sm:px-6 py-3">Последний вход<ColResizeHandle cr={crTop} colId="last_login" label="Последний вход" isLast /></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {stats.top.map(u => (
-                  <ResizableRow key={u.id} rowId={u.id} heights={hTop} onHeightChange={setHTop} onHeightReset={resetHTop}>
+                  <tr key={u.id}>
                     <td className={`${TD_FIRST} min-w-44`}>
                       <p className="font-bold text-slate-800">{u.fullName}</p>
                       <p className="text-[10px] text-slate-400">{u.username}{u.roleName ? ` · ${u.roleName}` : ''}</p>
@@ -128,7 +129,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
                     {ACTION_KEYS.map(k => <td key={k} className={`px-3 py-3 text-right font-mono ${u.actions[k] ? '' : 'text-slate-300'}`}>{u.actions[k]}</td>)}
                     <td className={`${TD} text-right font-mono font-black`}>{u.total}</td>
                     <td className="px-4 sm:px-6 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDateTime(u.lastLogin)}</td>
-                  </ResizableRow>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -169,17 +170,18 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
         <AsyncContent state={state} isEmpty={() => stats.inactive.length === 0} emptyText="Все активные пользователи заходили за последние 30 дней">
           {() => (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crInactive.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crInactive} columnIds={['user', 'role', 'last_login']} />
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Пользователь</th>
-                    <th className="px-4 py-3">Роль</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Последний вход</th>
+                    <th className="px-4 sm:px-6 py-3">Пользователь<ColResizeHandle cr={crInactive} colId="user" label="Пользователь" /></th>
+                    <th className="px-4 py-3">Роль<ColResizeHandle cr={crInactive} colId="role" label="Роль" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Последний вход<ColResizeHandle cr={crInactive} colId="last_login" label="Последний вход" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.inactive.map(u => (
-                    <ResizableRow key={u.id} rowId={u.id} heights={hInactive} onHeightChange={setHInactive} onHeightReset={resetHInactive}>
+                    <tr key={u.id}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800">{u.fullName}</p>
                         <p className="text-[10px] text-slate-400">{u.username}{u.position ? ` · ${u.position}` : ''}</p>
@@ -190,7 +192,7 @@ export function UsersActivityTab({ data, canExport, recentActivity = [] }: { dat
                           ? <span className="font-bold text-amber-600">Ни разу не входил</span>
                           : <><span className="font-bold text-slate-700">{u.daysSince} {pluralRu(u.daysSince, ['день', 'дня', 'дней'])} назад</span><p className="text-[10px] text-slate-400">{formatDateTime(u.lastLogin)}</p></>}
                       </td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>

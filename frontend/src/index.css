@@ -66,18 +66,23 @@ html, body, #root, * {
   max-width: 100%;
 }
 
-/* Analytics / report tables — full grid borders */
+/* Analytics / report tables — full grid borders + fixed layout for column resize */
 .report-table {
   border-collapse: collapse;
   border: 1px solid #e2e8f0;
+  table-layout: fixed;
+  width: 100%;
+  min-width: 100%;
 }
 .report-table th,
 .report-table td {
   border: 1px solid #e2e8f0;
+  overflow: hidden;
 }
 .report-table thead tr th {
   border-bottom-width: 2px;
   border-bottom-color: #cbd5e1;
+  position: relative; /* anchor for ColResizeHandle */
 }
 .report-table tfoot tr td,
 .report-table tfoot tr th {
@@ -85,12 +90,34 @@ html, body, #root, * {
   border-top-color: #cbd5e1;
 }
 
-/* Resizable rows — drag handle highlight */
-.report-table tbody .rr-row td {
-  vertical-align: middle;
+/* Column resize handle — right edge of each <th>, 8px wide */
+.col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+  touch-action: none;
+  outline: none;
 }
-.report-table tbody .rr-row[data-rr] td {
-  border-bottom: 2px solid var(--color-primary, #2563eb);
+.col-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  transform: translateX(-50%);
+  background: transparent;
+  transition: background 0.1s;
+  pointer-events: none;
+}
+.col-resize-handle:hover::after,
+.col-resize-handle:focus-visible::after,
+.col-resize-handle[data-drag]::after {
+  background: var(--color-primary, #2563eb);
 }
 
 @layer utilities {

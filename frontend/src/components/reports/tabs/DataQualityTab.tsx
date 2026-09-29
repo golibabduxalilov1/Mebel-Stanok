@@ -4,8 +4,8 @@ import { machineService } from '../../../services/machineService';
 import { CompletenessField, IncompleteRecord, ReportData, dataQuality, formatBytes, formatNumber, formatPercent, searchMatches } from '../reportUtils';
 import { AsyncContent, BarList, XlsxButton, EmptyState, KpiCard, Pagination, Panel, ProgressBar, SearchInput, TD, TD_FIRST, THEAD_ROW, usePaged } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 
 const KIND_LABELS: Record<IncompleteRecord['kind'], string> = { machine: 'Станок', part: 'Запчасть', schedule: 'Задача ТО' };
 const ATTACHMENT_TYPE_LABELS: Record<string, string> = {
@@ -59,7 +59,7 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
     [quality.records, allowedKinds, kind, search],
   );
   const paged = usePaged(records, 30);
-  const { heights: hDQ, setHeight: setHDQ, resetHeight: resetHDQ } = useRowResize('data-quality');
+  const crDQ = useColumnResize('data-quality', { record: 220, branch: 150, missing: 280 });
   const visibleFields = [...(canEquipment ? quality.machines : []), ...(canInventory ? quality.parts : []), ...(canToir ? quality.schedules : [])];
   const filled = visibleFields.reduce((a, f) => a + f.filled, 0);
   const total = visibleFields.reduce((a, f) => a + f.total, 0);
@@ -151,17 +151,18 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
         {records.length === 0 ? <EmptyState text={search ? 'Ничего не найдено' : 'Все обязательные поля заполнены'} /> : (
           <>
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crDQ.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crDQ} columnIds={['record', 'branch', 'missing']} />
                 <thead>
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Запись</th>
-                    <th className="px-4 py-3">Филиал</th>
-                    <th className="px-4 sm:px-6 py-3">Не заполнено</th>
+                    <th className="px-4 sm:px-6 py-3">Запись<ColResizeHandle cr={crDQ} colId="record" label="Запись" /></th>
+                    <th className="px-4 py-3">Филиал<ColResizeHandle cr={crDQ} colId="branch" label="Филиал" /></th>
+                    <th className="px-4 sm:px-6 py-3">Не заполнено<ColResizeHandle cr={crDQ} colId="missing" label="Не заполнено" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paged.pageRows.map(r => (
-                    <ResizableRow key={`${r.kind}:${r.id}`} rowId={`${r.kind}:${r.id}`} heights={hDQ} onHeightChange={setHDQ} onHeightReset={resetHDQ}>
+                    <tr key={`${r.kind}:${r.id}`}>
                       <td className={`${TD_FIRST} min-w-48`}>
                         <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{KIND_LABELS[r.kind]}</p>
                         {r.kind === 'machine' && onOpenMachine ? (
@@ -176,7 +177,7 @@ export function DataQualityTab({ data, canExport, canEquipment, canInventory, ca
                           {r.missing.map(f => <span key={f} className="text-[9px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">{f}</span>)}
                         </div>
                       </td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>

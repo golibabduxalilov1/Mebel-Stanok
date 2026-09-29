@@ -12,8 +12,8 @@ import {
   AsyncContent, BarList, XlsxButton, EmptyState, KpiCard, Panel, SCROLL_BOX, SearchInput, SortTh, StatusBadge, TD, TD_FIRST, THEAD_ROW, useSorted,
 } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 import { SERIES_COLORS, STATUS_COLORS } from '../charts/ChartFrame';
 import { DonutChart } from '../charts/DonutChart';
 import { DepreciationChart } from '../charts/DepreciationChart';
@@ -73,8 +73,10 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
     [stats.ranking, search],
   );
   const { sorted, sort, toggle } = useSorted(filtered, RANKING_SORT, { key: 'cost', dir: 'desc' });
-  const { heights: hRanking, setHeight: setHRanking, resetHeight: resetHRanking } = useRowResize('equipment-ranking');
-  const th = (label: string, key: string, align: 'left' | 'right' = 'right') => <SortTh label={label} sortKey={key} sort={sort} onSort={toggle} align={align} />;
+  const crRanking = useColumnResize('equipment-ranking', { machine: 200, branch: 150, status: 110, age: 90, residual: 130, cost: 100, last: 110 });
+  const th = (label: string, key: string, colId: string, align: 'left' | 'right' = 'right', isLast = false) =>
+    <SortTh label={label} sortKey={key} sort={sort} onSort={toggle} align={align}
+      resizeHandle={<ColResizeHandle cr={crRanking} colId={colId} label={label} isLast={isLast} />} />;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -148,22 +150,24 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
           <EmptyState text={search ? 'Ничего не найдено' : 'Нет оборудования по выбранным фильтрам'} />
         ) : (
           <div className={`${SCROLL_BOX} max-h-[600px]`}>
-            <table className="w-full text-left text-sm report-table">
+            <table ref={crRanking.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crRanking} columnIds={['machine', 'branch', 'status', 'age', 'residual', 'cost', 'last']} />
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
-                  <SortTh label="Станок" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6" />
-                  {th('Филиал', 'branch', 'left')}
-                  {th('Статус', 'status', 'left')}
-                  {th('Возраст', 'age')}
-                  {th('Ост. амортизация', 'residual')}
-                  {th('Ремонт', 'cost')}
-                  {th('Посл. ТО', 'last')}
+                  <SortTh label="Станок" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6"
+                    resizeHandle={<ColResizeHandle cr={crRanking} colId="machine" label="Станок" />} />
+                  {th('Филиал', 'branch', 'branch', 'left')}
+                  {th('Статус', 'status', 'status', 'left')}
+                  {th('Возраст', 'age', 'age')}
+                  {th('Ост. амортизация', 'residual', 'residual')}
+                  {th('Ремонт', 'cost', 'cost')}
+                  {th('Посл. ТО', 'last', 'last', 'right', true)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {sorted.map(r => {
                   return (
-                    <ResizableRow key={r.id} rowId={r.id} heights={hRanking} onHeightChange={setHRanking} onHeightReset={resetHRanking}
+                    <tr key={r.id}
                       className="cursor-pointer transition-colors hover:bg-blue-50/30"
                       onClick={() => onSelectMachine(r.id)}>
                       <td className={`${TD_FIRST} min-w-44`}>
@@ -176,7 +180,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
-                    </ResizableRow>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -196,8 +200,8 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
   onOpenMachine?: (machineId: string) => void;
 }) {
   const transfers = useAsyncData(`transfers:${machine.id}`, () => machineService.getAnalyticsTransfers({ machineId: machine.id }));
-  const { heights: hParts, setHeight: setHParts, resetHeight: resetHParts } = useRowResize('equipment-parts');
-  const { heights: hHistory, setHeight: setHHistory, resetHeight: resetHHistory } = useRowResize('equipment-history');
+  const crParts = useColumnResize('equipment-parts', { part: 220, qty: 120, cost: 100 });
+  const crHistory = useColumnResize('equipment-history', { date: 120, type: 180, tech: 140, cost: 100 });
   const card = useMemo(() => {
     const logs = sortLogsByDateDesc(data.logs.filter(l => l.machineId === machine.id));
     const files = new Map<string, { count: number; size: number }>();
@@ -263,15 +267,20 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
         <Panel title="Израсходованные запчасти" icon={Boxes} bodyClass="">
           {card.parts.length === 0 ? <EmptyState compact /> : (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm report-table">
-                <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Запчасть</th><th className="px-4 py-3 text-right">Кол-во</th><th className="px-4 sm:px-6 py-3 text-right">Сумма</th></tr></thead>
+              <table ref={crParts.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crParts} columnIds={['part', 'qty', 'cost']} />
+                <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}>
+                  <th className="px-4 sm:px-6 py-3">Запчасть<ColResizeHandle cr={crParts} colId="part" label="Запчасть" /></th>
+                  <th className="px-4 py-3 text-right">Кол-во<ColResizeHandle cr={crParts} colId="qty" label="Кол-во" /></th>
+                  <th className="px-4 sm:px-6 py-3 text-right">Сумма<ColResizeHandle cr={crParts} colId="cost" label="Сумма" isLast /></th>
+                </tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {card.parts.map(p => (
-                    <ResizableRow key={p.key} rowId={p.key} heights={hParts} onHeightChange={setHParts} onHeightReset={resetHParts}>
+                    <tr key={p.key}>
                       <td className={`${TD_FIRST} font-bold text-slate-800`}>{p.name}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatNumber(p.qty)} {p.unit}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{p.totalCost > 0 ? formatMoney(p.totalCost) : '—'}</td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -292,11 +301,12 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
       >
         {card.logs.length === 0 ? <EmptyState compact /> : (
           <div className={SCROLL_BOX}>
-            <table className="w-full text-left text-sm report-table">
-              <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Дата</th><th className="px-4 py-3">Вид работ</th><th className="px-4 py-3">Исполнитель</th><th className="px-4 sm:px-6 py-3 text-right">Амортизация</th></tr></thead>
+            <table ref={crHistory.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crHistory} columnIds={['date', 'type', 'tech', 'cost']} />
+              <thead className="sticky top-0 bg-white"><tr className={THEAD_ROW}><th className="px-4 sm:px-6 py-3">Дата<ColResizeHandle cr={crHistory} colId="date" label="Дата" /></th><th className="px-4 py-3">Вид работ<ColResizeHandle cr={crHistory} colId="type" label="Вид работ" /></th><th className="px-4 py-3">Исполнитель<ColResizeHandle cr={crHistory} colId="tech" label="Исполнитель" /></th><th className="px-4 sm:px-6 py-3 text-right">Амортизация<ColResizeHandle cr={crHistory} colId="cost" label="Амортизация" isLast /></th></tr></thead>
               <tbody className="divide-y divide-slate-100">
                 {card.logs.map(l => (
-                  <ResizableRow key={l.id} rowId={l.id} heights={hHistory} onHeightChange={setHHistory} onHeightReset={resetHHistory}>
+                  <tr key={l.id}>
                     <td className={`${TD_FIRST} font-mono text-xs text-slate-500 whitespace-nowrap`}>{formatDateKey(toLocalDateKey(l.date))}</td>
                     <td className={TD}>
                       <div className="flex flex-wrap gap-1">
@@ -307,7 +317,7 @@ function MachineCard({ machine, data, canExport, onClose, onOpenMachine }: {
                     </td>
                     <td className={`${TD} text-slate-600 text-xs`}>{l.technicianName || '—'}</td>
                     <td className={`px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap ${isCompleted(l) ? '' : 'text-slate-400'}`}>{formatMoney(l.cost || 0)}</td>
-                  </ResizableRow>
+                  </tr>
                 ))}
               </tbody>
             </table>

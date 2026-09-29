@@ -6,8 +6,8 @@ import {
 } from '../reportUtils';
 import { XlsxButton, EmptyState, KpiCard, Panel, SCROLL_BOX, SortTh, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, useSorted } from '../ReportUi';
 import { machineService } from '../../../services/machineService';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 
 const STATUS_BADGE = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -46,7 +46,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
 }) {
   const comparison = useMemo(() => branchComparison(data), [data]);
   const { sorted, sort, toggle } = useSorted(comparison.rows, SORT, { key: 'cost', dir: 'desc' });
-  const { heights: hComp, setHeight: setHComp, resetHeight: resetHComp } = useRowResize('branches-comparison');
+  const crComp = useColumnResize('branches-comparison', { name: 200, machines: 80, active: 80, maintenance: 80, repair: 80, amps: 90, activeAmps: 90, residual: 130, cost: 110, stock: 110 });
   const selected = data.filters.branchId !== 'all' ? data.branchMap.get(data.filters.branchId) : undefined;
 
   if (selected) {
@@ -54,7 +54,9 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
     return <BranchPassport data={data} row={row} canExport={canExport} onBack={() => onSelectBranch('all')} onOpenMachine={onOpenMachine} />;
   }
 
-  const th = (label: string, key: string, align: 'left' | 'right' = 'right') => <SortTh label={label} sortKey={key} sort={sort} onSort={toggle} align={align} />;
+  const th = (label: string, key: string, align: 'left' | 'right' = 'right', isLast = false) =>
+    <SortTh label={label} sortKey={key} sort={sort} onSort={toggle} align={align}
+      resizeHandle={<ColResizeHandle cr={crComp} colId={key} label={label} isLast={isLast} />} />;
   return (
     <Panel
       title="Сравнение филиалов"
@@ -70,10 +72,12 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
         <EmptyState text="Нет филиалов по выбранным фильтрам" />
       ) : (
         <div className="report-scroll overflow-x-auto">
-          <table className="w-full text-left text-sm report-table">
+          <table ref={crComp.tableRef} className="w-full text-left text-sm report-table">
+            <ColGroup cr={crComp} columnIds={['name', 'machines', 'active', 'maintenance', 'repair', 'amps', 'activeAmps', 'residual', 'cost', 'stock']} />
             <thead>
               <tr className={THEAD_ROW}>
-                <SortTh label="Филиал" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6" />
+                <SortTh label="Филиал" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6"
+                  resizeHandle={<ColResizeHandle cr={crComp} colId="name" label="Филиал" />} />
                 {th('Станков', 'machines')}
                 {th('В работе', 'active')}
                 {th('ТО', 'maintenance')}
@@ -82,14 +86,14 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                 {th('Ток в работе', 'activeAmps')}
                 {th('Ост. амортизация', 'residual')}
                 {th('Ремонт', 'cost')}
-                {th('Склад', 'stock')}
+                {th('Склад', 'stock', 'right', true)}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {sorted.map(r => {
                 const clickable = r.branchId !== NO_BRANCH_ID;
                 return (
-                  <ResizableRow key={r.branchId} rowId={r.branchId} heights={hComp} onHeightChange={setHComp} onHeightReset={resetHComp}
+                  <tr key={r.branchId}
                     className={`transition-colors ${clickable ? 'hover:bg-blue-50/40 cursor-pointer' : ''}`} onClick={clickable ? () => onSelectBranch(r.branchId) : undefined}>
                     <td className={`${TD_FIRST} min-w-44`}>
                       <p className={`font-bold ${clickable ? 'text-blue-700' : 'text-slate-800'}`}>{r.branchName}</p>
@@ -104,7 +108,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                     <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                     <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                     <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.stockValue)}</td>
-                  </ResizableRow>
+                  </tr>
                 );
               })}
             </tbody>
@@ -132,7 +136,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
   onBack: () => void;
   onOpenMachine?: (machineId: string) => void;
 }) {
-  const { heights: hMachines, setHeight: setHMachines, resetHeight: resetHMachines } = useRowResize('branch-passport-machines');
+  const crMachines = useColumnResize('branch-passport-machines', { machine: 200, status: 110, amps: 90, residual: 130, cost: 100 });
   const details = useMemo(() => {
     const costs = costByMachine(data.logs);
     return {
@@ -190,19 +194,20 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
         >
           {details.machines.length === 0 ? <EmptyState text="Нет оборудования по выбранным фильтрам" compact /> : (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crMachines.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crMachines} columnIds={['machine', 'status', 'amps', 'residual', 'cost']} />
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Станок</th>
-                    <th className="px-4 py-3">Статус</th>
-                    <th className="px-4 py-3 text-right">Ток</th>
-                    <th className="px-4 py-3 text-right">Ост. амортизация</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Ремонт</th>
+                    <th className="px-4 sm:px-6 py-3">Станок<ColResizeHandle cr={crMachines} colId="machine" label="Станок" /></th>
+                    <th className="px-4 py-3">Статус<ColResizeHandle cr={crMachines} colId="status" label="Статус" /></th>
+                    <th className="px-4 py-3 text-right">Ток<ColResizeHandle cr={crMachines} colId="amps" label="Ток" /></th>
+                    <th className="px-4 py-3 text-right">Ост. амортизация<ColResizeHandle cr={crMachines} colId="residual" label="Ост. амортизация" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Ремонт<ColResizeHandle cr={crMachines} colId="cost" label="Ремонт" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {details.machines.map(({ machine, residual, cost }) => (
-                    <ResizableRow key={machine.id} rowId={machine.id} heights={hMachines} onHeightChange={setHMachines} onHeightReset={resetHMachines} className="hover:bg-blue-50/20">
+                    <tr key={machine.id} className="hover:bg-blue-50/20">
                       <td className={`${TD_FIRST} min-w-44`}>
                         {onOpenMachine ? (
                           <button type="button" onClick={() => onOpenMachine(machine.id)} className="font-bold text-blue-700 hover:underline text-left cursor-pointer">{machine.name}</button>
@@ -215,7 +220,7 @@ function BranchPassport({ data, row, canExport, onBack, onOpenMachine }: {
                       </td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${residual === null ? 'text-slate-400' : ''}`}>{residual === null ? 'нет данных' : formatMoney(residual)}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{formatMoney(cost)}</td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>

@@ -11,8 +11,8 @@ import {
   XlsxButton, EmptyState, KpiCard, KPI_GRID, Pagination, Panel, ProgressBar, SCROLL_BOX, SearchInput, SortTh, StatusBadge,
   TD, TD_FIRST, TFOOT_ROW, THEAD_ROW, usePaged, useSorted,
 } from '../ReportUi';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 import type { MaintenanceLog } from '../../../types';
 import { machineService } from '../../../services/machineService';
 import { SERIES_COLORS } from '../charts/ChartFrame';
@@ -126,7 +126,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
 
   const comparison = useMemo(() => branchComparison(data), [data]);
   const { sorted: branchSorted, sort: branchSort, toggle: branchToggle } = useSorted(comparison.rows, BRANCH_SORT, { key: 'cost', dir: 'desc' });
-  const bth = (label: string, key: string, align: 'left' | 'right' = 'right') => <SortTh label={label} sortKey={key} sort={branchSort} onSort={branchToggle} align={align} />;
+  const bth = (label: string, key: string, colId: string, align: 'left' | 'right' = 'right', isLast = false) => <SortTh label={label} sortKey={key} sort={branchSort} onSort={branchToggle} align={align} resizeHandle={<ColResizeHandle cr={crBranches} colId={colId} label={label} isLast={isLast} />} />;
 
   const ranking = useMemo(
     () => machineRanking(data.machines, data.logs, data.branchMap, lastMaintenanceByMachine(data.machines, data.allLogs), data.now),
@@ -137,16 +137,16 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
     [ranking, search],
   );
   const { sorted: machineSorted, sort: machineSort, toggle: machineToggle } = useSorted(filtered, RANKING_SORT, { key: 'cost', dir: 'desc' });
-  const mth = (label: string, key: string, align: 'left' | 'right' = 'right') => <SortTh label={label} sortKey={key} sort={machineSort} onSort={machineToggle} align={align} />;
+  const mth = (label: string, key: string, colId: string, align: 'left' | 'right' = 'right', isLast = false) => <SortTh label={label} sortKey={key} sort={machineSort} onSort={machineToggle} align={align} resizeHandle={<ColResizeHandle cr={crMachines} colId={colId} label={label} isLast={isLast} />} />;
 
   const journal: MaintenanceLog[] = useMemo(
     () => sortLogsByDate(searchLogs(data.logs, journalSearch, data.machineMap), journalDir),
     [data.logs, data.machineMap, journalSearch, journalDir],
   );
   const paged = usePaged(journal, 25);
-  const { heights: hBranches, setHeight: setHBranches, resetHeight: resetHBranches } = useRowResize('overview-branches');
-  const { heights: hMachines, setHeight: setHMachines, resetHeight: resetHMachines } = useRowResize('overview-machines');
-  const { heights: hJournal, setHeight: setHJournal, resetHeight: resetHJournal } = useRowResize('overview-journal');
+  const crBranches = useColumnResize('overview-branches', { name: 200, machines: 80, active: 80, maintenance: 80, repair: 80, amps: 90, residual: 150, cost: 110, stock: 110 });
+  const crMachines = useColumnResize('overview-machines', { name: 200, branch: 150, status: 110, age: 90, residual: 150, cost: 110, last: 120 });
+  const crJournal = useColumnResize('overview-journal', { date_machine: 180, type: 160, status: 120, tech: 140, parts: 180, labor_cost: 130, parts_cost: 130 });
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -206,25 +206,26 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           <EmptyState text="Нет филиалов по выбранным фильтрам" />
         ) : (
           <div className="report-scroll overflow-x-auto">
-            <table className="w-full text-left text-sm report-table">
+            <table ref={crBranches.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crBranches} columnIds={['name', 'machines', 'active', 'maintenance', 'repair', 'amps', 'residual', 'cost', 'stock']} />
               <thead>
                 <tr className={THEAD_ROW}>
-                  <SortTh label="Филиал" sortKey="name" sort={branchSort} onSort={branchToggle} className="sm:pl-6" />
-                  {bth('Станков', 'machines')}
-                  {bth('В работе', 'active')}
-                  {bth('ТО', 'maintenance')}
-                  {bth('Ремонт', 'repair')}
-                  {bth('Ток', 'amps')}
-                  {bth('Ост. амортизация', 'residual')}
-                  {bth('Ремонт', 'cost')}
-                  {bth('Склад', 'stock')}
+                  <SortTh label="Филиал" sortKey="name" sort={branchSort} onSort={branchToggle} className="sm:pl-6" resizeHandle={<ColResizeHandle cr={crBranches} colId="name" label="Филиал" />} />
+                  {bth('Станков', 'machines', 'machines')}
+                  {bth('В работе', 'active', 'active')}
+                  {bth('ТО', 'maintenance', 'maintenance')}
+                  {bth('Ремонт', 'repair', 'repair')}
+                  {bth('Ток', 'amps', 'amps')}
+                  {bth('Ост. амортизация', 'residual', 'residual')}
+                  {bth('Ремонт', 'cost', 'cost')}
+                  {bth('Склад', 'stock', 'stock', 'right', true)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {branchSorted.map(r => {
                   const clickable = r.branchId !== NO_BRANCH_ID;
                   return (
-                    <ResizableRow key={r.branchId} rowId={r.branchId} heights={hBranches} onHeightChange={setHBranches} onHeightReset={resetHBranches}
+                    <tr key={r.branchId}
                       className={`transition-colors ${clickable ? 'hover:bg-blue-50/40 cursor-pointer' : ''}`}
                       onClick={clickable ? () => onSelectBranch(r.branchId) : undefined}>
                       <td className={`${TD_FIRST} min-w-44`}>
@@ -239,7 +240,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.stockValue)}</td>
-                    </ResizableRow>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -285,23 +286,24 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           <EmptyState text={search ? 'Ничего не найдено' : 'Нет оборудования по выбранным фильтрам'} />
         ) : (
           <div className={`${SCROLL_BOX} max-h-[600px]`}>
-            <table className="w-full text-left text-sm report-table">
+            <table ref={crMachines.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crMachines} columnIds={['name', 'branch', 'status', 'age', 'residual', 'cost', 'last']} />
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
-                  <SortTh label="Станок" sortKey="name" sort={machineSort} onSort={machineToggle} className="sm:pl-6" />
-                  {mth('Филиал', 'branch', 'left')}
-                  {mth('Статус', 'status', 'left')}
-                  {mth('Возраст', 'age')}
-                  {mth('Ост. амортизация', 'residual')}
-                  {mth('Ремонт', 'cost')}
-                  {mth('Посл. ТО', 'last')}
+                  <SortTh label="Станок" sortKey="name" sort={machineSort} onSort={machineToggle} className="sm:pl-6" resizeHandle={<ColResizeHandle cr={crMachines} colId="name" label="Станок" />} />
+                  {mth('Филиал', 'branch', 'branch', 'left')}
+                  {mth('Статус', 'status', 'status', 'left')}
+                  {mth('Возраст', 'age', 'age')}
+                  {mth('Ост. амортизация', 'residual', 'residual')}
+                  {mth('Ремонт', 'cost', 'cost')}
+                  {mth('Посл. ТО', 'last', 'last', 'right', true)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {machineSorted.map(r => {
                   const level = ratioLevel(r.ratio);
                   return (
-                    <ResizableRow key={r.id} rowId={r.id} heights={hMachines} onHeightChange={setHMachines} onHeightReset={resetHMachines}
+                    <tr key={r.id}
                       className={`cursor-pointer transition-colors ${level === 'critical' ? 'bg-rose-50/60 hover:bg-rose-50' : level === 'warn' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-blue-50/30'}`}
                       onClick={() => onSelectMachine(r.id)}>
                       <td className={`${TD_FIRST} min-w-44`}>
@@ -314,7 +316,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
-                    </ResizableRow>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -354,16 +356,17 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         {journal.length === 0 ? <EmptyState text={journalSearch ? 'Ничего не найдено' : undefined} /> : (
           <>
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crJournal.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crJournal} columnIds={['date_machine', 'type', 'status', 'tech', 'parts', 'labor_cost', 'parts_cost']} />
                 <thead>
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Дата / Станок</th>
-                    <th className="px-4 py-3">Вид работ</th>
-                    <th className="px-4 py-3">Статус</th>
-                    <th className="px-4 py-3">Исполнитель</th>
-                    <th className="px-4 py-3">Запчасти</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей</th>
+                    <th className="px-4 sm:px-6 py-3">Дата / Станок<ColResizeHandle cr={crJournal} colId="date_machine" label="Дата / Станок" /></th>
+                    <th className="px-4 py-3">Вид работ<ColResizeHandle cr={crJournal} colId="type" label="Вид работ" /></th>
+                    <th className="px-4 py-3">Статус<ColResizeHandle cr={crJournal} colId="status" label="Статус" /></th>
+                    <th className="px-4 py-3">Исполнитель<ColResizeHandle cr={crJournal} colId="tech" label="Исполнитель" /></th>
+                    <th className="px-4 py-3">Запчасти<ColResizeHandle cr={crJournal} colId="parts" label="Запчасти" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ<ColResizeHandle cr={crJournal} colId="labor_cost" label="Стоимость работ" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей<ColResizeHandle cr={crJournal} colId="parts_cost" label="Стоимость деталей" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -371,7 +374,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                     const machine = data.machineMap.get(log.machineId);
                     const done = isCompleted(log);
                     return (
-                      <ResizableRow key={log.id} rowId={log.id} heights={hJournal} onHeightChange={setHJournal} onHeightReset={resetHJournal} className="hover:bg-blue-50/20 transition-colors">
+                      <tr key={log.id} className="hover:bg-blue-50/20 transition-colors">
                         <td className={TD_FIRST}>
                           <p className="text-xs font-mono text-slate-400 mb-0.5">{formatDateKey(toLocalDateKey(log.date))}</p>
                           <p className="font-bold text-slate-800 leading-tight min-w-40">{machine?.name || '—'}</p>
@@ -392,7 +395,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                         </td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.partsCost || 0)}</td>
-                      </ResizableRow>
+                      </tr>
                     );
                   })}
                 </tbody>

@@ -7,8 +7,8 @@ import {
 } from '../reportUtils';
 import { AsyncContent, XlsxButton, EmptyState, KpiCard, Panel, ProgressBar, SCROLL_BOX, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 import { SERIES_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
@@ -18,12 +18,12 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
   const [topBy, setTopBy] = useState<'qty' | 'value'>('qty');
   const branchParam = data.filters.branchId === 'all' ? undefined : data.filters.branchId;
   const reservations = useAsyncData(`reservations:${branchParam ?? 'all'}`, () => machineService.getAnalyticsReservations({ branchId: branchParam }));
-  const { heights: hByBranch, setHeight: setHByBranch, resetHeight: resetHByBranch } = useRowResize('inv-by-branch');
-  const { heights: hLow, setHeight: setHLow, resetHeight: resetHLow } = useRowResize('inv-low-stock');
-  const { heights: hRes, setHeight: setHRes, resetHeight: resetHRes } = useRowResize('inv-reservations');
-  const { heights: hByMachine, setHeight: setHByMachine, resetHeight: resetHByMachine } = useRowResize('inv-by-machine');
-  const { heights: hDead, setHeight: setHDead, resetHeight: resetHDead } = useRowResize('inv-dead-stock');
-  const { heights: hUnits, setHeight: setHUnits, resetHeight: resetHUnits } = useRowResize('inv-units');
+  const crByBranch = useColumnResize('inv-by-branch', { branch: 200, items: 100, value: 120, archived: 120 });
+  const crLow = useColumnResize('inv-low-stock', { name: 200, sku: 120, available: 90, reserved: 90, min: 90, deficit: 90, unit: 80 });
+  const crRes = useColumnResize('inv-reservations', { part: 200, qty: 120, value: 120, source: 200, date: 120 });
+  const crByMachine = useColumnResize('inv-by-machine', { machine: 200, works: 100, qty: 100, cost: 120 });
+  const crDead = useColumnResize('inv-dead-stock', { name: 200, qty: 120, value: 120 });
+  const crUnits = useColumnResize('inv-units', { unit: 200, items: 100, qty: 120, value: 120 });
 
   const stats = useMemo(() => {
     const usage = partsUsage(data.logs, data.partLookup);
@@ -86,23 +86,24 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         >
           {stats.byBranch.length === 0 ? <EmptyState text="На складе нет запчастей" compact /> : (
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crByBranch.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crByBranch} columnIds={['branch', 'items', 'value', 'archived']} />
                 <thead>
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Филиал</th>
-                    <th className="px-4 py-3 text-right">Позиций</th>
-                    <th className="px-4 py-3 text-right">Стоимость</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">В архиве</th>
+                    <th className="px-4 sm:px-6 py-3">Филиал<ColResizeHandle cr={crByBranch} colId="branch" label="Филиал" /></th>
+                    <th className="px-4 py-3 text-right">Позиций<ColResizeHandle cr={crByBranch} colId="items" label="Позиций" /></th>
+                    <th className="px-4 py-3 text-right">Стоимость<ColResizeHandle cr={crByBranch} colId="value" label="Стоимость" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">В архиве<ColResizeHandle cr={crByBranch} colId="archived" label="В архиве" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.byBranch.map(r => (
-                    <ResizableRow key={r.branchId} rowId={r.branchId} heights={hByBranch} onHeightChange={setHByBranch} onHeightReset={resetHByBranch}>
+                    <tr key={r.branchId}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
                       <td className={`${TD} text-right font-mono text-slate-600`}>{r.items}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.value)}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono whitespace-nowrap text-slate-400">{formatMoney(stats.archivedByBranch.get(r.branchId) || 0)}</td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
                 <tfoot>
@@ -139,21 +140,22 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
       >
         {stats.low.length === 0 ? <EmptyState text="Все позиции выше минимального остатка" compact /> : (
           <div className={SCROLL_BOX}>
-            <table className="w-full text-left text-sm report-table">
+            <table ref={crLow.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crLow} columnIds={['name', 'sku', 'available', 'reserved', 'min', 'deficit', 'unit']} />
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
-                  <th className="px-4 sm:px-6 py-3">Наименование</th>
-                  <th className="px-4 py-3">Артикул</th>
-                  <th className="px-4 py-3 text-right">Доступно</th>
-                  <th className="px-4 py-3 text-right">В брони</th>
-                  <th className="px-4 py-3 text-right">Минимум</th>
-                  <th className="px-4 py-3 text-right">Дефицит</th>
-                  <th className="px-4 sm:px-6 py-3">Ед.</th>
+                  <th className="px-4 sm:px-6 py-3">Наименование<ColResizeHandle cr={crLow} colId="name" label="Наименование" /></th>
+                  <th className="px-4 py-3">Артикул<ColResizeHandle cr={crLow} colId="sku" label="Артикул" /></th>
+                  <th className="px-4 py-3 text-right">Доступно<ColResizeHandle cr={crLow} colId="available" label="Доступно" /></th>
+                  <th className="px-4 py-3 text-right">В брони<ColResizeHandle cr={crLow} colId="reserved" label="В брони" /></th>
+                  <th className="px-4 py-3 text-right">Минимум<ColResizeHandle cr={crLow} colId="min" label="Минимум" /></th>
+                  <th className="px-4 py-3 text-right">Дефицит<ColResizeHandle cr={crLow} colId="deficit" label="Дефицит" /></th>
+                  <th className="px-4 sm:px-6 py-3">Ед.<ColResizeHandle cr={crLow} colId="unit" label="Ед." isLast /></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {stats.low.map(r => (
-                  <ResizableRow key={r.part.id} rowId={r.part.id} heights={hLow} onHeightChange={setHLow} onHeightReset={resetHLow} className="hover:bg-amber-50/30 transition-colors">
+                  <tr key={r.part.id} className="hover:bg-amber-50/30 transition-colors">
                     <td className={`${TD_FIRST} font-bold text-slate-800 min-w-44`}>{r.part.name}</td>
                     <td className={`${TD} font-mono text-xs text-slate-500`}>{r.part.sku || '—'}</td>
                     <td className={`${TD} text-right font-mono font-black ${r.available <= 0 ? 'text-rose-600' : 'text-amber-600'}`}>{formatNumber(r.available)}</td>
@@ -161,7 +163,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                     <td className={`${TD} text-right font-mono text-slate-700`}>{formatNumber(r.min)}</td>
                     <td className={`${TD} text-right font-mono font-bold ${r.deficit > 0 ? 'text-rose-600' : 'text-slate-300'}`}>{formatNumber(r.deficit)}</td>
                     <td className="px-4 sm:px-6 py-3 text-slate-500">{r.part.unit || 'шт'}</td>
-                  </ResizableRow>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -185,19 +187,20 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         <AsyncContent state={reservations} isEmpty={rows => rows.length === 0} emptyText="Нет забронированных запчастей">
           {rows => (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crRes.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crRes} columnIds={['part', 'qty', 'value', 'source', 'date']} />
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Запчасть</th>
-                    <th className="px-4 py-3 text-right">Кол-во</th>
-                    <th className="px-4 py-3 text-right">Стоимость</th>
-                    <th className="px-4 py-3">Для чего</th>
-                    <th className="px-4 sm:px-6 py-3">Дата</th>
+                    <th className="px-4 sm:px-6 py-3">Запчасть<ColResizeHandle cr={crRes} colId="part" label="Запчасть" /></th>
+                    <th className="px-4 py-3 text-right">Кол-во<ColResizeHandle cr={crRes} colId="qty" label="Кол-во" /></th>
+                    <th className="px-4 py-3 text-right">Стоимость<ColResizeHandle cr={crRes} colId="value" label="Стоимость" /></th>
+                    <th className="px-4 py-3">Для чего<ColResizeHandle cr={crRes} colId="source" label="Для чего" /></th>
+                    <th className="px-4 sm:px-6 py-3">Дата<ColResizeHandle cr={crRes} colId="date" label="Дата" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {rows.map(r => (
-                    <ResizableRow key={r.id} rowId={r.id} heights={hRes} onHeightChange={setHRes} onHeightReset={resetHRes}>
+                    <tr key={r.id}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800">{r.partName}</p>
                         <p className="text-[10px] font-mono text-slate-400">{r.sku}{r.isArchived ? ' · в архиве' : ''}</p>
@@ -212,7 +215,7 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
                         {r.sourceDate && <p>Срок: {formatDateKey(toLocalDateKey(r.sourceDate))}</p>}
                         <p className="text-[10px]">Бронь: {formatDateKey(toLocalDateKey(r.createdAt))}</p>
                       </td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -276,23 +279,24 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         >
           {stats.byMachine.length === 0 ? <EmptyState compact /> : (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crByMachine.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crByMachine} columnIds={['machine', 'works', 'qty', 'cost']} />
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Станок</th>
-                    <th className="px-4 py-3 text-right">Работ</th>
-                    <th className="px-4 py-3 text-right">Кол-во</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Сумма</th>
+                    <th className="px-4 sm:px-6 py-3">Станок<ColResizeHandle cr={crByMachine} colId="machine" label="Станок" /></th>
+                    <th className="px-4 py-3 text-right">Работ<ColResizeHandle cr={crByMachine} colId="works" label="Работ" /></th>
+                    <th className="px-4 py-3 text-right">Кол-во<ColResizeHandle cr={crByMachine} colId="qty" label="Кол-во" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Сумма<ColResizeHandle cr={crByMachine} colId="cost" label="Сумма" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.byMachine.map(r => (
-                    <ResizableRow key={r.machineId} rowId={r.machineId} heights={hByMachine} onHeightChange={setHByMachine} onHeightReset={resetHByMachine}>
+                    <tr key={r.machineId}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.name}</td>
                       <td className={`${TD} text-right font-mono`}>{r.works}</td>
                       <td className={`${TD} text-right font-mono`}>{formatNumber(r.qty)}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{formatMoney(r.cost)}</td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -316,24 +320,25 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         >
           {stats.dead.length === 0 ? <EmptyState text="Все позиции в наличии использовались за период" compact /> : (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crDead.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crDead} columnIds={['name', 'qty', 'value']} />
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Наименование</th>
-                    <th className="px-4 py-3 text-right">Кол-во</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость</th>
+                    <th className="px-4 sm:px-6 py-3">Наименование<ColResizeHandle cr={crDead} colId="name" label="Наименование" /></th>
+                    <th className="px-4 py-3 text-right">Кол-во<ColResizeHandle cr={crDead} colId="qty" label="Кол-во" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость<ColResizeHandle cr={crDead} colId="value" label="Стоимость" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.dead.map(p => (
-                    <ResizableRow key={p.id} rowId={p.id} heights={hDead} onHeightChange={setHDead} onHeightReset={resetHDead}>
+                    <tr key={p.id}>
                       <td className={`${TD_FIRST} min-w-44`}>
                         <p className="font-bold text-slate-800">{p.name}</p>
                         {p.sku && <p className="text-[10px] font-mono text-slate-400">{p.sku}</p>}
                       </td>
                       <td className={`${TD} text-right font-mono text-slate-600 whitespace-nowrap`}>{formatNumber(p.quantity)} {p.unit || 'шт'}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{formatMoney(partValue(p))}</td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -353,23 +358,24 @@ export function InventoryTab({ data, canExport }: { data: ReportData; canExport:
         >
           {stats.units.length === 0 ? <EmptyState text="На складе нет запчастей" compact /> : (
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crUnits.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crUnits} columnIds={['unit', 'items', 'qty', 'value']} />
                 <thead>
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Единица</th>
-                    <th className="px-4 py-3 text-right">Позиций</th>
-                    <th className="px-4 py-3 text-right">Количество</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость</th>
+                    <th className="px-4 sm:px-6 py-3">Единица<ColResizeHandle cr={crUnits} colId="unit" label="Единица" /></th>
+                    <th className="px-4 py-3 text-right">Позиций<ColResizeHandle cr={crUnits} colId="items" label="Позиций" /></th>
+                    <th className="px-4 py-3 text-right">Количество<ColResizeHandle cr={crUnits} colId="qty" label="Количество" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость<ColResizeHandle cr={crUnits} colId="value" label="Стоимость" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.units.map(u => (
-                    <ResizableRow key={u.code} rowId={u.code} heights={hUnits} onHeightChange={setHUnits} onHeightReset={resetHUnits}>
+                    <tr key={u.code}>
                       <td className={TD_FIRST}><span className="font-bold text-slate-800">{u.name}</span> <span className="text-[10px] font-mono text-slate-400">{u.code}</span></td>
                       <td className={`${TD} text-right font-mono`}>{u.items}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatNumber(u.qty)} {u.code}</td>
                       <td className="px-4 sm:px-6 py-3 text-right font-mono font-bold whitespace-nowrap">{formatMoney(u.value)}</td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>

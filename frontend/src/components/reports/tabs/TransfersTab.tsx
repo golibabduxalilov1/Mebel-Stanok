@@ -4,15 +4,15 @@ import { machineService } from '../../../services/machineService';
 import { ReportData, filterTransferRows, formatDateTime, formatPeriod, rangeToInstants, transferBalance } from '../reportUtils';
 import { AsyncContent, XlsxButton, KpiCard, Panel, SCROLL_BOX, Skeleton, TD, TD_FIRST, THEAD_ROW } from '../ReportUi';
 import { useAsyncData } from '../useAsyncData';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 
 export function TransfersTab({ data, canExport }: { data: ReportData; canExport: boolean }) {
   const { branchId, machineId, start, end } = data.filters;
   const params = { ...rangeToInstants({ start, end }), branchId, machineId };
   const state = useAsyncData(`transfers:${JSON.stringify(params)}`, () => machineService.getAnalyticsTransfers(params));
-  const { heights: hBalance, setHeight: setHBalance, resetHeight: resetHBalance } = useRowResize('transfers-balance');
-  const { heights: hJournal, setHeight: setHJournal, resetHeight: resetHJournal } = useRowResize('transfers-journal');
+  const crBalance = useColumnResize('transfers-balance', { branch: 220, incoming: 100, outgoing: 100, balance: 100 });
+  const crJournal = useColumnResize('transfers-journal', { date: 140, machine: 180, route: 200, who: 160 });
 
   const stats = useMemo(() => {
     if (!state.data) return null;
@@ -52,25 +52,26 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
         <AsyncContent state={state} isEmpty={() => !stats?.balance.length} emptyText="Нет перемещений за выбранный период">
           {() => (
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crBalance.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crBalance} columnIds={['branch', 'incoming', 'outgoing', 'balance']} />
                 <thead>
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Филиал</th>
-                    <th className="px-4 py-3 text-right">Поступило</th>
-                    <th className="px-4 py-3 text-right">Убыло</th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Баланс</th>
+                    <th className="px-4 sm:px-6 py-3">Филиал<ColResizeHandle cr={crBalance} colId="branch" label="Филиал" /></th>
+                    <th className="px-4 py-3 text-right">Поступило<ColResizeHandle cr={crBalance} colId="incoming" label="Поступило" /></th>
+                    <th className="px-4 py-3 text-right">Убыло<ColResizeHandle cr={crBalance} colId="outgoing" label="Убыло" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Баланс<ColResizeHandle cr={crBalance} colId="balance" label="Баланс" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats!.balance.map(r => (
-                    <ResizableRow key={r.branchId} rowId={r.branchId} heights={hBalance} onHeightChange={setHBalance} onHeightReset={resetHBalance}>
+                    <tr key={r.branchId}>
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
                       <td className={`${TD} text-right font-mono ${r.incoming ? 'text-emerald-700' : 'text-slate-300'}`}>{r.incoming ? `+${r.incoming}` : 0}</td>
                       <td className={`${TD} text-right font-mono ${r.outgoing ? 'text-rose-700' : 'text-slate-300'}`}>{r.outgoing ? `−${r.outgoing}` : 0}</td>
                       <td className={`px-4 sm:px-6 py-3 text-right font-mono font-black ${r.balance > 0 ? 'text-emerald-700' : r.balance < 0 ? 'text-rose-700' : 'text-slate-500'}`}>
                         {r.balance > 0 ? `+${r.balance}` : r.balance < 0 ? `−${Math.abs(r.balance)}` : '0'}
                       </td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -92,18 +93,19 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
         <AsyncContent state={state} isEmpty={() => !stats?.rows.length} emptyText="Нет перемещений за выбранный период">
           {() => (
             <div className={SCROLL_BOX}>
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crJournal.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crJournal} columnIds={['date', 'machine', 'route', 'who']} />
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Дата</th>
-                    <th className="px-4 py-3">Станок</th>
-                    <th className="px-4 py-3">Маршрут</th>
-                    <th className="px-4 sm:px-6 py-3">Кто</th>
+                    <th className="px-4 sm:px-6 py-3">Дата<ColResizeHandle cr={crJournal} colId="date" label="Дата" /></th>
+                    <th className="px-4 py-3">Станок<ColResizeHandle cr={crJournal} colId="machine" label="Станок" /></th>
+                    <th className="px-4 py-3">Маршрут<ColResizeHandle cr={crJournal} colId="route" label="Маршрут" /></th>
+                    <th className="px-4 sm:px-6 py-3">Кто<ColResizeHandle cr={crJournal} colId="who" label="Кто" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats!.rows.map(r => (
-                    <ResizableRow key={r.id} rowId={r.id} heights={hJournal} onHeightChange={setHJournal} onHeightReset={resetHJournal}>
+                    <tr key={r.id}>
                       <td className={`${TD_FIRST} font-mono text-xs text-slate-500 whitespace-nowrap`}>{formatDateTime(r.date)}</td>
                       <td className={`${TD} min-w-40`}>
                         <p className="font-bold text-slate-800">{r.machineName}</p>
@@ -117,7 +119,7 @@ export function TransfersTab({ data, canExport }: { data: ReportData; canExport:
                         </span>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-xs text-slate-600">{r.createdByName || '—'}</td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
               </table>

@@ -5,8 +5,8 @@ import {
   powerByBranch, powerSummary, topConsumers,
 } from '../reportUtils';
 import { XlsxButton, EmptyState, KpiCard, Panel, ProgressBar, SCROLL_BOX, StatusBadge, TD, TD_FIRST, TFOOT_ROW, THEAD_ROW } from '../ReportUi';
-import { useRowResize } from '../useRowResize';
-import { ResizableRow } from '../ResizableRow';
+import { useColumnResize } from '../useColumnResize';
+import { ColGroup, ColResizeHandle } from '../ColResize';
 import { STATUS_COLORS } from '../charts/ChartFrame';
 import { StackedBarChart } from '../charts/StackedBarChart';
 
@@ -35,8 +35,8 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
 
   const { summary } = stats;
   const hasChart = stats.statusChart.some(r => r.active + r.maintenance + r.repair > 0);
-  const { heights: hByBranch, setHeight: setHByBranch, resetHeight: resetHByBranch } = useRowResize('power-by-branch');
-  const { heights: hMissing, setHeight: setHMissing, resetHeight: resetHMissing } = useRowResize('power-missing-amps');
+  const crByBranch = useColumnResize('power-by-branch', { branch: 200, count: 90, total: 100, active: 100, disconnected: 100, missing: 90, share: 140 });
+  const crMissing = useColumnResize('power-missing-amps', { name: 200, branch: 150, status: 120, action: 140 });
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -81,21 +81,22 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
         >
           {stats.byBranch.rows.length === 0 ? <EmptyState text="Нет оборудования по выбранным фильтрам" /> : (
             <div className="report-scroll overflow-x-auto">
-              <table className="w-full text-left text-sm report-table">
+              <table ref={crByBranch.tableRef} className="w-full text-left text-sm report-table">
+                <ColGroup cr={crByBranch} columnIds={['branch', 'count', 'total', 'active', 'disconnected', 'missing', 'share']} />
                 <thead>
                   <tr className={THEAD_ROW}>
-                    <th className="px-4 sm:px-6 py-3">Филиал</th>
-                    <th className="px-4 py-3 text-right">Станков</th>
-                    <th className="px-4 py-3 text-right">Всего</th>
-                    <th className="px-4 py-3 text-right">В работе</th>
-                    <th className="px-4 py-3 text-right">Отключено</th>
-                    <th className="px-4 py-3 text-right">Не указан</th>
-                    <th className="px-4 sm:px-6 py-3">Доля</th>
+                    <th className="px-4 sm:px-6 py-3">Филиал<ColResizeHandle cr={crByBranch} colId="branch" label="Филиал" /></th>
+                    <th className="px-4 py-3 text-right">Станков<ColResizeHandle cr={crByBranch} colId="count" label="Станков" /></th>
+                    <th className="px-4 py-3 text-right">Всего<ColResizeHandle cr={crByBranch} colId="total" label="Всего" /></th>
+                    <th className="px-4 py-3 text-right">В работе<ColResizeHandle cr={crByBranch} colId="active" label="В работе" /></th>
+                    <th className="px-4 py-3 text-right">Отключено<ColResizeHandle cr={crByBranch} colId="disconnected" label="Отключено" /></th>
+                    <th className="px-4 py-3 text-right">Не указан<ColResizeHandle cr={crByBranch} colId="missing" label="Не указан" /></th>
+                    <th className="px-4 sm:px-6 py-3">Доля<ColResizeHandle cr={crByBranch} colId="share" label="Доля" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stats.byBranch.rows.map(r => (
-                    <ResizableRow key={r.branchId} rowId={r.branchId} heights={hByBranch} onHeightChange={setHByBranch} onHeightReset={resetHByBranch} className="hover:bg-blue-50/20 transition-colors">
+                    <tr key={r.branchId} className="hover:bg-blue-50/20 transition-colors">
                       <td className={`${TD_FIRST} font-bold text-slate-800 min-w-40`}>{r.branchName}</td>
                       <td className={`${TD} text-right font-mono text-slate-600`}>{r.machineCount}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatAmps(r.totalAmps)}</td>
@@ -108,7 +109,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
                           <span className="text-[10px] font-mono font-bold">{formatPercent(r.share, 1)}</span>
                         </div>
                       </td>
-                    </ResizableRow>
+                    </tr>
                   ))}
                 </tbody>
                 <tfoot>
@@ -190,18 +191,19 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
       >
         {stats.missing.length === 0 ? <EmptyState text="Ампераж указан у всех станков" compact /> : (
           <div className={SCROLL_BOX}>
-            <table className="w-full text-left text-sm report-table">
+            <table ref={crMissing.tableRef} className="w-full text-left text-sm report-table">
+              <ColGroup cr={crMissing} columnIds={['name', 'branch', 'status', ...(onOpenMachine ? ['action'] : [])]} />
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
-                  <th className="px-4 sm:px-6 py-3">Станок</th>
-                  <th className="px-4 py-3">Филиал</th>
-                  <th className="px-4 py-3">Статус</th>
-                  {onOpenMachine && <th className="px-4 sm:px-6 py-3 text-right print:hidden">Действие</th>}
+                  <th className="px-4 sm:px-6 py-3">Станок<ColResizeHandle cr={crMissing} colId="name" label="Станок" /></th>
+                  <th className="px-4 py-3">Филиал<ColResizeHandle cr={crMissing} colId="branch" label="Филиал" /></th>
+                  <th className="px-4 py-3">Статус<ColResizeHandle cr={crMissing} colId="status" label="Статус" isLast={!onOpenMachine} /></th>
+                  {onOpenMachine && <th className="px-4 sm:px-6 py-3 text-right print:hidden">Действие<ColResizeHandle cr={crMissing} colId="action" label="Действие" isLast /></th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {stats.missing.map(m => (
-                  <ResizableRow key={m.id} rowId={m.id} heights={hMissing} onHeightChange={setHMissing} onHeightReset={resetHMissing}>
+                  <tr key={m.id}>
                     <td className={`${TD_FIRST} min-w-44`}>
                       <p className="font-bold text-slate-800">{m.name}</p>
                       <p className="text-[10px] text-slate-400 font-mono uppercase">{m.model}</p>
@@ -215,7 +217,7 @@ export function PowerTab({ data, canExport, onOpenMachine }: { data: ReportData;
                         </button>
                       </td>
                     )}
-                  </ResizableRow>
+                  </tr>
                 ))}
               </tbody>
             </table>

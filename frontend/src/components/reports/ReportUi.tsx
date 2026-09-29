@@ -276,13 +276,14 @@ export function useSorted<T>(rows: T[], getters: Record<string, (row: T) => Sort
   return { sorted, sort, toggle };
 }
 
-export function SortTh({ label, sortKey, sort, onSort, align = 'left', className = '' }: {
+export function SortTh({ label, sortKey, sort, onSort, align = 'left', className = '', resizeHandle }: {
   label: string;
   sortKey: string;
   sort: { key: string; dir: SortDir };
   onSort: (key: string) => void;
   align?: 'left' | 'right';
   className?: string;
+  resizeHandle?: React.ReactNode;
 }) {
   const active = sort.key === sortKey;
   const Icon = !active ? ArrowUpDown : sort.dir === 'asc' ? ArrowUp : ArrowDown;
@@ -296,6 +297,7 @@ export function SortTh({ label, sortKey, sort, onSort, align = 'left', className
         {label}
         <Icon className={`w-3 h-3 print:hidden ${active ? '' : 'opacity-40'}`} />
       </button>
+      {resizeHandle}
     </th>
   );
 }
