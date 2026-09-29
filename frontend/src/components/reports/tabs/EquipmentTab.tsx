@@ -38,6 +38,7 @@ const RANKING_SORT = {
   status: (r: MachineRankingRow) => MACHINE_STATUSES.indexOf(r.status),
   age: (r: MachineRankingRow) => r.ageYears,
   residual: (r: MachineRankingRow) => r.residual,
+  partsCost: (r: MachineRankingRow) => r.partsCost,
   cost: (r: MachineRankingRow) => r.cost,
   ratio: (r: MachineRankingRow) => (r.ratio === Infinity ? Number.MAX_VALUE : r.ratio),
   emergencies: (r: MachineRankingRow) => r.emergencies,
@@ -73,7 +74,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
     [stats.ranking, search],
   );
   const { sorted, sort, toggle } = useSorted(filtered, RANKING_SORT, { key: 'cost', dir: 'desc' });
-  const crRanking = useColumnResize('equipment-ranking', { machine: 200, branch: 150, status: 110, age: 90, residual: 130, cost: 100, last: 110 });
+  const crRanking = useColumnResize('equipment-ranking', { machine: 200, branch: 150, status: 110, age: 90, residual: 130, partsCost: 120, cost: 100, last: 110 });
   const th = (label: string, key: string, colId: string, align: 'left' | 'right' = 'right', isLast = false) =>
     <SortTh label={label} sortKey={key} sort={sort} onSort={toggle} align={align}
       resizeHandle={<ColResizeHandle cr={crRanking} colId={colId} label={label} isLast={isLast} />} />;
@@ -137,8 +138,8 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
               <XlsxButton
                 filename="reiting_stankov"
                 disabled={!sorted.length}
-                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Ремонт на ТО за период, $', 'Последнее ТО']}
-                rows={() => sorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status], r.ageYears, r.residual, r.cost,
+                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Стоимость деталей, $', 'Ремонт на ТО за период, $', 'Последнее ТО']}
+                rows={() => sorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status], r.ageYears, r.residual, r.partsCost, r.cost,
                   r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
               />
             )}
@@ -151,7 +152,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
         ) : (
           <div className={`${SCROLL_BOX} max-h-[600px]`}>
             <table ref={crRanking.tableRef} className="w-full text-left text-sm report-table">
-              <ColGroup cr={crRanking} columnIds={['machine', 'branch', 'status', 'age', 'residual', 'cost', 'last']} />
+              <ColGroup cr={crRanking} columnIds={['machine', 'branch', 'status', 'age', 'residual', 'partsCost', 'cost', 'last']} />
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
                   <SortTh label="Станок" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6"
@@ -160,6 +161,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                   {th('Статус', 'status', 'status', 'left')}
                   {th('Возраст', 'age', 'age')}
                   {th('Ост. амортизация', 'residual', 'residual')}
+                  {th('Стоимость деталей', 'partsCost', 'partsCost')}
                   {th('Ремонт', 'cost', 'cost')}
                   {th('Посл. ТО', 'last', 'last', 'right', true)}
                 </tr>
@@ -178,6 +180,7 @@ export function EquipmentTab({ data, canExport, onSelectMachine, onOpenMachine }
                       <td className={TD}><StatusBadge label={MACHINE_STATUS_LABELS[r.status]} className={STATUS_BADGE[r.status]} /></td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.ageYears === null ? 'text-slate-300' : ''}`}>{r.ageYears === null ? '—' : `${formatNumber(r.ageYears, 1)} г.`}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
+                      <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.partsCost)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
                     </tr>

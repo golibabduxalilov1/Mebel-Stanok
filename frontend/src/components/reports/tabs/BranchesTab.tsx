@@ -29,14 +29,14 @@ const SORT = {
   cost: (r: BranchComparisonRow) => r.cost,
   emergencies: (r: BranchComparisonRow) => r.emergencies,
   overdue: (r: BranchComparisonRow) => r.overdue,
-  stock: (r: BranchComparisonRow) => r.stockValue,
+  partsCost: (r: BranchComparisonRow) => r.partsCost,
   users: (r: BranchComparisonRow) => r.users,
 };
 
 const CSV_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Ток всего, А', 'Ток в работе, А',
-  'Остаточная амортизация, $', 'Ремонт за период, $', 'Склад, $'];
+  'Остаточная амортизация, $', 'Ремонт за период, $', 'Стоимость деталей, $'];
 const csvRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
-  r.totalAmps, r.activeAmps, r.residual, r.cost, r.stockValue];
+  r.totalAmps, r.activeAmps, r.residual, r.cost, r.partsCost];
 
 export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: {
   data: ReportData;
@@ -46,7 +46,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
 }) {
   const comparison = useMemo(() => branchComparison(data), [data]);
   const { sorted, sort, toggle } = useSorted(comparison.rows, SORT, { key: 'cost', dir: 'desc' });
-  const crComp = useColumnResize('branches-comparison', { name: 200, machines: 80, active: 80, maintenance: 80, repair: 80, amps: 90, activeAmps: 90, residual: 130, cost: 110, stock: 110 });
+  const crComp = useColumnResize('branches-comparison', { name: 200, machines: 80, active: 80, maintenance: 80, repair: 80, amps: 90, activeAmps: 90, residual: 130, cost: 110, partsCost: 130 });
   const selected = data.filters.branchId !== 'all' ? data.branchMap.get(data.filters.branchId) : undefined;
 
   if (selected) {
@@ -73,7 +73,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
       ) : (
         <div className="report-scroll overflow-x-auto">
           <table ref={crComp.tableRef} className="w-full text-left text-sm report-table">
-            <ColGroup cr={crComp} columnIds={['name', 'machines', 'active', 'maintenance', 'repair', 'amps', 'activeAmps', 'residual', 'cost', 'stock']} />
+            <ColGroup cr={crComp} columnIds={['name', 'machines', 'active', 'maintenance', 'repair', 'amps', 'activeAmps', 'residual', 'cost', 'partsCost']} />
             <thead>
               <tr className={THEAD_ROW}>
                 <SortTh label="Филиал" sortKey="name" sort={sort} onSort={toggle} className="sm:pl-6"
@@ -86,7 +86,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                 {th('Ток в работе', 'activeAmps')}
                 {th('Ост. амортизация', 'residual')}
                 {th('Ремонт', 'cost')}
-                {th('Склад', 'stock', 'right', true)}
+                {th('Стоимость деталей', 'partsCost', 'right', true)}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -107,7 +107,7 @@ export function BranchesTab({ data, canExport, onSelectBranch, onOpenMachine }: 
                     <td className={`${TD} text-right font-mono whitespace-nowrap text-slate-600`}>{formatAmps(r.activeAmps)}</td>
                     <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                     <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
-                    <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.stockValue)}</td>
+                    <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.partsCost)}</td>
                   </tr>
                 );
               })}

@@ -557,6 +557,7 @@ export interface MachineRankingRow {
   status: MachineStatus;
   ageYears: number | null;
   residual: number | null;
+  partsCost: number;
   cost: number;
   /** cost / residual in %; null without price data, Infinity when fully depreciated but still costing money. */
   ratio: number | null;
@@ -573,6 +574,10 @@ export function machineRanking(
   now: Date = new Date(),
 ): MachineRankingRow[] {
   const costs = costByMachine(logs);
+  const partsCosts = new Map<string, number>();
+  logs.forEach(l => {
+    if (isCompleted(l)) partsCosts.set(l.machineId, (partsCosts.get(l.machineId) || 0) + (l.partsCost || 0));
+  });
   const emergencies = new Map<string, number>();
   logs.forEach(l => {
     if (isCompleted(l) && isEmergencyType(l.type)) emergencies.set(l.machineId, (emergencies.get(l.machineId) || 0) + 1);
@@ -596,6 +601,7 @@ export function machineRanking(
       status: m.status,
       ageYears: machineAgeYears(m, now),
       residual,
+      partsCost: roundTo2(partsCosts.get(m.id) || 0),
       cost,
       ratio,
       emergencies: emergencies.get(m.id) || 0,
@@ -1227,6 +1233,8 @@ export interface BranchComparisonRow {
   emergencies: number;
   overdue: number;
   stockValue: number;
+  /** Parts cost of completed works in the period. */
+  partsCost: number;
   users: number;
 }
 
@@ -1238,7 +1246,7 @@ export function branchComparison(data: ReportData): { rows: BranchComparisonRow[
   const emptyStatus = (): Record<MachineStatus, number> => ({ active: 0, maintenance: 0, repair: 0, retired: 0 });
   const make = (branchId: string, branchName: string, b?: Branch): BranchComparisonRow => ({
     branchId, branchName, location: b?.location || '', contactPerson: b?.contactPerson || '',
-    machineCount: 0, byStatus: emptyStatus(), totalAmps: 0, activeAmps: 0, residual: 0, cost: 0, emergencies: 0, overdue: 0, stockValue: 0, users: 0,
+    machineCount: 0, byStatus: emptyStatus(), totalAmps: 0, activeAmps: 0, residual: 0, cost: 0, emergencies: 0, overdue: 0, stockValue: 0, partsCost: 0, users: 0,
   });
   const rows = new Map<string, BranchComparisonRow>();
   const visible = data.filters.branchId === 'all' ? data.branches : data.branches.filter(b => b.id === data.filters.branchId);
@@ -1267,6 +1275,12 @@ export function branchComparison(data: ReportData): { rows: BranchComparisonRow[
     row.cost = r.cost;
     row.emergencies = r.emergencies;
   });
+  data.logs.forEach(l => {
+    if (isCompleted(l)) {
+      const row = rowFor(data.machineMap.get(l.machineId)?.branchId);
+      row.partsCost = roundTo2(row.partsCost + (l.partsCost || 0));
+    }
+  });
   overdueSchedules(data.schedules, data.machineMap, data.today).forEach(t => rowFor(data.machineMap.get(t.machineId)?.branchId).overdue++);
   data.parts.forEach(p => {
     const home = data.filters.branchId !== 'all' ? data.filters.branchId : partHomeBranch(p, data.machineMap);
@@ -1293,6 +1307,7 @@ export function branchComparison(data: ReportData): { rows: BranchComparisonRow[
     total.emergencies += r.emergencies;
     total.overdue += r.overdue;
     total.stockValue = roundTo2(total.stockValue + r.stockValue);
+    total.partsCost = roundTo2(total.partsCost + r.partsCost);
   });
   // A user assigned to several branches is counted once in the total.
   total.users = assignedUsers.size;

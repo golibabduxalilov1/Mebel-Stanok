@@ -40,7 +40,7 @@ const BRANCH_SORT = {
   cost: (r: BranchComparisonRow) => r.cost,
   emergencies: (r: BranchComparisonRow) => r.emergencies,
   overdue: (r: BranchComparisonRow) => r.overdue,
-  stock: (r: BranchComparisonRow) => r.stockValue,
+  partsCost: (r: BranchComparisonRow) => r.partsCost,
   users: (r: BranchComparisonRow) => r.users,
 };
 
@@ -50,6 +50,7 @@ const RANKING_SORT = {
   status: (r: MachineRankingRow) => r.status,
   age: (r: MachineRankingRow) => r.ageYears,
   residual: (r: MachineRankingRow) => r.residual,
+  partsCost: (r: MachineRankingRow) => r.partsCost,
   cost: (r: MachineRankingRow) => r.cost,
   ratio: (r: MachineRankingRow) => (r.ratio === Infinity ? Number.MAX_VALUE : r.ratio),
   emergencies: (r: MachineRankingRow) => r.emergencies,
@@ -57,9 +58,9 @@ const RANKING_SORT = {
 };
 
 const CSV_BRANCH_HEADERS = ['Филиал', 'Станков', 'В работе', 'На ТО', 'В ремонте', 'Ток всего, А',
-  'Остаточная амортизация, $', 'Ремонт за период, $', 'Склад, $'];
+  'Остаточная амортизация, $', 'Ремонт за период, $', 'Стоимость деталей, $'];
 const csvBranchRow = (r: BranchComparisonRow) => [r.branchName, r.machineCount, r.byStatus.active, r.byStatus.maintenance, r.byStatus.repair,
-  r.totalAmps, r.residual, r.cost, r.stockValue];
+  r.totalAmps, r.residual, r.cost, r.partsCost];
 
 function ChangeBadge({ change, invert = false }: { change: number | null | undefined; invert?: boolean }) {
   if (change === undefined) return <span>Нет периода для сравнения</span>;
@@ -98,6 +99,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
       byStatus,
       uptime: uptimePercent(data.machines),
       cost,
+      journalTotal: data.logs.reduce((sum, l) => sum + (l.partsCost || 0) + (l.laborCost || 0), 0),
       costChange: data.prevLogs ? percentChange(cost, sumCompletedCost(data.prevLogs)) : undefined,
       completed: data.logs.filter(isCompleted).length,
       completedChange: data.prevLogs ? percentChange(data.logs.filter(isCompleted).length, data.prevLogs.filter(isCompleted).length) : undefined,
@@ -144,8 +146,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
     [data.logs, data.machineMap, journalSearch, journalDir],
   );
   const paged = usePaged(journal, 25);
-  const crBranches = useColumnResize('overview-branches', { name: 200, machines: 80, active: 80, maintenance: 80, repair: 80, amps: 90, residual: 150, cost: 110, stock: 110 });
-  const crMachines = useColumnResize('overview-machines', { name: 200, branch: 150, status: 110, age: 90, residual: 150, cost: 110, last: 120 });
+  const crBranches = useColumnResize('overview-branches', { name: 200, machines: 80, active: 80, maintenance: 80, repair: 80, amps: 90, residual: 150, cost: 110, partsCost: 130 });
+  const crMachines = useColumnResize('overview-machines', { name: 200, branch: 150, status: 110, age: 90, residual: 150, partsCost: 130, cost: 110, last: 120 });
   const crJournal = useColumnResize('overview-journal', { date_machine: 180, type: 160, status: 120, tech: 140, parts: 180, labor_cost: 130, parts_cost: 130 });
 
   return (
@@ -153,8 +155,14 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <KpiCard
           label="Всего станков"
-          value={formatNumber(stats.total)}
-          hint={`В работе: ${stats.inService}`}
+          value={(
+            <span className="flex items-baseline gap-3 flex-wrap">
+              <span>{formatNumber(stats.total)}</span>
+              <span className="text-slate-300 font-normal">|</span>
+              <span className="text-blue-600">{formatAmps(stats.power.totalAmps)}</span>
+            </span>
+          )}
+          hint={`В работе: ${stats.inService} · Ток всего`}
         />
         <KpiCard
           label="Итого на складе"
@@ -163,7 +171,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         />
         <KpiCard
           label="Итого ремонт"
-          value={formatMoney(stats.cost)}
+          value={formatMoney(stats.journalTotal)}
           hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Расходы за период'}
         />
       </div>
@@ -207,7 +215,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         ) : (
           <div className="report-scroll overflow-x-auto">
             <table ref={crBranches.tableRef} className="w-full text-left text-sm report-table">
-              <ColGroup cr={crBranches} columnIds={['name', 'machines', 'active', 'maintenance', 'repair', 'amps', 'residual', 'cost', 'stock']} />
+              <ColGroup cr={crBranches} columnIds={['name', 'machines', 'active', 'maintenance', 'repair', 'amps', 'residual', 'cost', 'partsCost']} />
               <thead>
                 <tr className={THEAD_ROW}>
                   <SortTh label="Филиал" sortKey="name" sort={branchSort} onSort={branchToggle} className="sm:pl-6" resizeHandle={<ColResizeHandle cr={crBranches} colId="name" label="Филиал" />} />
@@ -218,7 +226,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {bth('Ток', 'amps', 'amps')}
                   {bth('Ост. амортизация', 'residual', 'residual')}
                   {bth('Ремонт', 'cost', 'cost')}
-                  {bth('Склад', 'stock', 'stock', 'right', true)}
+                  {bth('Стоимость деталей', 'partsCost', 'partsCost', 'right', true)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -239,7 +247,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatAmps(r.totalAmps)}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.residual)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
-                      <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.stockValue)}</td>
+                      <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.partsCost)}</td>
                     </tr>
                   );
                 })}
@@ -271,10 +279,10 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               <XlsxButton
                 filename="reiting_stankov"
                 disabled={!machineSorted.length}
-                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $',
+                headers={['Станок', 'Модель', 'Производитель', 'Филиал', 'Статус', 'Возраст, лет', 'Остаточная амортизация, $', 'Стоимость деталей, $',
                   'Ремонт на ТО за период, $', 'Ремонт / амортизация, %', 'Последнее ТО']}
                 rows={() => machineSorted.map(r => [r.name, r.model, r.manufacturer, r.branchName, MACHINE_STATUS_LABELS[r.status],
-                  r.ageYears, r.residual, r.cost, r.ratio === Infinity ? '>100' : r.ratio,
+                  r.ageYears, r.residual, r.partsCost, r.cost, r.ratio === Infinity ? '>100' : r.ratio,
                   r.lastMaintenance ? formatDateKey(r.lastMaintenance) : ''])}
               />
             )}
@@ -287,7 +295,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         ) : (
           <div className={`${SCROLL_BOX} max-h-[600px]`}>
             <table ref={crMachines.tableRef} className="w-full text-left text-sm report-table">
-              <ColGroup cr={crMachines} columnIds={['name', 'branch', 'status', 'age', 'residual', 'cost', 'last']} />
+              <ColGroup cr={crMachines} columnIds={['name', 'branch', 'status', 'age', 'residual', 'partsCost', 'cost', 'last']} />
               <thead className="sticky top-0 bg-white z-10">
                 <tr className={THEAD_ROW}>
                   <SortTh label="Станок" sortKey="name" sort={machineSort} onSort={machineToggle} className="sm:pl-6" resizeHandle={<ColResizeHandle cr={crMachines} colId="name" label="Станок" />} />
@@ -295,6 +303,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                   {mth('Статус', 'status', 'status', 'left')}
                   {mth('Возраст', 'age', 'age')}
                   {mth('Ост. амортизация', 'residual', 'residual')}
+                  {mth('Стоимость деталей', 'partsCost', 'partsCost')}
                   {mth('Ремонт', 'cost', 'cost')}
                   {mth('Посл. ТО', 'last', 'last', 'right', true)}
                 </tr>
@@ -314,6 +323,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                       <td className={TD}><StatusBadge label={MACHINE_STATUS_LABELS[r.status]} className={STATUS_BADGE[r.status]} /></td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.ageYears === null ? 'text-slate-300' : ''}`}>{r.ageYears === null ? '—' : `${formatNumber(r.ageYears, 1)} г.`}</td>
                       <td className={`${TD} text-right font-mono whitespace-nowrap ${r.residual === null ? 'text-slate-400' : ''}`}>{r.residual === null ? 'нет данных' : formatMoney(r.residual)}</td>
+                      <td className={`${TD} text-right font-mono whitespace-nowrap`}>{formatMoney(r.partsCost)}</td>
                       <td className={`${TD} text-right font-mono font-bold whitespace-nowrap`}>{formatMoney(r.cost)}</td>
                       <td className={`${TD} text-right font-mono text-xs whitespace-nowrap text-slate-500`}>{r.lastMaintenance ? formatDateKey(r.lastMaintenance) : '—'}</td>
                     </tr>
@@ -341,12 +351,12 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               <XlsxButton
                 filename="zhurnal_obsluzhivaniya"
                 disabled={!journal.length}
-                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость работ, $', 'Стоимость деталей, $']}
+                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость деталей, $', 'Стоимость работ, $']}
                 rows={() => journal.map(log => {
                   const machine = data.machineMap.get(log.machineId);
                   return [formatDateKey(toLocalDateKey(log.date)), machine?.name, machine?.model, LOG_TYPE_LABELS[log.type] || log.type,
                     isCompleted(log) ? 'Выполнено' : 'Запланировано', log.technicianName, log.notes,
-                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.laborCost || 0, log.partsCost || 0];
+                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.partsCost || 0, log.laborCost || 0];
                 })}
               />
             )}
@@ -357,7 +367,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           <>
             <div className="report-scroll overflow-x-auto">
               <table ref={crJournal.tableRef} className="w-full text-left text-sm report-table">
-                <ColGroup cr={crJournal} columnIds={['date_machine', 'type', 'status', 'tech', 'parts', 'labor_cost', 'parts_cost']} />
+                <ColGroup cr={crJournal} columnIds={['date_machine', 'type', 'status', 'tech', 'parts', 'parts_cost', 'labor_cost']} />
                 <thead>
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Дата / Станок<ColResizeHandle cr={crJournal} colId="date_machine" label="Дата / Станок" /></th>
@@ -365,8 +375,8 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                     <th className="px-4 py-3">Статус<ColResizeHandle cr={crJournal} colId="status" label="Статус" /></th>
                     <th className="px-4 py-3">Исполнитель<ColResizeHandle cr={crJournal} colId="tech" label="Исполнитель" /></th>
                     <th className="px-4 py-3">Запчасти<ColResizeHandle cr={crJournal} colId="parts" label="Запчасти" /></th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ<ColResizeHandle cr={crJournal} colId="labor_cost" label="Стоимость работ" /></th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей<ColResizeHandle cr={crJournal} colId="parts_cost" label="Стоимость деталей" isLast /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей<ColResizeHandle cr={crJournal} colId="parts_cost" label="Стоимость деталей" /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ<ColResizeHandle cr={crJournal} colId="labor_cost" label="Стоимость работ" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -393,12 +403,23 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                             )) : <span className="text-slate-300">—</span>}
                           </div>
                         </td>
-                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.partsCost || 0)}</td>
+                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
                       </tr>
                     );
                   })}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold">
+                    <td colSpan={5} className="px-4 sm:px-6 py-3 text-sm text-slate-700">Итого</td>
+                    <td className="px-4 sm:px-6 py-3 text-right text-sm text-slate-900 whitespace-nowrap">
+                      {formatMoney(journal.reduce((s, l) => s + (l.partsCost || 0), 0))}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 text-right text-sm text-slate-900 whitespace-nowrap">
+                      {formatMoney(journal.reduce((s, l) => s + (l.laborCost || 0), 0))}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
             <Pagination page={paged.page} pageCount={paged.pageCount} total={journal.length} pageSize={paged.pageSize} onPage={paged.setPage} />
