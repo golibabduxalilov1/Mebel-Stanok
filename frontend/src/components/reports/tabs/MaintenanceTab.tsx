@@ -73,6 +73,15 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
     () => sortLogsByDate(searchLogs(data.logs, search, data.machineMap), journalDir),
     [data.logs, data.machineMap, search, journalDir],
   );
+  const laborByMachine = useMemo(() => {
+    const acc = new Map<string, { machineId: string; name: string; labor: number }>();
+    for (const log of journal) {
+      const row = acc.get(log.machineId) ?? { machineId: log.machineId, name: data.machineMap.get(log.machineId)?.name || '—', labor: 0 };
+      row.labor += log.laborCost || 0;
+      acc.set(log.machineId, row);
+    }
+    return [...acc.values()];
+  }, [journal, data.machineMap]);
   const paged = usePaged(journal, 25);
   const tech = useSorted(stats.technicians, TECH_SORT, { key: 'count', dir: 'desc' });
   const crUpcoming = useColumnResize('maint-upcoming', { task: 200, due: 120, priority: 120, hours: 140 });
@@ -362,15 +371,12 @@ export function MaintenanceTab({ data, canExport }: { data: ReportData; canExpor
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold">
-                    <td colSpan={5} className="px-4 sm:px-6 py-3 text-sm text-slate-700">Итого</td>
-                    <td className="px-4 sm:px-6 py-3 text-right text-sm text-slate-900 whitespace-nowrap">
-                      {formatMoney(journal.reduce((s, l) => s + (l.partsCost || 0), 0))}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3 text-right text-sm text-slate-900 whitespace-nowrap">
-                      {formatMoney(journal.reduce((s, l) => s + (l.laborCost || 0), 0))}
-                    </td>
-                  </tr>
+                  {laborByMachine.map(m => (
+                    <tr key={m.machineId} className="border-t border-slate-200 bg-slate-50 font-bold">
+                      <td colSpan={6} className="px-4 sm:px-6 py-2.5 text-sm text-slate-700">Итого · {m.name}</td>
+                      <td className="px-4 sm:px-6 py-2.5 text-right text-sm text-slate-900 whitespace-nowrap">{formatMoney(m.labor)}</td>
+                    </tr>
+                  ))}
                 </tfoot>
               </table>
             </div>
