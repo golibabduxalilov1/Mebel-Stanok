@@ -933,21 +933,6 @@ export default function App() {
             {activeTab !== 'inventory' && activeTab !== 'users' && activeTab !== 'reports' && (
               <div className="hidden lg:flex items-center gap-3">
                 <div className="w-px h-6 bg-slate-200"></div>
-                {activeTab === 'all' && (
-                  <select
-                    value={registryBranchFilter}
-                    onChange={(e) => setRegistryBranchFilter(e.target.value)}
-                    className="min-w-[140px] max-w-[160px] min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
-                    title="Фильтр по филиалу"
-                  >
-                    <option value="all">Все филиалы ({machines.length})</option>
-                    {branches.map(b => (
-                      <option key={b.id} value={b.id}>
-                        {b.name} ({machines.filter(m => m.branchId === b.id).length})
-                      </option>
-                    ))}
-                  </select>
-                )}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -1207,6 +1192,19 @@ export default function App() {
                   </h2>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-slate-900">Показано {filteredMachines.length} объектов</span>
+                    <select
+                      value={registryBranchFilter}
+                      onChange={(e) => setRegistryBranchFilter(e.target.value)}
+                      className="min-w-[140px] max-w-[160px] min-h-10 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer truncate"
+                      title="Фильтр по филиалу"
+                    >
+                      <option value="all">Все филиалы ({machines.length})</option>
+                      {branches.map(b => (
+                        <option key={b.id} value={b.id}>
+                          {b.name} ({machines.filter(m => m.branchId === b.id).length})
+                        </option>
+                      ))}
+                    </select>
                     <button
                       onClick={() => setShowArchive(v => !v)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${showArchive ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
