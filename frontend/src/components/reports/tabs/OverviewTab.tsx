@@ -172,13 +172,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         />
         <KpiCard
           label="Итого ремонт"
-          value={(
-            <span className="flex items-baseline gap-3 flex-wrap">
-              <span>{formatMoney(stats.partsTotal)}</span>
-              <span className="text-slate-300 font-normal">|</span>
-              <span className="text-blue-600">{formatMoney(stats.laborTotal)}</span>
-            </span>
-          )}
+          value={formatMoney(stats.partsTotal + stats.laborTotal)}
           hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Расходы за период'}
         />
       </div>
