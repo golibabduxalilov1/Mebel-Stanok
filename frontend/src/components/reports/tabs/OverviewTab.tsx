@@ -149,7 +149,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
   const paged = usePaged(journal, 25);
   const crBranches = useColumnResize('overview-branches', { name: 200, machines: 80, active: 80, maintenance: 80, repair: 80, amps: 90, residual: 150, cost: 110, partsCost: 130 });
   const crMachines = useColumnResize('overview-machines', { name: 200, branch: 150, status: 110, age: 90, residual: 150, partsCost: 130, cost: 110, last: 120 });
-  const crJournal = useColumnResize('overview-journal', { date_machine: 180, type: 160, status: 120, tech: 140, parts: 180, labor_cost: 130, parts_cost: 130, total_cost: 130 });
+  const crJournal = useColumnResize('overview-journal', { date_machine: 180, type: 160, status: 120, tech: 140, parts: 180, labor_cost: 130, parts_cost: 130 });
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -172,7 +172,13 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
         />
         <KpiCard
           label="Итого ремонт"
-          value={formatMoney(stats.partsTotal + stats.laborTotal)}
+          value={(
+            <span className="flex items-baseline gap-3 flex-wrap">
+              <span>{formatMoney(stats.partsTotal)}</span>
+              <span className="text-slate-300 font-normal">|</span>
+              <span className="text-blue-600">{formatMoney(stats.laborTotal)}</span>
+            </span>
+          )}
           hint={stats.costChange !== undefined ? <ChangeBadge change={stats.costChange} /> : 'Расходы за период'}
         />
       </div>
@@ -352,12 +358,12 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
               <XlsxButton
                 filename="zhurnal_obsluzhivaniya"
                 disabled={!journal.length}
-                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость деталей, $', 'Стоимость работ, $', 'Общая стоимость, $']}
+                headers={['Дата', 'Станок', 'Модель', 'Вид работ', 'Статус', 'Исполнитель', 'Описание', 'Запчасти', 'Стоимость деталей, $', 'Стоимость работ, $']}
                 rows={() => journal.map(log => {
                   const machine = data.machineMap.get(log.machineId);
                   return [formatDateKey(toLocalDateKey(log.date)), machine?.name, machine?.model, LOG_TYPE_LABELS[log.type] || log.type,
                     isCompleted(log) ? 'Выполнено' : 'Запланировано', log.technicianName, log.notes,
-                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.partsCost || 0, log.laborCost || 0, (log.partsCost || 0) + (log.laborCost || 0)];
+                    (log.partsUsed || []).map(p => `${p.name} x${p.quantity}`).join(', '), log.partsCost || 0, log.laborCost || 0];
                 })}
               />
             )}
@@ -368,7 +374,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
           <>
             <div className="report-scroll overflow-x-auto">
               <table ref={crJournal.tableRef} className="w-full text-left text-sm report-table">
-                <ColGroup cr={crJournal} columnIds={['date_machine', 'type', 'status', 'tech', 'parts', 'parts_cost', 'labor_cost', 'total_cost']} />
+                <ColGroup cr={crJournal} columnIds={['date_machine', 'type', 'status', 'tech', 'parts', 'parts_cost', 'labor_cost']} />
                 <thead>
                   <tr className={THEAD_ROW}>
                     <th className="px-4 sm:px-6 py-3">Дата / Станок<ColResizeHandle cr={crJournal} colId="date_machine" label="Дата / Станок" /></th>
@@ -377,8 +383,7 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                     <th className="px-4 py-3">Исполнитель<ColResizeHandle cr={crJournal} colId="tech" label="Исполнитель" /></th>
                     <th className="px-4 py-3">Запчасти<ColResizeHandle cr={crJournal} colId="parts" label="Запчасти" /></th>
                     <th className="px-4 sm:px-6 py-3 text-right">Стоимость деталей<ColResizeHandle cr={crJournal} colId="parts_cost" label="Стоимость деталей" /></th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ<ColResizeHandle cr={crJournal} colId="labor_cost" label="Стоимость работ" /></th>
-                    <th className="px-4 sm:px-6 py-3 text-right">Общая стоимость<ColResizeHandle cr={crJournal} colId="total_cost" label="Общая стоимость" isLast /></th>
+                    <th className="px-4 sm:px-6 py-3 text-right">Стоимость работ<ColResizeHandle cr={crJournal} colId="labor_cost" label="Стоимость работ" isLast /></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -407,11 +412,21 @@ export function OverviewTab({ data, canExport, canEquipment, canToir, canInvento
                         </td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.partsCost || 0)}</td>
                         <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney(log.laborCost || 0)}</td>
-                        <td className={`px-4 sm:px-6 py-3 text-right font-black whitespace-nowrap ${done ? 'text-slate-900' : 'text-slate-400'}`}>{formatMoney((log.partsCost || 0) + (log.laborCost || 0))}</td>
                       </tr>
                     );
                   })}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold">
+                    <td colSpan={5} className="px-4 sm:px-6 py-3 text-sm text-slate-700">Итого</td>
+                    <td className="px-4 sm:px-6 py-3 text-right text-sm text-slate-900 whitespace-nowrap">
+                      {formatMoney(journal.reduce((s, l) => s + (l.partsCost || 0), 0))}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 text-right text-sm text-slate-900 whitespace-nowrap">
+                      {formatMoney(journal.reduce((s, l) => s + (l.laborCost || 0), 0))}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
             <Pagination page={paged.page} pageCount={paged.pageCount} total={journal.length} pageSize={paged.pageSize} onPage={paged.setPage} />

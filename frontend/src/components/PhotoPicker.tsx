@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ZoomableImage } from './ZoomableImage';
 import { 
   Camera, 
   Upload, 
@@ -301,12 +302,7 @@ export function LightboxModal({
               </button>
             )}
 
-            <img
-              key={currentImg}
-              src={currentImg}
-              alt="" 
-              className="max-h-[65vh] w-auto max-w-full object-contain rounded-xl shadow-2xl transition-all" 
-            />
+            <ZoomableImage key={currentImg} src={currentImg} alt="" heightClass="h-[65vh]" />
 
             {allImages.length > 1 && (
               <button 

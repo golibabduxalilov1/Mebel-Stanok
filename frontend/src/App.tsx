@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
+import { ZoomableImage } from './components/ZoomableImage';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { 
@@ -1021,6 +1022,19 @@ export default function App() {
                     </button>
                   </div>
                 </div>
+                <select
+                  value={registryBranchFilter}
+                  onChange={(e) => setRegistryBranchFilter(e.target.value)}
+                  className="w-full min-h-10 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  title="Фильтр по филиалу"
+                >
+                  <option value="all">Все филиалы ({machines.length})</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({machines.filter(m => m.branchId === b.id).length})
+                    </option>
+                  ))}
+                </select>
                 <AnimatePresence mode="popLayout">
                   {filteredMachines.map((machine) => {
                     const machineImages = getMachineImages(machine);
@@ -3203,12 +3217,7 @@ function LightboxModal({
               </button>
             )}
 
-            <img
-              key={currentImg}
-              src={currentImg}
-              alt=""
-              className="max-h-[65vh] w-auto max-w-full object-contain rounded-xl shadow-2xl transition-all"
-            />
+            <ZoomableImage key={currentImg} src={currentImg} alt="" heightClass="h-[65vh]" />
 
             {allImages.length > 1 && (
               <button 
